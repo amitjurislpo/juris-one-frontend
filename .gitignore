@@ -8,3 +8,6 @@
 npm-debug.log*
 # the real env files hold per-environment settings and are not committed
 .env*
+
+# IDE settings
+.idea/
