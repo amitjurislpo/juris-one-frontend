@@ -100,7 +100,7 @@ export interface TaxProjection {
 }
 
 /** A policy setting as stored (defaults merged with saved values). */
-export type SettingKey = keyof typeof DEFAULT_SETTINGS;
+type SettingKey = keyof typeof DEFAULT_SETTINGS;
 type Widen<T> = T extends readonly (infer U)[] ? Widen<U>[] : T extends object ? { -readonly [K in keyof T]: Widen<T[K]> } : T extends string ? string : T extends number ? number : T;
 export type SettingValue<K extends SettingKey> = Widen<(typeof DEFAULT_SETTINGS)[K]>;
 

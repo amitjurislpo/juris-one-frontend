@@ -5,8 +5,8 @@
  * and `tax_sections`.
  */
 
-export interface Slab { upto: number | null; rate: number }
-export interface Surcharge { above: number; rate: number }
+interface Slab { upto: number | null; rate: number }
+interface Surcharge { above: number; rate: number }
 
 export interface TaxYearConfig {
   regime: "NEW" | "OLD";
@@ -18,7 +18,7 @@ export interface TaxYearConfig {
   surcharge: Surcharge[];
 }
 
-export interface SlabLine { from: number; to: number | null; rate: number; amount: number }
+interface SlabLine { from: number; to: number | null; rate: number; amount: number }
 
 export interface TaxResult {
   regime: "NEW" | "OLD";
@@ -35,7 +35,7 @@ export interface TaxResult {
   lines: SlabLine[];
 }
 
-export function slabTax(taxable: number, slabs: Slab[]): { tax: number; lines: SlabLine[] } {
+function slabTax(taxable: number, slabs: Slab[]): { tax: number; lines: SlabLine[] } {
   let prev = 0, tax = 0;
   const lines: SlabLine[] = [];
   for (const s of slabs) {

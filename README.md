@@ -14,7 +14,9 @@ its own; every number on screen comes from the Spring Boot API in the backend re
 
 1. Run the API (backend repo): Postgres + `npm run backend:dev` → http://localhost:8080
 2. `npm install`
-3. `cp .env.example .env.dev` (optional; the defaults are the same) and `npm run dev` → http://localhost:3005
+3. `npm run dev` → http://localhost:3005
+
+Optional settings (read from the environment or a `.env.dev` file next to `package.json`): `WEB_PORT` (default 3005) and `BACKEND_URL` (default `http://127.0.0.1:8080`).
 
 The dev server and `vite preview` proxy `/api/*` to `BACKEND_URL`. The browser therefore only ever talks to its own
 origin, which is what the API's `SameSite=Lax` session cookies and its Origin check (CSRF) expect. The backend's

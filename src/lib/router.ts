@@ -22,7 +22,7 @@ export function useRouter() {
 
 export const usePathname = () => useLocation().pathname;
 
-export function useSearchParams() {
+function useSearchParams() {
   const [sp] = useRouterSearchParams();
   return sp;
 }

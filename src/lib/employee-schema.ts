@@ -1,38 +1,37 @@
-import { z } from "zod";
-import { digits, LOCATIONS, PAN_RE, validAadhaar, validUan } from "./people-rules";
+import { PAN_RE, validAadhaar, validUan } from "./people-rules";
 import { phoneProblem } from "./phone";
 
 /**
  * Add / edit employee (REQUIREMENTS §5.2). Shared by the 3-step form and the server action.
  * On edit, blank PII fields mean "keep what's on file". PAN, Aadhaar and UAN are optional (checked when given).
  */
-export const employeeInput = z.object({
+export interface EmployeeInput {
   // step 1 · personal
-  firstName: z.string().trim().min(1, "First name is required").max(60),
-  middleName: z.string().trim().max(60),
-  lastName: z.string().trim().min(1, "Last name is required").max(60),
-  fatherName: z.string().trim().min(2, "Father’s name is required").max(120),
-  email: z.string().trim().toLowerCase().max(200).email("Enter a valid email"),
-  phoneCountry: z.string().trim().max(5),
-  phone: z.string().trim().max(20),
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  fatherName: string;
+  email: string;
+  phoneCountry: string;
+  phone: string;
   /** empty = India (IST) */
-  location: z.union([z.enum(LOCATIONS.map((l) => l.v) as [string, ...string[]]), z.literal("")]),
-  joiningOffice: z.string().trim().max(120),
+  location: string;
+  joiningOffice: string;
   // step 2 · identity & address (India only for IDs)
-  pan: z.string().trim().toUpperCase().max(10),
-  aadhaar: z.string().trim().max(20),
-  uan: z.string().trim().max(20),
-  address: z.string().trim().max(500),
+  pan: string;
+  aadhaar: string;
+  uan: string;
+  address: string;
   // step 3 · job & access
-  designation: z.string().trim().min(2, "Designation is required").max(120),
-  departmentId: z.string().uuid("Pick a department"),
-  managerId: z.union([z.string().uuid(), z.literal("")]),
-  doj: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick the date of joining"),
-  shift: z.enum(["IN_NIGHT", "IN_DAY", "US_DAY"]),
-  roleId: z.string().uuid("Pick a role"),
-});
+  designation: string;
+  departmentId: string;
+  managerId: string;
+  doj: string;
+  shift: "IN_NIGHT" | "IN_DAY" | "US_DAY";
+  roleId: string;
+}
 
-export type EmployeeInput = z.infer<typeof employeeInput>;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export type StepErrors = Partial<Record<keyof EmployeeInput, string>>;
 
@@ -44,7 +43,7 @@ export function stepErrors(step: 1 | 2 | 3, f: EmployeeInput, editing: boolean, 
     if (!f.firstName.trim()) x.firstName = "First name is required";
     if (!f.lastName.trim()) x.lastName = "Last name is required";
     if (f.fatherName.trim().length < 2) x.fatherName = "Father’s name is required";
-    if (!z.string().email().safeParse(f.email.trim()).success) x.email = "Enter a valid email";
+    if (!EMAIL_RE.test(f.email.trim())) x.email = "Enter a valid email";
     if (f.phone || !editing) { const p = phoneProblem(f.phoneCountry, f.phone); if (p) x.phone = p; }
   }
   if (step === 2 && india) {
@@ -61,6 +60,3 @@ export function stepErrors(step: 1 | 2 | 3, f: EmployeeInput, editing: boolean, 
   }
   return x;
 }
-
-export const cleanAadhaar = (s: string) => digits(s);
-export const cleanUan = (s: string) => digits(s);

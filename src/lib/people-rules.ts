@@ -22,7 +22,7 @@ export interface Target {
   isSuperAdmin: boolean;
 }
 
-export const isAdmin = (a: Pick<Actor, "roleKey">) => a.roleKey === "owner" || a.roleKey === "super_admin"; // the business owner (sub admin), or the super admin in the platform company
+const isAdmin = (a: Pick<Actor, "roleKey">) => a.roleKey === "owner" || a.roleKey === "super_admin"; // the business owner (sub admin), or the super admin in the platform company
 
 /** People ops can add employees only if their role can assign at least one role. */
 export const canAddEmployees = (a: Actor) => a.perms.has("people.add") && (isAdmin(a) || a.assignable.size > 0);
@@ -86,12 +86,9 @@ export const LOCATIONS = [
   { v: "US_CT", l: "US Central · CT", tz: "America/Chicago", region: "US" },
   { v: "US_PT", l: "US West · PT", tz: "America/Los_Angeles", region: "US" },
 ] as const;
-export type LocationCode = (typeof LOCATIONS)[number]["v"];
-export const locationOfTz = (tz: string) => LOCATIONS.find((l) => l.tz === tz) ?? LOCATIONS[0];
 
 // ─── identity validation ───
 export const PAN_RE = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
-export const digits = (s: string) => s.replace(/\D/g, "");
+const digits = (s: string) => s.replace(/\D/g, "");
 export const validAadhaar = (s: string) => digits(s).length === 12;
 export const validUan = (s: string) => digits(s).length === 12;
-export const validPhone = (s: string) => digits(s).length >= 10 && digits(s).length <= 15;

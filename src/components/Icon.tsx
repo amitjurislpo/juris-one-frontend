@@ -46,8 +46,6 @@ const ICONS: Record<string, string> = {
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
 };
 
-export type IconName = keyof typeof ICONS;
-
 export function Icon({ n, s = 18 }: { n: string; s?: number }) {
   return (
     <svg

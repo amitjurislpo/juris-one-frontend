@@ -26,7 +26,7 @@ export interface PersonRow {
 }
 
 const STATUS_LABEL: Record<string, string> = { ACTIVE: "Active", PROBATION: "Probation", ONBOARDING: "Onboarding", EXITED: "Past employee" };
-export const stChip = (s: string) => (s === "ACTIVE" ? "ok" : s === "EXITED" ? "neutral" : s === "ONBOARDING" ? "info" : "warn");
+const stChip = (s: string) => (s === "ACTIVE" ? "ok" : s === "EXITED" ? "neutral" : s === "ONBOARDING" ? "info" : "warn");
 
 function AccessSwitch({ id, name, on, disabled, onDone }: { id: string; name: string; on: boolean; disabled: boolean; onDone?: (v: boolean) => void }) {
   const toast = useToast();

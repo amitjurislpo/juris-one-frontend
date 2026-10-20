@@ -71,7 +71,7 @@ export function IssueLetter({ templates, employees, canSalary }: { templates: Le
 }
 
 /** Create or edit a template; merge fields are inserted at the cursor. */
-export function TemplateEditor({ id, fields, onClose }: { id: string | null; fields: LetterField[]; onClose: () => void }) {
+function TemplateEditor({ id, fields, onClose }: { id: string | null; fields: LetterField[]; onClose: () => void }) {
   const t = useT();
   const toast = useToast();
   const router = useRouter();

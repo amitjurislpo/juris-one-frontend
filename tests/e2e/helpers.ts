@@ -6,17 +6,13 @@ import { Client } from "pg";
 // the e2e database and the demo passwords come from the backend repo's .env.dev (BACKEND_REPO, default ../JurisOne)
 config({ path: path.join(path.resolve(process.env.BACKEND_REPO || path.join(import.meta.dirname, "..", "..", "..", "JurisOne")), ".env.dev"), quiet: true });
 
-/** Passwords of the demo business (scripts/e2e-env.mjs seeds it into the e2e database). */
-export const DEMO_PW = process.env.SEED_DEMO_PASSWORD || "";
 /** JC-002 owns the demo business (its sub admin): the business admin. */
 export const OWNER = "JC-002";
-export const OWNER_PW = process.env.SEED_OWNER_PASSWORD || "";
 /** The platform super admin (no business). */
 export const ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL || "";
-export const ADMIN_PW = process.env.SUPER_ADMIN_PASSWORD || "";
 
 /** The e2e database (never the development one): same server, database "<db>_e2e". */
-export function e2eDatabaseUrl() {
+function e2eDatabaseUrl() {
   const url = new URL(process.env.DATABASE_URL!);
   url.pathname = `/${url.pathname.replace(/^\//, "")}_e2e`;
   url.search = "";

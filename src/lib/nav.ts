@@ -9,7 +9,7 @@ export type NavId =
 export type NavGroup = "Platform" | "My workspace" | "Workspace" | "Team" | "People ops" | "Finance" | "Administration";
 
 /** The platform super admin's permission — never part of a business role. */
-export const PLATFORM_MANAGE = "platform.manage";
+const PLATFORM_MANAGE = "platform.manage";
 /** The business owner's (sub admin's) permission — subscription and employee export; owner role only. */
 export const BUSINESS_MANAGE = "business.manage";
 
@@ -27,7 +27,7 @@ export interface NavItem {
 }
 
 /** Juris Track: a module of the plan, or granted on its own by the super admin. */
-export const JURIS_TRACK = "JURIS_TRACK";
+const JURIS_TRACK = "JURIS_TRACK";
 
 /** Sidebar + route access table (prototype NAV). Every page checks this on the server. */
 export const NAV: NavItem[] = [

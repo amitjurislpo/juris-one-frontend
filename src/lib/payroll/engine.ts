@@ -8,8 +8,6 @@
 
 export interface Structure { basic: number; hra: number; lta: number; special: number } // paise / month
 
-export const grossOf = (s: Structure) => s.basic + s.hra + s.lta + s.special;
-
 export interface PayInput {
   structure: Structure;
   daysInMonth: number;
@@ -23,7 +21,7 @@ export interface PayInput {
   professionalTax: number; // paise per month (when anything is earned)
 }
 
-export interface PayLine { label: string; rate: number; earned: number }
+interface PayLine { label: string; rate: number; earned: number }
 
 export interface PayResult {
   daysInMonth: number;
@@ -69,8 +67,6 @@ export function eligibleDays(ym: string, doj: string, exit: string | null): numb
   if (from > to) return 0;
   return Math.round((Date.parse(to) - Date.parse(from)) / 86400_000) + 1;
 }
-
-export const daysInMonth = (ym: string) => new Date(Date.UTC(Number(ym.slice(0, 4)), Number(ym.slice(5)), 0)).getUTCDate();
 
 /** "Split" helper: Basic 50% · HRA 20% · LTA 5% · Special = the rest (paise, rupee-rounded). */
 export function splitGross(target: number): Structure {

@@ -84,7 +84,7 @@ const fmtFor = (tz: string) => {
 };
 
 /** Local calendar date + minutes-after-midnight of an instant in `tz`. */
-export function localParts(at: Date, tz: string): { date: string; minutes: number; dow: number } {
+function localParts(at: Date, tz: string): { date: string; minutes: number; dow: number } {
   const p = Object.fromEntries(fmtFor(tz).formatToParts(at).map((x) => [x.type, x.value]));
   const date = `${p.year}-${p.month}-${p.day}`;
   return { date, minutes: Number(p.hour) * 60 + Number(p.minute), dow: new Date(`${date}T00:00:00Z`).getUTCDay() };
@@ -100,7 +100,7 @@ export function atLocal(date: string, hm: string, tz: string): Date {
   return new Date(new TZDate(y, m - 1, d, h, mi, 0, tz).getTime());
 }
 
-export const WINDOW_LEAD_MIN = 240;
+const WINDOW_LEAD_MIN = 240;
 
 /** Which work date a punch belongs to. */
 export function workDateOf(at: Date, shift: ShiftDef, tz: string): string {

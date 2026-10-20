@@ -48,7 +48,7 @@ export function paidFractions(dates: string[], part: Part, paidDays: number): Ma
   return out;
 }
 
-export const round2 = (n: number) => Math.round(n * 100) / 100;
+const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /** Monthly accrual, pro-rata in the joining month (and zero before it). */
 export function accrualFor(ym: string, dojIso: string, perMonth: number): number {

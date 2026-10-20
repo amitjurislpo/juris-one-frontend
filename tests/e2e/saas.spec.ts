@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { ADMIN_EMAIL, ADMIN_PW, expectLanded, login, sql } from "./helpers";
+import { ADMIN_EMAIL, expectLanded, login, sql } from "./helpers";
 
 /**
  * The multi-business journey: the super admin creates a business and its sub admin, grants Juris Track; the sub

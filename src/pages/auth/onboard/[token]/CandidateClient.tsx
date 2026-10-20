@@ -7,7 +7,7 @@ import { fmtDY } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import { removeCandidateDocument, saveCandidateForm, submitOnboarding, type CandidateForm } from "../actions";
 
-export interface CandidateDoc { id: string; kind: string; label: string; fileName: string; status: "PENDING" | "VERIFIED" | "REJECTED"; comment: string | null }
+interface CandidateDoc { id: string; kind: string; label: string; fileName: string; status: "PENDING" | "VERIFIED" | "REJECTED"; comment: string | null }
 export interface CandidateView {
   candidateName: string; personalEmail: string; businessName: string; designation: string | null; joiningDate: string | null; india: boolean;
   status: string; editable: boolean; hrComment: string | null; linkExpiresAt: string; form: CandidateForm;

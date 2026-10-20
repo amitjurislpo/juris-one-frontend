@@ -1,5 +1,5 @@
 /** Old-regime investment declarations (REQUIREMENTS §5.10, prototype DECL). Client-safe. */
-export interface DeclItem { k: string; label: string; hint?: string; auto?: boolean; cap?: number }
+interface DeclItem { k: string; label: string; hint?: string; auto?: boolean; cap?: number }
 export interface DeclSection { sec: string; key: string; title: string; cap?: number; note: string; items: DeclItem[] }
 
 export const DECL: DeclSection[] = [
@@ -16,7 +16,3 @@ export const DECL: DeclSection[] = [
   { sec: "80TTA", key: "80TTA", title: "Savings account interest", cap: 10000, note: "Up to ₹10,000 of savings bank interest.", items: [{ k: "sav", label: "Savings interest earned" }] },
 ];
 
-export const ITEM_SECTION: Record<string, string> = Object.fromEntries(DECL.flatMap((s) => s.items.filter((i) => !i.auto).map((i) => [i.k, i.k === "medParents" ? "80D_PARENTS" : s.key])));
-export const ITEM_LABEL: Record<string, string> = Object.fromEntries(DECL.flatMap((s) => s.items.map((i) => [i.k, i.label])));
-export const SECTION_OF_ITEM: Record<string, string> = Object.fromEntries(DECL.flatMap((s) => s.items.map((i) => [i.k, s.sec])));
-export const DECLARABLE = Object.keys(ITEM_SECTION);

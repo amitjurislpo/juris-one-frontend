@@ -18,10 +18,7 @@ export const isoDateIn = (ts: string, timeZone: string) => isoInZone(new Date(ts
 
 export const todayIn = (timeZone: string) => isoInZone(new Date(), timeZone);
 
-/** `@db.Date` value → ISO date string. */
-export const dateToIso = (d: Date) => d.toISOString().slice(0, 10);
-
-/** ISO date string → `@db.Date` value (UTC midnight). */
+/** ISO date string → Date (UTC midnight). */
 export const isoToDate = (s: string) => new Date(`${s}T00:00:00.000Z`);
 
 const parts = (s: string) => {

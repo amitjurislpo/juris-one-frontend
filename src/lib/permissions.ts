@@ -36,5 +36,3 @@ export const PERMISSION_GROUPS: [string, Permission[]][] = [
 
 /** Permissions that expose salary / tax figures. HR roles must never hold these. */
 export const SALARY_PERMISSIONS: Permission[] = ["pay.view", "pay.close", "struct.manage", "tax.view", "proofs.verify"];
-
-export const isPermission = (s: string): s is Permission => (PERMISSION_KEYS as string[]).includes(s);
