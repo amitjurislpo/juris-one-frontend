@@ -1,0 +1,13 @@
+/node_modules
+/dist
+/dist-e2e
+/coverage
+/test-results
+/playwright-report
+.DS_Store
+npm-debug.log*
+# the real env files hold per-environment settings and are not committed
+.env*
+
+# IDE settings
+.idea/
