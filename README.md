@@ -12,7 +12,7 @@ its own; every number on screen comes from the Spring Boot API in the backend re
 
 ## Run it (development)
 
-1. Run the API (backend repo): Postgres + `npm run backend:dev` → http://localhost:8080
+1. Run the API (backend repo): `docker compose up -d db`, then `./mvnw spring-boot:run` in `backend/` → http://localhost:8080
 2. `npm install`
 3. `npm run dev` → http://localhost:3005
 
@@ -75,6 +75,8 @@ and `Cache-Control: no-store`.
 ## End-to-end tests
 
 The tests drive a real browser against a real API and database, so they need the backend repo next to this one
-(`../JurisOne`, or set `BACKEND_REPO`). Playwright starts the API on :8081 with a throw-away database `<db>_e2e` (reset and
-seeded with the demo business), builds the SPA into `dist-e2e/` and serves it on :3006. Development data is never touched.
-Docker (Postgres) and the backend's `.env.dev` must exist. `E2E_BUILD=1 npm run test:e2e` rebuilds the API jar and the SPA.
+(`../JurisOne`, or set `BACKEND_REPO`). `scripts/e2e-env.mjs` builds the API jar with the backend's Maven Wrapper (when missing),
+starts it on :8081 with a throw-away database `<db>_e2e` (reset and seeded with the demo business; uploaded files go to the temp
+folder), builds the SPA into `dist-e2e/` and serves it on :3006. Development data is never touched. The database address and logins
+come from the backend's `application-dev.properties`; Docker (Postgres) must be running. `E2E_BUILD=1 npm run test:e2e` rebuilds
+the API jar and the SPA.

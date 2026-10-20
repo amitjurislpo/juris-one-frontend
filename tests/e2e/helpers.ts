@@ -4,18 +4,19 @@ import { expect, type Page } from "@playwright/test";
 import { Client } from "pg";
 
 // the e2e database and the demo logins come from the backend repo's application-dev.properties (BACKEND_REPO, default ../JurisOne)
-const backendRepo = path.resolve(process.env.BACKEND_REPO || path.join(import.meta.dirname, "..", "..", "..", "JurisOne"));
-const { loadEnv } = (await import(pathToFileURL(path.join(backendRepo, "scripts", "env.mjs")).href)) as { loadEnv: (name?: string) => string };
-loadEnv("dev");
+const { devSettings } = (await import(pathToFileURL(path.join(import.meta.dirname, "..", "..", "scripts", "backend-config.mjs")).href)) as {
+  devSettings: () => { databaseUrl: string; superAdminEmail: string };
+};
+const dev = devSettings();
 
 /** JC-002 owns the demo business (its sub admin): the business admin. */
 export const OWNER = "JC-002";
 /** The platform super admin (no business). */
-export const ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL || "";
+export const ADMIN_EMAIL = dev.superAdminEmail;
 
 /** The e2e database (never the development one): same server, database "<db>_e2e". */
 function e2eDatabaseUrl() {
-  const url = new URL(process.env.DATABASE_URL!);
+  const url = new URL(dev.databaseUrl);
   url.pathname = `/${url.pathname.replace(/^\//, "")}_e2e`;
   url.search = "";
   return url.toString();
