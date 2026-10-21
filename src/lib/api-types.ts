@@ -7,8 +7,8 @@ import type { DEFAULT_SETTINGS } from "./settings-defaults";
 
 /** One line in the notification bell. */
 export interface ShellNote {
-  t: string;
-  s: string;
+  text: string;
+  meta: string;
   href?: string;
   /** set for a stored notification (system lines such as "3 requests waiting" have none) */
   id?: string | null;

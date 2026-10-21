@@ -2,7 +2,7 @@ import Link from "@/lib/link";
 import { Icon } from "@/components/Icon";
 import { PageHeader } from "@/components/PageHeader";
 import { PageLoading, useData, usePage } from "@/lib/page";
-import { fmtDY } from "@/lib/format";
+import { formatDayMonthYear } from "@/lib/format";
 import { NewPolicyButton } from "./PoliciesClient";
 
 
@@ -46,7 +46,7 @@ export default function PoliciesPage() {
                   </td>
                   <td className="num">{r.version ? `v${r.version}` : "—"}</td>
                   <td>{r.status === "PUBLISHED" && r.requiresAck ? <span className="num">{r.acknowledged} / {r.required}</span> : <span className="muted">—</span>}</td>
-                  <td className="muted hide-sm">{fmtDY(r.updatedAt.slice(0, 10))}</td>
+                  <td className="muted hide-sm">{formatDayMonthYear(r.updatedAt.slice(0, 10))}</td>
                 </tr>
               ))}
             </tbody>

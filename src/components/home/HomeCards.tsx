@@ -1,6 +1,6 @@
 import Link from "@/lib/link";
 import { Icon } from "@/components/Icon";
-import { fmtD, ymLabel } from "@/lib/format";
+import { formatDayMonth, formatMonthLabel } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import { Avatar } from "@/components/Avatar";
 
@@ -11,9 +11,9 @@ const LLABEL: Record<string, string> = { PENDING: "Pending", APPROVED: "Approved
 /** Permission-driven Home cards, from /api/home (salary is never included). */
 export interface HomeCardsData {
   myLeaves: { id: string; type: string; from: string; to: string; days: number; status: string }[] | null;
-  team: { id: string; photo?: number | null; name: string; title: string; st: { label: string; tone: "ok" | "info" | "warn" | "gold" | "neutral" } }[] | null;
+  team: { id: string; photo?: number | null; name: string; title: string; status: { label: string; tone: "ok" | "info" | "warn" | "gold" | "neutral" } }[] | null;
   approvals: { leaveToo: boolean; count: number } | null;
-  payroll: { month: string; status: "Closed" | "Approved" | "In review"; proofs: number | null; regs: number } | null;
+  payroll: { month: string; status: "Closed" | "Approved" | "In review"; proofs: number | null; regularizations: number } | null;
   payslip: { month: string; ready: boolean } | null;
 }
 
@@ -31,7 +31,7 @@ export function HomeCards({ c, i0 }: { c: HomeCardsData; i0: number }) {
             {c.myLeaves.map((l) => (
               <div className="it" key={l.id}>
                 <span style={{ width: 32, height: 32, borderRadius: 9, display: "grid", placeItems: "center", background: "var(--hover)", color: "var(--muted)", flex: "none" }}><Icon n="cal" s={15} /></span>
-                <div style={{ flex: 1, minWidth: 0 }}><b style={{ fontSize: 13.5, fontWeight: 600 }}>{t(l.type)}</b><div className="faint" style={{ fontSize: 12.5 }}>{fmtD(l.from)}{l.to !== l.from ? ` – ${fmtD(l.to)}` : ""} · {l.days}d</div></div>
+                <div style={{ flex: 1, minWidth: 0 }}><b style={{ fontSize: 13.5, fontWeight: 600 }}>{t(l.type)}</b><div className="faint" style={{ fontSize: 12.5 }}>{formatDayMonth(l.from)}{l.to !== l.from ? ` – ${formatDayMonth(l.to)}` : ""} · {l.days}d</div></div>
                 <span className={`chip ${LCHIP[l.status]}`}>{t(LLABEL[l.status])}</span>
               </div>
             ))}
@@ -48,7 +48,7 @@ export function HomeCards({ c, i0 }: { c: HomeCardsData; i0: number }) {
               <div className="it" key={m.id}>
                 <Avatar id={m.id} name={m.name} photo={m.photo} />
                 <div style={{ flex: 1, minWidth: 0 }}><b style={{ fontSize: 13.5, fontWeight: 600 }}>{m.name}</b><div className="faint" style={{ fontSize: 12 }}>{m.title}</div></div>
-                <span className={`chip ${m.st.tone}`}>{t(m.st.label)}</span>
+                <span className={`chip ${m.status.tone}`}>{t(m.status.label)}</span>
               </div>
             ))}
           </div>
@@ -68,10 +68,10 @@ export function HomeCards({ c, i0 }: { c: HomeCardsData; i0: number }) {
       {c.payroll && (
         <section className="card pad enter" style={{ ["--i" as string]: i++ }}>
           <span className="spot"></span>
-          <div className="card-h"><h3>{t("Payroll")} · {ymLabel(c.payroll.month).split(" ")[0]}</h3><span className={`chip ${c.payroll.status === "Closed" ? "ok" : "warn"}`}>{t(c.payroll.status)}</span></div>
+          <div className="card-h"><h3>{t("Payroll")} · {formatMonthLabel(c.payroll.month).split(" ")[0]}</h3><span className={`chip ${c.payroll.status === "Closed" ? "ok" : "warn"}`}>{t(c.payroll.status)}</span></div>
           <p className="muted" style={{ margin: "0 0 16px", fontSize: 13.5 }}>
             {c.payroll.proofs !== null && `${t("{n} investment proof(s) waiting for verification.", { n: c.payroll.proofs })} `}
-            {t("{n} regularization(s) may change LOP.", { n: c.payroll.regs })}
+            {t("{n} regularization(s) may change LOP.", { n: c.payroll.regularizations })}
           </p>
           <div style={{ display: "flex", gap: 8 }}>
             <Link className="btn btn-gold" style={{ flex: 1 }} href="/payroll">{t("Open payroll")}</Link>
@@ -84,7 +84,7 @@ export function HomeCards({ c, i0 }: { c: HomeCardsData; i0: number }) {
         <section className="card pad enter" style={{ ["--i" as string]: i++, display: "flex", gap: 14, alignItems: "center" }}>
           <span className="spot"></span>
           <span className="kpi-ico" style={{ background: "var(--accentsoft)", color: "var(--accent)" }}><Icon n="doc" s={18} /></span>
-          <div style={{ flex: 1 }}><h3 style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>{ymLabel(c.payslip.month).split(" ")[0]} {t("payslip")}</h3><div className="faint" style={{ fontSize: 12.5 }}>{c.payslip.ready ? t("Ready to view and download") : t("Available once Finance closes payroll")}</div></div>
+          <div style={{ flex: 1 }}><h3 style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>{formatMonthLabel(c.payslip.month).split(" ")[0]} {t("payslip")}</h3><div className="faint" style={{ fontSize: 12.5 }}>{c.payslip.ready ? t("Ready to view and download") : t("Available once Finance closes payroll")}</div></div>
           <Link className="btn btn-sm" href="/payslips">{t("Open")}</Link>
         </section>
       )}

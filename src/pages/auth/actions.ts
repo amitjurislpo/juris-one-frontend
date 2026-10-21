@@ -1,6 +1,6 @@
 import { apiCall, apiData, navigate } from "@/lib/api";
 import { queryClient } from "@/lib/query";
-import { fetchMe, ME_KEY } from "@/lib/session";
+import { fetchMe, CURRENT_USER_QUERY_KEY } from "@/lib/session";
 
 import type { FormState } from "./form-state";
 
@@ -18,7 +18,7 @@ function leave(to: string) {
 async function enter(to: string) {
   queryClient.clear();
   await Promise.all([
-    queryClient.fetchQuery({ queryKey: ME_KEY, queryFn: fetchMe }),
+    queryClient.fetchQuery({ queryKey: CURRENT_USER_QUERY_KEY, queryFn: fetchMe }),
     queryClient.prefetchQuery({ queryKey: ["api", "/api/shell"], queryFn: () => apiData("/api/shell") }),
   ]);
   navigate(to);

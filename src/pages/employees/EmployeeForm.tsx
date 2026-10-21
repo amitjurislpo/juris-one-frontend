@@ -185,7 +185,7 @@ export function EmployeeForm({ editId, photo, onClose }: { editId?: string; phot
                   </select>
                   {err("managerId")}
                 </label>
-                <label className="field">{t("Date of joining *")}<input type="date" value={f.doj} onChange={(e) => set("doj", e.target.value)} />{err("doj")}</label>
+                <label className="field">{t("Date of joining *")}<input type="date" value={f.dateOfJoining} onChange={(e) => set("dateOfJoining", e.target.value)} />{err("dateOfJoining")}</label>
                 <label className="field">{t("Shift")}
                   <select value={f.shift} disabled={!india} onChange={(e) => set("shift", e.target.value as EmployeeInput["shift"])}>
                     {(india ? SHIFT_OPTIONS.IN : SHIFT_OPTIONS.US).map((s) => <option key={s.v} value={s.v}>{t(s.l)}</option>)}

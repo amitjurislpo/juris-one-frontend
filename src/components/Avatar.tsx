@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { avc, initials } from "@/lib/format";
+import { avatarColorClass, initials } from "@/lib/format";
 
 /**
  * The round person marker: the employee's photo when they have one (`photo` is the epoch millis of its last change, so a
@@ -10,7 +10,7 @@ export function Avatar({ id, name, photo, lg, plain, style }: { id?: string; nam
   const [failed, setFailed] = useState<number | null>(null);
   const showPhoto = !!id && !!photo && failed !== photo;
   return (
-    <span className={`avatar${lg ? " lg" : ""}${plain ? "" : ` ${avc(initials(name))}`}`} style={style} title={name}>
+    <span className={`avatar${lg ? " lg" : ""}${plain ? "" : ` ${avatarColorClass(initials(name))}`}`} style={style} title={name}>
       {showPhoto ? <img src={`/api/people/${id}/photo?v=${photo}`} alt={name} loading="lazy" onError={() => setFailed(photo)} /> : initials(name)}
     </span>
   );

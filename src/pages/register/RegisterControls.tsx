@@ -8,7 +8,7 @@ import { useT } from "@/lib/i18n/client";
 export function DayNav({ day, max }: { day: string; max: string }) {
   const t = useT();
   const { set } = useQuery();
-  const go = (d: string) => set({ day: d === max ? null : d });
+  const go = (d: string) => set({ date: d === max ? null : d });
   return (
     <div className="daynav">
       <button className="icon-btn" onClick={() => go(addDays(day, -1))} aria-label={t("Previous day")}><Icon n="chevL" s={16} /></button>
@@ -18,14 +18,14 @@ export function DayNav({ day, max }: { day: string; max: string }) {
   );
 }
 
-export function ZonePicker({ zones, value }: { zones: readonly { v: string; l: string }[]; value: string }) {
+export function ZonePicker({ zones, value }: { zones: readonly { value: string; label: string }[]; value: string }) {
   const t = useT();
   const { set } = useQuery();
   return (
     <label className="tsel tz">
       <Icon n="globe" s={15} />
       <span>{t("Show times in")}</span>
-      <select value={value} onChange={(e) => set({ tz: e.target.value })}>{zones.map((z) => <option key={z.v} value={z.v}>{t(z.l)}</option>)}</select>
+      <select value={value} onChange={(e) => set({ timeZone: e.target.value })}>{zones.map((z) => <option key={z.value} value={z.value}>{t(z.label)}</option>)}</select>
     </label>
   );
 }

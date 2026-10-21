@@ -8,7 +8,7 @@ import { Icon } from "@/components/Icon";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useT } from "@/lib/i18n/client";
 import { Avatar } from "@/components/Avatar";
-import { fmtDL } from "@/lib/format";
+import { formatWeekdayDayMonthYear } from "@/lib/format";
 import { useCurrentUser } from "@/lib/session";
 import { PAGE_TITLES, type NavId } from "@/lib/nav";
 import { ToastProvider } from "./Toasts";
@@ -22,13 +22,13 @@ export interface ShellProps {
     roleName: string;
     department: string;
     manager: string;
-    doj: string;
+    dateOfJoining: string;
     shift: string | null;
     isAdminLike: boolean;
   };
-  groups: { g: string; items: { id: string; label: string; icon: string }[] }[];
+  groups: { title: string; items: { id: string; label: string; icon: string }[] }[];
   badges: { approvals: number; proofs: number };
-  notes: { t: string; s: string; href?: string; id?: string | null; unread?: boolean; sticky?: boolean }[];
+  notes: { text: string; meta: string; href?: string; id?: string | null; unread?: boolean; sticky?: boolean }[];
   unread: number;
   landing: string;
   canSelf: boolean;
@@ -38,7 +38,7 @@ export interface ShellProps {
   children: React.ReactNode;
 }
 
-interface Act { g: string; label: string; icon: string; run: () => void; idx: number }
+interface PaletteAction { group: string; label: string; icon: string; run: () => void; idx: number }
 
 export function Shell(props: ShellProps) {
   const { me, groups, badges, notes, landing, canSelf, businessName } = props;
@@ -55,9 +55,9 @@ export function Shell(props: ShellProps) {
   // "My profile" is a page for everyone in a business (the super admin keeps the small card)
   const hasProfilePage = groups.some((g) => g.items.some((i) => i.id === "profile"));
   const openProfile = useCallback(() => (hasProfilePage ? router.push("/profile") : setProfile(true)), [hasProfilePage, router]);
-  const [pal, setPal] = useState(false);
-  const [pq, setPq] = useState("");
-  const [pi, setPi] = useState(0);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [paletteQuery, setPaletteQuery] = useState("");
+  const [paletteIndex, setPaletteIndex] = useState(0);
   const [theme, setThemeState] = useState<Theme>(props.initialTheme);
   const palIn = useRef<HTMLInputElement>(null);
 
@@ -80,43 +80,43 @@ export function Shell(props: ShellProps) {
   const logout = useCallback(() => { void logoutAction(); }, []);
 
   const openPal = useCallback(() => {
-    setPal(true);
-    setPq("");
-    setPi(0);
+    setPaletteOpen(true);
+    setPaletteQuery("");
+    setPaletteIndex(0);
     setMenu(false);
     setNotif(false);
     requestAnimationFrame(() => palIn.current?.focus());
   }, []);
 
   const acts = useMemo(() => {
-    const q = pq.trim().toLowerCase();
-    const out: Act[] = [];
-    const add = (g: string, label: string, icon: string, run: () => void) => {
-      if (!q || label.toLowerCase().includes(q) || g.toLowerCase().includes(q)) out.push({ g, label, icon, run, idx: out.length });
+    const query = paletteQuery.trim().toLowerCase();
+    const out: PaletteAction[] = [];
+    const add = (group: string, label: string, icon: string, run: () => void) => {
+      if (!query || label.toLowerCase().includes(query) || group.toLowerCase().includes(query)) out.push({ group, label, icon, run, idx: out.length });
     };
     if (canSelf) {
       add(t("Actions"), t("Check in / out"), "sunrise", () => go("home"));
       add(t("Actions"), t("Apply for leave"), "plus", () => router.push("/leave?apply=1"));
     }
     add(t("Actions"), theme === "dark" ? t("Switch to light theme") : t("Switch to dark theme"), theme === "dark" ? "sun" : "moon", toggleTheme);
-    groups.forEach((G) => G.items.forEach((n) => add(t("Go to"), t(n.label), n.icon, () => go(n.id))));
+    groups.forEach((bucket) => bucket.items.forEach((n) => add(t("Go to"), t(n.label), n.icon, () => go(n.id))));
     add(t("Account"), t("My profile"), "user", openProfile);
     add(t("Account"), t("Sign out"), "logout", logout);
     return out;
-  }, [pq, canSelf, theme, groups, go, router, toggleTheme, logout, openProfile, t]);
+  }, [paletteQuery, canSelf, theme, groups, go, router, toggleTheme, logout, openProfile, t]);
 
   const groupedActs = useMemo(() => {
-    const g: { g: string; items: Act[] }[] = [];
+    const groupedActions: { title: string; items: PaletteAction[] }[] = [];
     acts.forEach((a) => {
-      let G = g.find((x) => x.g === a.g);
-      if (!G) g.push((G = { g: a.g, items: [] }));
+      let G = groupedActions.find((x) => x.title === a.group);
+      if (!G) groupedActions.push((G = { title: a.group, items: [] }));
       G.items.push(a);
     });
-    return g;
+    return groupedActions;
   }, [acts]);
 
-  const runAct = (a: Act) => {
-    setPal(false);
+  const runAct = (a: PaletteAction) => {
+    setPaletteOpen(false);
     a.run();
   };
 
@@ -124,7 +124,7 @@ export function Shell(props: ShellProps) {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        if (pal) setPal(false);
+        if (paletteOpen) setPaletteOpen(false);
         else openPal();
       } else if (e.key === "Escape") {
         setMenu(false);
@@ -154,7 +154,7 @@ export function Shell(props: ShellProps) {
       document.removeEventListener("click", away);
       document.removeEventListener("pointermove", spot);
     };
-  }, [pal, openPal]);
+  }, [paletteOpen, openPal]);
 
   return (
     <ToastProvider>
@@ -169,8 +169,8 @@ export function Shell(props: ShellProps) {
           </Link>
           <button className="side-search" type="button" onClick={openPal}><Icon n="search" s={15} />{t("Search")}<kbd>⌘K</kbd></button>
           {groups.map((G) => (
-            <div key={G.g} style={{ display: "contents" }}>
-              <div className="group">{t(G.g)}</div>
+            <div key={G.title} style={{ display: "contents" }}>
+              <div className="group">{t(G.title)}</div>
               {G.items.map((n) => (
                 <Link key={n.id} href={`/${n.id}`} className={`nav-item${page === n.id ? " on" : ""}`} aria-current={page === n.id ? "page" : undefined}>
                   <span className="ic"><Icon n={n.icon} s={17} /></span>
@@ -207,7 +207,7 @@ export function Shell(props: ShellProps) {
                   {notes.length === 0 && <div className="n faint">{t("You're all caught up.")}</div>}
                   {notes.map((n, i) => {
                     const unread = n.id ? !!n.unread : true;
-                    const body = (<><i style={unread ? undefined : { background: "transparent", boxShadow: "inset 0 0 0 1px var(--line3)" }}></i><div><div style={{ fontWeight: unread ? 600 : 400 }}>{n.t}</div><div className="faint" style={{ fontSize: 12, marginTop: 2 }}>{n.s}{n.sticky ? ` · ${t("accept to clear")}` : ""}</div></div></>);
+                    const body = (<><i style={unread ? undefined : { background: "transparent", boxShadow: "inset 0 0 0 1px var(--line3)" }}></i><div><div style={{ fontWeight: unread ? 600 : 400 }}>{n.text}</div><div className="faint" style={{ fontSize: 12, marginTop: 2 }}>{n.meta}{n.sticky ? ` · ${t("accept to clear")}` : ""}</div></div></>);
                     // opening a stored notification marks it read (policy ones clear only when the policy is accepted)
                     const onOpen = () => { if (n.id && n.unread && !n.sticky) startTransition(() => { void markNotification(n.id!, true).then(() => router.refresh()); }); setNotif(false); };
                     return n.href ? <Link key={n.id ?? i} href={n.href} onClick={onOpen} className="n" style={{ color: "inherit", textDecoration: "none" }}>{body}</Link> : <div key={n.id ?? i} className="n">{body}</div>;
@@ -259,7 +259,7 @@ export function Shell(props: ShellProps) {
                 <div className="kv"><span className="muted">{t("Role")}</span><b>{me.roleName}</b></div>
                 <div className="kv"><span className="muted">{t("Department")}</span><b>{me.department}</b></div>
                 <div className="kv"><span className="muted">{t("Reporting manager")}</span><b>{me.manager}</b></div>
-                <div className="kv"><span className="muted">{t("Date of joining")}</span><b>{fmtDL(me.doj)}</b></div>
+                <div className="kv"><span className="muted">{t("Date of joining")}</span><b>{formatWeekdayDayMonthYear(me.dateOfJoining)}</b></div>
                 {!me.isAdminLike && me.shift && <div className="kv"><span className="muted">{t("Shift")}</span><b>{me.shift}</b></div>}
               </div>
               <div className="modal-f">
@@ -270,21 +270,21 @@ export function Shell(props: ShellProps) {
           </div>
         )}
 
-        {pal && (
-          <div className="pal-wrap" onClick={(e) => e.target === e.currentTarget && setPal(false)}>
+        {paletteOpen && (
+          <div className="pal-wrap" onClick={(e) => e.target === e.currentTarget && setPaletteOpen(false)}>
             <div className="pal" role="dialog" aria-modal="true" aria-label={t("Command menu")}>
               <div className="pal-in">
                 <Icon n="search" s={18} />
                 <input
                   ref={palIn}
-                  value={pq}
-                  onChange={(e) => { setPq(e.target.value); setPi(0); }}
+                  value={paletteQuery}
+                  onChange={(e) => { setPaletteQuery(e.target.value); setPaletteIndex(0); }}
                   onKeyDown={(e) => {
                     const L = acts.length;
-                    if (e.key === "ArrowDown") { e.preventDefault(); if (L) setPi((pi + 1) % L); }
-                    else if (e.key === "ArrowUp") { e.preventDefault(); if (L) setPi((pi - 1 + L) % L); }
-                    else if (e.key === "Enter") { e.preventDefault(); if (acts[pi]) runAct(acts[pi]); }
-                    else if (e.key === "Escape") setPal(false);
+                    if (e.key === "ArrowDown") { e.preventDefault(); if (L) setPaletteIndex((paletteIndex + 1) % L); }
+                    else if (e.key === "ArrowUp") { e.preventDefault(); if (L) setPaletteIndex((paletteIndex - 1 + L) % L); }
+                    else if (e.key === "Enter") { e.preventDefault(); if (acts[paletteIndex]) runAct(acts[paletteIndex]); }
+                    else if (e.key === "Escape") setPaletteOpen(false);
                   }}
                   placeholder={t("Type a command or search…")}
                   aria-label={t("Command")}
@@ -293,16 +293,16 @@ export function Shell(props: ShellProps) {
               </div>
               <div className="pal-list" role="listbox">
                 {groupedActs.map((g) => (
-                  <div key={g.g}>
-                    <div className="pal-g">{g.g}</div>
+                  <div key={g.title}>
+                    <div className="pal-g">{g.title}</div>
                     {g.items.map((a) => (
-                      <button key={a.label} type="button" role="option" aria-selected={a.idx === pi} className={`pal-item${a.idx === pi ? " act" : ""}`} onMouseEnter={() => setPi(a.idx)} onClick={() => runAct(a)}>
+                      <button key={a.label} type="button" role="option" aria-selected={a.idx === paletteIndex} className={`pal-item${a.idx === paletteIndex ? " act" : ""}`} onMouseEnter={() => setPaletteIndex(a.idx)} onClick={() => runAct(a)}>
                         <span className="ic"><Icon n={a.icon} s={15} /></span>{a.label}
                       </button>
                     ))}
                   </div>
                 ))}
-                {!acts.length && <div className="pal-g" style={{ padding: 24, textAlign: "center" }}>{t("No results for")} “{pq}”</div>}
+                {!acts.length && <div className="pal-g" style={{ padding: 24, textAlign: "center" }}>{t("No results for")} “{paletteQuery}”</div>}
               </div>
               <div className="pal-foot"><span><kbd>↑</kbd> <kbd>↓</kbd> {t("navigate")}</span><span><kbd>↵</kbd> {t("select")}</span><span style={{ marginLeft: "auto" }}>JurisOne</span></div>
             </div>

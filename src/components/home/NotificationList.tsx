@@ -6,7 +6,7 @@ import { markAllNotifications, markNotification } from "@/pages/notification-act
 import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
 import type { InboxItem } from "@/lib/api-types";
-import { fmtDateTime } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
 
 /**
  * Notifications, unread first. Opening one marks it read; each can be marked read / unread on its own. Policy
@@ -35,7 +35,7 @@ export function NotificationList({ items, timeZone, empty = "You're all caught u
             <span aria-hidden style={{ width: 8, height: 8, borderRadius: "50%", marginTop: 6, flex: "none", background: unread ? "var(--accent)" : "transparent", boxShadow: unread ? "none" : "inset 0 0 0 1px var(--line3)" }}></span>
             <button type="button" onClick={() => open(n)} style={{ all: "unset", cursor: "pointer", flex: 1, minWidth: 0 }} aria-label={`${unread ? "Unread: " : ""}${n.text}`}>
               <div style={{ fontWeight: unread ? 600 : 400, fontSize: 13.5, lineHeight: 1.45 }}>{n.text}</div>
-              <div className="faint" style={{ fontSize: 12, marginTop: 2 }}>{fmtDateTime(new Date(n.createdAt), timeZone)}</div>
+              <div className="faint" style={{ fontSize: 12, marginTop: 2 }}>{formatDateTime(new Date(n.createdAt), timeZone)}</div>
             </button>
             {n.sticky ? <Link href="/acknowledge" className="chip warn nodot" style={{ textDecoration: "none" }}>Accept to clear</Link>
               : <button type="button" className="btn btn-sm btn-ghost" disabled={busy} onClick={() => mark(n.id, unread)} aria-label={unread ? "Mark as read" : "Mark as unread"} title={unread ? "Mark as read" : "Mark as unread"}>

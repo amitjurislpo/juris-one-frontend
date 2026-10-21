@@ -31,7 +31,7 @@ const onPublicPage = () => PUBLIC.some((p) => location.pathname === p || locatio
 let refreshing: Promise<boolean> | null = null;
 /** Exchanges the refresh cookie for new session cookies; one call at a time. */
 function refreshSession(): Promise<boolean> {
-  refreshing ??= fetch("/api/auth/session/refresh", {
+  refreshing ??= fetch("/api/auth/session-refreshes", {
     method: "POST",
     headers: { "content-type": "application/json", accept: "application/json" },
     body: "{}",
@@ -132,7 +132,7 @@ export async function apiFile(method: "PUT" | "DELETE", path: string, file?: Blo
 }
 
 /** Search params → query string (first value of each). */
-export function qs(sp: Record<string, string | string[] | undefined>): string {
+export function toQueryString(sp: Record<string, string | string[] | undefined>): string {
   const p = new URLSearchParams();
   for (const [k, v] of Object.entries(sp)) {
     const x = Array.isArray(v) ? v[0] : v;

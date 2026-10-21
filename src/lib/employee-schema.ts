@@ -1,4 +1,4 @@
-import { PAN_RE, validAadhaar, validUan } from "./people-rules";
+import { PAN_PATTERN, validAadhaar, validUan } from "./people-rules";
 import { phoneProblem } from "./phone";
 
 /**
@@ -26,7 +26,7 @@ export interface EmployeeInput {
   designation: string;
   departmentId: string;
   managerId: string;
-  doj: string;
+  dateOfJoining: string;
   shift: "IN_NIGHT" | "IN_DAY" | "US_DAY";
   roleId: string;
 }
@@ -47,7 +47,7 @@ export function stepErrors(step: 1 | 2 | 3, f: EmployeeInput, editing: boolean, 
     if (f.phone || !editing) { const p = phoneProblem(f.phoneCountry, f.phone); if (p) x.phone = p; }
   }
   if (step === 2 && india) {
-    if (f.pan && !PAN_RE.test(f.pan.trim().toUpperCase())) x.pan = "PAN looks like ABCDE1234F";
+    if (f.pan && !PAN_PATTERN.test(f.pan.trim().toUpperCase())) x.pan = "PAN looks like ABCDE1234F";
     if (f.aadhaar && !validAadhaar(f.aadhaar)) x.aadhaar = "Aadhaar has 12 digits";
     if (f.uan && !validUan(f.uan)) x.uan = "UAN has 12 digits";
   }
@@ -55,7 +55,7 @@ export function stepErrors(step: 1 | 2 | 3, f: EmployeeInput, editing: boolean, 
     if (f.designation.trim().length < 2) x.designation = "Designation is required";
     if (!f.departmentId) x.departmentId = "Pick a department";
     if (!f.managerId && (!editing || hadManager)) x.managerId = "Pick a reporting manager";
-    if (!f.doj) x.doj = "Pick the date of joining";
+    if (!f.dateOfJoining) x.dateOfJoining = "Pick the date of joining";
     if (!f.roleId) x.roleId = "Pick a role";
   }
   return x;

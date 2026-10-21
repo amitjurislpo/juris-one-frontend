@@ -3,13 +3,13 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
 import { Modal } from "@/components/ui/Modal";
-import { addDays, dowOf } from "@/lib/attendance/engine";
-import { fmtD, fmtDL, MONTHS } from "@/lib/format";
+import { addDays, weekdayOf } from "@/lib/attendance/engine";
+import { formatDayMonth, formatWeekdayDayMonthYear, MONTH_NAMES } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import type { Preview } from "@/lib/api-types";
 import { applyLeave, preview } from "./actions";
 
-export interface TypeOpt { code: string; name: string; available: number | null; paid: boolean; lockedReason: string | null }
+export interface LeaveTypeOption { code: string; name: string; available: number | null; paid: boolean; lockedReason: string | null }
 type Part = "FULL" | "FIRST_HALF" | "SECOND_HALF";
 
 /** Prototype range picker: tap a start, then an end; weekends, holidays and past dates disabled. */
@@ -19,7 +19,7 @@ function RangePicker({ from, to, onPick, today, holidays, weeklyOffs }: { from: 
   const [picking, setPicking] = useState(false);
   const first = `${ym}-01`;
   const n = new Date(Date.UTC(Number(ym.slice(0, 4)), Number(ym.slice(5)), 0)).getUTCDate();
-  const lead = (dowOf(first) + 6) % 7;
+  const lead = (weekdayOf(first) + 6) % 7;
   const lo = from && to ? (from < to ? from : to) : from;
   const hi = from && to ? (from < to ? to : from) : from;
   const move = (k: number) => setYm(new Date(Date.UTC(Number(ym.slice(0, 4)), Number(ym.slice(5)) - 1 + k, 1)).toISOString().slice(0, 7));
@@ -27,7 +27,7 @@ function RangePicker({ from, to, onPick, today, holidays, weeklyOffs }: { from: 
     <div className="drp">
       <div className="drp-h">
         <button className="icon-btn" type="button" onClick={() => move(-1)} aria-label={t("Previous month")} disabled={ym <= today.slice(0, 7)}><Icon n="chevL" /></button>
-        <b>{t(MONTHS[Number(ym.slice(5)) - 1])} {ym.slice(0, 4)}</b>
+        <b>{t(MONTH_NAMES[Number(ym.slice(5)) - 1])} {ym.slice(0, 4)}</b>
         <button className="icon-btn" type="button" onClick={() => move(1)} aria-label={t("Next month")}><Icon n="chevR" /></button>
       </div>
       <div className="drp-g">
@@ -35,12 +35,12 @@ function RangePicker({ from, to, onPick, today, holidays, weeklyOffs }: { from: 
         {Array.from({ length: lead }, (_, i) => <span className="blank" key={`b${i}`}></span>)}
         {Array.from({ length: n }, (_, i) => {
           const k = addDays(first, i);
-          const wk = weeklyOffs.includes(dowOf(k));
+          const wk = weeklyOffs.includes(weekdayOf(k));
           const hol = holidays[k];
           const dis = k < today || wk || !!hol;
           const cls = [hol && "hol", k === today && "td", k === lo && "s", k === hi && "e", lo && hi && k > lo && k < hi && "in"].filter(Boolean).join(" ");
           return (
-            <button key={k} type="button" className={cls || undefined} disabled={dis} title={hol || (wk ? t("Weekend") : undefined)} aria-label={`${fmtDL(k)}${hol ? `, ${hol}` : ""}`}
+            <button key={k} type="button" className={cls || undefined} disabled={dis} title={hol || (wk ? t("Weekend") : undefined)} aria-label={`${formatWeekdayDayMonthYear(k)}${hol ? `, ${hol}` : ""}`}
               aria-pressed={k === lo || k === hi}
               onClick={() => { if (!picking || !from) { onPick(k, k); setPicking(true); } else { onPick(from, k); setPicking(false); } }}>
               {i + 1}
@@ -55,7 +55,7 @@ function RangePicker({ from, to, onPick, today, holidays, weeklyOffs }: { from: 
   );
 }
 
-export function ApplyLeave({ types, today, holidays, weeklyOffs, onClose }: { types: TypeOpt[]; today: string; holidays: Record<string, string>; weeklyOffs: number[]; onClose: () => void }) {
+export function ApplyLeave({ types, today, holidays, weeklyOffs, onClose }: { types: LeaveTypeOption[]; today: string; holidays: Record<string, string>; weeklyOffs: number[]; onClose: () => void }) {
   const toast = useToast();
   const t = useT();
   const [type, setType] = useState((types.find((x) => x.code === "CL" && !x.lockedReason) ?? types.find((x) => !x.lockedReason) ?? types[0]).code);
@@ -118,8 +118,8 @@ export function ApplyLeave({ types, today, holidays, weeklyOffs, onClose }: { ty
         </div>
         <div className="col" style={{ gap: 18 }}>
           <div className="grid2">
-            <div className="field">{t("Start date")}<input readOnly value={lo ? fmtDL(lo) : t("Pick on calendar")} aria-label={t("Start date")} /></div>
-            <div className="field">{t("End date")}<input readOnly value={hi ? fmtDL(hi) : "—"} aria-label={t("End date")} /></div>
+            <div className="field">{t("Start date")}<input readOnly value={lo ? formatWeekdayDayMonthYear(lo) : t("Pick on calendar")} aria-label={t("Start date")} /></div>
+            <div className="field">{t("End date")}<input readOnly value={hi ? formatWeekdayDayMonthYear(hi) : "—"} aria-label={t("End date")} /></div>
           </div>
           {single && (
             <div className="field">{t("Duration")}
@@ -136,7 +136,7 @@ export function ApplyLeave({ types, today, holidays, weeklyOffs, onClose }: { ty
             <div><small>{t("Balance after")}</small><b>{pv?.balanceAfter ?? "—"}</b></div>
             <div><small>{t("Loss of pay")}</small><b style={{ color: pv?.lopDays ? "var(--bad)" : "var(--ok)" }}>{pv?.lopDays ? t("{n} d", { n: pv.lopDays }) : t("None")}</b></div>
           </div>
-          {pv && pv.skipped.length > 0 && <p className="faint" style={{ margin: 0, fontSize: 12.5 }}>{t("Holidays skipped: {list}. Weekends are never counted.", { list: pv.skipped.map((s) => `${s.name} (${fmtD(s.date)})`).join(", ") })}</p>}
+          {pv && pv.skipped.length > 0 && <p className="faint" style={{ margin: 0, fontSize: 12.5 }}>{t("Holidays skipped: {list}. Weekends are never counted.", { list: pv.skipped.map((s) => `${s.name} (${formatDayMonth(s.date)})`).join(", ") })}</p>}
           {pv && pv.lopDays > 0 && type !== "LOP" && <p style={{ margin: 0, fontSize: 13, color: "var(--warn)", fontWeight: 600 }}>{t("You don't have enough {type} — {n} day(s) will be unpaid.", { type: t(tName).toLowerCase(), n: pv.lopDays })}</p>}
           {pv?.error && <p className="err" style={{ margin: 0 }}>{pv.error}</p>}
           {tried && !lo && <p className="err" style={{ margin: 0 }}>{t("Pick your dates on the calendar.")}</p>}

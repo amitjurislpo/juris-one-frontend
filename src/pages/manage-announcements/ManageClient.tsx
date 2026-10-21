@@ -6,7 +6,7 @@ import { useToast } from "@/components/shell/Toasts";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
 import type { Announcement } from "@/lib/api-types";
 import { AUDIENCES } from "@/lib/assets";
-import { fmtDY } from "@/lib/format";
+import { formatDayMonthYear } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import { useReadOnly } from "@/lib/session";
 import { createAnnouncement, setAnnouncementStatus, updateAnnouncement, type AnnouncementInput } from "./actions";
@@ -91,8 +91,8 @@ export function ManageTable({ rows }: { rows: Announcement[] }) {
                   <td><b>{a.title}</b>{a.pinned && <span className="chip gold nodot" style={{ marginLeft: 8 }}>{t("Pinned")}</span>}<br /><small className="muted">{a.body.length > 80 ? `${a.body.slice(0, 80)}…` : a.body}</small></td>
                   <td><span className={`chip ${state(a).cls}`}>{t(state(a).text)}</span></td>
                   <td>{t(AUDIENCES[a.audience])}</td>
-                  <td className="muted hide-sm">{fmtDY(a.createdAt.slice(0, 10))}</td>
-                  <td className="muted hide-sm">{a.expiresOn ? fmtDY(a.expiresOn) : "—"}</td>
+                  <td className="muted hide-sm">{formatDayMonthYear(a.createdAt.slice(0, 10))}</td>
+                  <td className="muted hide-sm">{a.expiresOn ? formatDayMonthYear(a.expiresOn) : "—"}</td>
                   <td style={{ whiteSpace: "nowrap", textAlign: "right" }}>
                     {!readOnly && <><button className="btn btn-sm btn-ghost" aria-label={t("Edit {title}", { title: a.title })} onClick={() => setEdit(a)}><Icon n="edit" s={14} /></button>
                     {a.status === "PUBLISHED"

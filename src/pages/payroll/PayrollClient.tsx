@@ -2,12 +2,12 @@
 import { useState, useSyncExternalStore, useTransition } from "react";
 import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
-import { SortTh } from "@/components/table/Table";
+import { SortableHeader } from "@/components/table/Table";
 import { useQuery } from "@/components/table/useQuery";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
 import { useT } from "@/lib/i18n/client";
 import { useReadOnly } from "@/lib/session";
-import { inr, ymLabel } from "@/lib/format";
+import { formatRupees, formatMonthLabel } from "@/lib/format";
 import type { PayView } from "@/lib/api-types";
 import { approveAndClose, resetAdjustment, saveAdjustment } from "./actions";
 import { Avatar } from "@/components/Avatar";
@@ -27,7 +27,7 @@ export function MonthSeg({ months, value }: { months: string[]; value: string })
   const t = useT();
   return (
     <div className="seg" role="group" aria-label={t("Payroll month")}>
-      {months.map((x) => <button key={x} type="button" className={value === x ? "on" : undefined} aria-pressed={value === x} onClick={() => set({ m: x })}>{ymLabel(x).slice(0, 3)} {x.slice(2, 4)}</button>)}
+      {months.map((x) => <button key={x} type="button" className={value === x ? "on" : undefined} aria-pressed={value === x} onClick={() => set({ month: x })}>{formatMonthLabel(x).slice(0, 3)} {x.slice(2, 4)}</button>)}
     </div>
   );
 }
@@ -35,7 +35,7 @@ export function MonthSeg({ months, value }: { months: string[]; value: string })
 export function PayrollKpis({ tot }: { tot: { n: number; earned: number; lop: number; tds: number; net: number } }) {
   const t = useT();
   const [hidden, setHidden] = useHidden();
-  const m = (v: number) => (hidden ? MASK : inr(v));
+  const m = (v: number) => (hidden ? MASK : formatRupees(v));
   return (
     <>
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: -8 }}>
@@ -65,9 +65,9 @@ export function CloseButton({ month, closed, locked, count }: { month: string; c
     <>
       <button className="btn btn-gold" disabled={!locked || busy} title={locked ? undefined : t("Attendance isn't locked yet")} onClick={() => setAsk(true)}>{busy ? t("Closing…") : t("Approve & close")}</button>
       {ask && (
-        <ConfirmDialog title={t("Close {month} payroll", { month: ymLabel(month) })} confirm={t("Approve & close")} busy={busy} onClose={() => setAsk(false)}
+        <ConfirmDialog title={t("Close {month} payroll", { month: formatMonthLabel(month) })} confirm={t("Approve & close")} busy={busy} onClose={() => setAsk(false)}
           body={<>{t("This publishes {count} payslips and freezes them. Later changes to salary, regime or attendance won't change them — corrections go into the next month as arrears.", { count })}</>}
-          onConfirm={() => start(async () => { const r = await approveAndClose(month); toast(r.ok ? r.msg! : r.error, r.ok ? "ok" : "bad"); setAsk(false); if (r.ok) set({ m: month }) /* stay on the month just closed */; })} />
+          onConfirm={() => start(async () => { const r = await approveAndClose(month); toast(r.ok ? r.msg! : r.error, r.ok ? "ok" : "bad"); setAsk(false); if (r.ok) set({ month }) /* stay on the month just closed */; })} />
       )}
     </>
   );
@@ -78,22 +78,22 @@ export function PayrollTable({ rows, month, closed }: { rows: PayView[]; month: 
   const readOnly = useReadOnly();
   const [hidden] = useHidden();
   const [editing, setEditing] = useState<PayView | null>(null);
-  const m = (v: number) => (hidden ? "••••" : inr(v));
+  const m = (v: number) => (hidden ? "••••" : formatRupees(v));
   return (
     <>
       <div className="table-wrap">
         <table className="t">
           <thead>
             <tr>
-              <SortTh k="name" dflt="name">{t("Employee")}</SortTh>
-              <SortTh k="gross" dflt="name" right>{t("Monthly gross")}</SortTh>
-              <SortTh k="lop" dflt="name" right>{t("LOP")}</SortTh>
-              <SortTh k="paid" dflt="name" right>{t("Paid days")}</SortTh>
+              <SortableHeader k="name" dflt="name">{t("Employee")}</SortableHeader>
+              <SortableHeader k="gross" dflt="name" right>{t("Monthly gross")}</SortableHeader>
+              <SortableHeader k="lop" dflt="name" right>{t("LOP")}</SortableHeader>
+              <SortableHeader k="paid" dflt="name" right>{t("Paid days")}</SortableHeader>
               <th className="r">{t("Bonus")}</th>
-              <SortTh k="earned" dflt="name" right>{t("Earned")}</SortTh>
+              <SortableHeader k="earned" dflt="name" right>{t("Earned")}</SortableHeader>
               <th className="r">{t("PF + PT")}</th>
-              <SortTh k="tds" dflt="name" right>{t("TDS")}</SortTh>
-              <SortTh k="net" dflt="name" right>{t("Net pay")}</SortTh>
+              <SortableHeader k="tds" dflt="name" right>{t("TDS")}</SortableHeader>
+              <SortableHeader k="net" dflt="name" right>{t("Net pay")}</SortableHeader>
               <th><span className="sr-only">{t("Actions")}</span></th>
             </tr>
           </thead>
@@ -133,7 +133,7 @@ function EditPay({ row, month, onClose }: { row: PayView; month: string; onClose
     if (r.ok) { toast(r.msg!); onClose(); } else setErr(r.error);
   });
   return (
-    <Modal title={t("Edit payroll · {name}", { name: row.name })} eyebrow={`${row.code} · ${ymLabel(month)}`} size="sm" onClose={onClose}
+    <Modal title={t("Edit payroll · {name}", { name: row.name })} eyebrow={`${row.code} · ${formatMonthLabel(month)}`} size="sm" onClose={onClose}
       footer={<>
         {row.edited ? <button className="btn btn-ghost" disabled={busy} onClick={() => start(async () => { const r = await resetAdjustment(month, row.employeeId); toast(r.ok ? r.msg! : r.error); onClose(); })}>{t("Reset to attendance")}</button> : <span></span>}
         <div className="row" style={{ gap: 10 }}><button className="btn btn-ghost" onClick={onClose}>{t("Cancel")}</button><button className="btn btn-gold" disabled={busy} onClick={save}>{t("Save changes")}</button></div>
@@ -145,7 +145,7 @@ function EditPay({ row, month, onClose }: { row: PayView; month: string; onClose
           <label className="field">{t("Other deduction (₹)")}<input type="number" min={0} step={1} value={f.other} onChange={(e) => setF({ ...f, other: e.target.value })} /></label>
         </div>
         <label className="field">{t("Note")} <span className="hint">{t("shown on the payroll register and payslip")}</span><input value={f.note} maxLength={200} onChange={(e) => setF({ ...f, note: e.target.value })} placeholder={t("e.g. Diwali bonus, laptop recovery")} /></label>
-        <p className="faint" style={{ margin: 0, fontSize: 12.5 }}>{t("Monthly rates come from the salary structure ({gross} gross). To change them permanently, revise the structure.", { gross: inr(row.monthlyGross) })}</p>
+        <p className="faint" style={{ margin: 0, fontSize: 12.5 }}>{t("Monthly rates come from the salary structure ({gross} gross). To change them permanently, revise the structure.", { gross: formatRupees(row.monthlyGross) })}</p>
         {err && <p className="err" role="alert" style={{ margin: 0 }}>{err}</p>}
       </div>
     </Modal>

@@ -37,8 +37,8 @@ export async function addOwner(id: string, i: OwnerInput): Promise<ActionResult<
   return apiAction("POST", `/api/platform/businesses/${enc(id)}/owners`, i, [...PAGES, `/platform/${id}`]);
 }
 
-export async function setOwnerAccess(id: string, ownerId: string, on: boolean): Promise<ActionResult> {
-  return apiAction("PUT", `/api/platform/businesses/${enc(id)}/owners/${enc(ownerId)}/access`, { on }, [`/platform/${id}`]);
+export async function setOwnerAccess(id: string, ownerId: string, enabled: boolean): Promise<ActionResult> {
+  return apiAction("PUT", `/api/platform/businesses/${enc(id)}/owners/${enc(ownerId)}/access`, { enabled }, [`/platform/${id}`]);
 }
 
 export async function addSubscription(id: string, i: SubscriptionInput): Promise<ActionResult<{ id: string }>> {
@@ -92,5 +92,5 @@ export async function removeBusinessRole(businessId: string, roleId: string): Pr
 }
 
 export async function syncBusinessRole(businessId: string, roleId: string): Promise<ActionResult> {
-  return apiAction("POST", `/api/platform/businesses/${enc(businessId)}/roles/${enc(roleId)}/sync`, undefined, [`/platform/${businessId}`]);
+  return apiAction("POST", `/api/platform/businesses/${enc(businessId)}/roles/${enc(roleId)}/template-syncs`, undefined, [`/platform/${businessId}`]);
 }

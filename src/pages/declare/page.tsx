@@ -3,39 +3,39 @@ import { PageLoading, useData, usePage } from "@/lib/page";
 import { DeclareClient, type ItemView } from "./DeclareClient";
 
 
-type Declare =
-  | { fy: string; india: false }
-  | { fy: string; india: true; hasStructure: false }
+type DeclarationData =
+  | { financialYear: string; india: false }
+  | { financialYear: string; india: true; hasStructure: false }
   | {
-      fy: string; india: true; hasStructure: true; regime: "NEW" | "OLD"; overridden: boolean; canChangeRegime: boolean; windowOpen: boolean; windowText: string;
+      financialYear: string; india: true; hasStructure: true; regime: "NEW" | "OLD"; overridden: boolean; canChangeRegime: boolean; windowOpen: boolean; windowText: string;
       newTax: number; oldTax: number; monthlyTds: number; epf: number; profile: { metro: boolean; parentsSenior: boolean; landlordPan: string }; items: ItemView[];
     };
 
 export default function DeclarePage() {
   const { t } = usePage();
-  const d = useData<Declare>("/api/declarations");
-  if (!d) return <PageLoading />;
-  if (!d.india) {
-    return <div className="col"><PageHeader eyebrow={t("Tax year {fy}", { fy: d.fy })} title={t("Tax")} em={t("declarations")} /><div className="empty"><b className="display">{t("Not applicable")}</b><span className="muted">{t("Tax declarations are for the India payroll. US team taxes are handled by the US payroll provider.")}</span></div></div>;
+  const data = useData<DeclarationData>("/api/declarations");
+  if (!data) return <PageLoading />;
+  if (!data.india) {
+    return <div className="col"><PageHeader eyebrow={t("Tax year {fy}", { fy: data.financialYear })} title={t("Tax")} em={t("declarations")} /><div className="empty"><b className="display">{t("Not applicable")}</b><span className="muted">{t("Tax declarations are for the India payroll. US team taxes are handled by the US payroll provider.")}</span></div></div>;
   }
-  if (!d.hasStructure) {
-    return <div className="col"><PageHeader eyebrow={t("Tax year {fy}", { fy: d.fy })} title={t("Tax")} em={t("declarations")} /><div className="empty"><b className="display">{t("No salary structure yet")}</b><span className="muted">{t("Finance hasn't set up your salary structure yet — tax estimates appear once it's in place.")}</span></div></div>;
+  if (!data.hasStructure) {
+    return <div className="col"><PageHeader eyebrow={t("Tax year {fy}", { fy: data.financialYear })} title={t("Tax")} em={t("declarations")} /><div className="empty"><b className="display">{t("No salary structure yet")}</b><span className="muted">{t("Finance hasn't set up your salary structure yet — tax estimates appear once it's in place.")}</span></div></div>;
   }
   return (
     <div className="col">
-      <PageHeader eyebrow={t("Tax year {fy}", { fy: d.fy })} title={t("Tax")} em={t("declarations")} sub={t("Choose your tax regime. On the old regime, declare investments and upload proofs — Finance verifies them before they reduce your TDS.")} />
+      <PageHeader eyebrow={t("Tax year {fy}", { fy: data.financialYear })} title={t("Tax")} em={t("declarations")} sub={t("Choose your tax regime. On the old regime, declare investments and upload proofs — Finance verifies them before they reduce your TDS.")} />
       <DeclareClient
-        regime={d.regime}
-        overridden={d.overridden}
-        canChangeRegime={d.canChangeRegime}
-        windowOpen={d.windowOpen}
-        windowText={d.windowText}
-        newTax={d.newTax}
-        oldTax={d.oldTax}
-        monthlyTds={d.monthlyTds}
-        epf={d.epf}
-        profile={d.profile}
-        items={d.items}
+        regime={data.regime}
+        overridden={data.overridden}
+        canChangeRegime={data.canChangeRegime}
+        windowOpen={data.windowOpen}
+        windowText={data.windowText}
+        newTax={data.newTax}
+        oldTax={data.oldTax}
+        monthlyTds={data.monthlyTds}
+        epf={data.epf}
+        profile={data.profile}
+        items={data.items}
       />
     </div>
   );

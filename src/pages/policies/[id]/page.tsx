@@ -2,13 +2,13 @@ import Link from "@/lib/link";
 import { PageHeader } from "@/components/PageHeader";
 import type { PolicyDetail } from "@/lib/api-types";
 import { PageLoading, useData, usePage } from "@/lib/page";
-import { fmtDateTime, fmtDY } from "@/lib/format";
+import { formatDateTime, formatDayMonthYear } from "@/lib/format";
 import { PolicyActions, PolicyEditor } from "../PoliciesClient";
 
 
 /** One policy: edit the draft, publish / archive, versions, and who has accepted the current version. */
 export default function PolicyPage() {
-  const { u, t, params } = usePage();
+  const { user, t, params } = usePage();
   const { id } = params;
   const p = useData<PolicyDetail>(`/api/policies/${encodeURIComponent(id)}`);
   if (!p) return <PageLoading />;
@@ -37,7 +37,7 @@ export default function PolicyPage() {
                   <tr key={x.code}>
                     <td><b>{x.name}</b> <span className="muted mono" style={{ fontSize: 12 }}>{x.code}</span></td>
                     <td className="muted hide-sm">{x.department ?? "—"}</td>
-                    <td>{x.acknowledgedAt ? <span className="chip ok">{fmtDateTime(new Date(x.acknowledgedAt), u.timeZone)}</span>
+                    <td>{x.acknowledgedAt ? <span className="chip ok">{formatDateTime(new Date(x.acknowledgedAt), user.timeZone)}</span>
                       : <span className="chip warn">{t("Not yet")}{x.lastVersion ? ` ${t("(accepted v{v})", { v: x.lastVersion })}` : ""}</span>}</td>
                   </tr>
                 ))}
@@ -57,7 +57,7 @@ export default function PolicyPage() {
                 {p.versions.map((v) => (
                   <tr key={v.versionId}>
                     <td><b>v{v.version}</b> <span className="muted">{v.title !== p.title ? v.title : ""}</span></td>
-                    <td>{fmtDY(v.publishedAt.slice(0, 10))}</td>
+                    <td>{formatDayMonthYear(v.publishedAt.slice(0, 10))}</td>
                     <td className="muted hide-sm">{v.publishedBy ?? "—"}</td>
                     <td className="r num">{v.requiresAck ? v.acknowledgements : "—"}</td>
                     <td className="mono muted hide-sm" style={{ fontSize: 11.5 }} title={v.bodySha256}>{v.bodySha256.slice(0, 16)}…</td>

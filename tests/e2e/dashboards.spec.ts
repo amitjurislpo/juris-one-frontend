@@ -55,14 +55,14 @@ test.describe("audit log", () => {
     await page.goto("/audit");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Audit");
     await page.getByLabel("Event").selectOption("auth");
-    await expect(page).toHaveURL(/ev=auth/);
+    await expect(page).toHaveURL(/eventGroup=auth/);
     const rows = page.locator("table.t tbody tr");
     await expect(rows.first()).toContainText("Auth · login");
     // the rows follow the URL a moment later (the page refetches): poll until every row is an auth event
     await expect.poll(async () => (await rows.allTextContents()).every((t) => /Auth ·/.test(t))).toBe(true);
 
     await page.getByLabel("Event").selectOption("people");
-    await expect(page).toHaveURL(/ev=people/);
+    await expect(page).toHaveURL(/eventGroup=people/);
     await page.getByLabel("Period").selectOption("All");
     await expect(rows.first()).toContainText("Employee ·");
     await rows.first().click();

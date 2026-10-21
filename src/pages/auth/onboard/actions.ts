@@ -12,13 +12,13 @@ export interface CandidateForm {
 }
 
 export async function saveCandidateForm(token: string, form: CandidateForm): Promise<ActionResult> {
-  return apiAction("PUT", `/api/onboarding/${enc(token)}`, form, [`/onboard/${token}`]);
+  return apiAction("PUT", `/api/public/onboardings/${enc(token)}`, form, [`/onboard/${token}`]);
 }
 
 export async function removeCandidateDocument(token: string, docId: string): Promise<ActionResult> {
-  return apiAction("DELETE", `/api/onboarding/${enc(token)}/documents/${enc(docId)}`, undefined, [`/onboard/${token}`]);
+  return apiAction("DELETE", `/api/public/onboardings/${enc(token)}/documents/${enc(docId)}`, undefined, [`/onboard/${token}`]);
 }
 
 export async function submitOnboarding(token: string): Promise<ActionResult> {
-  return apiAction("POST", `/api/onboarding/${enc(token)}/submission`, {}, [`/onboard/${token}`]);
+  return apiAction("POST", `/api/public/onboardings/${enc(token)}/submission`, {}, [`/onboard/${token}`]);
 }

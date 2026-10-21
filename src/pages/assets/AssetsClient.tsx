@@ -6,7 +6,7 @@ import { useToast } from "@/components/shell/Toasts";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
 import type { AssetAssignment, AssetRow } from "@/lib/api-types";
 import { ASSET_STATUS, ASSET_TYPES, CONDITIONS } from "@/lib/assets";
-import { fmtDY } from "@/lib/format";
+import { formatDayMonthYear } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import { useReadOnly } from "@/lib/session";
 import { assignAsset, createAsset, deleteAsset, returnAsset, updateAsset, type AssetInput } from "./actions";
@@ -140,8 +140,8 @@ function HistoryDialog({ asset, onClose }: { asset: AssetRow; onClose: () => voi
               {rows.map((h) => (
                 <tr key={h.id}>
                   <td><b>{h.employeeName}</b><br /><small className="muted">{h.employeeCode}</small></td>
-                  <td>{fmtDY(h.assignedOn)}{h.assignNotes && <><br /><small className="muted">{h.assignNotes}</small></>}</td>
-                  <td>{h.returnedOn ? fmtDY(h.returnedOn) : <span className="chip info">{t("Holding now")}</span>}</td>
+                  <td>{formatDayMonthYear(h.assignedOn)}{h.assignNotes && <><br /><small className="muted">{h.assignNotes}</small></>}</td>
+                  <td>{h.returnedOn ? formatDayMonthYear(h.returnedOn) : <span className="chip info">{t("Holding now")}</span>}</td>
                   <td>{h.returnCondition ? t(CONDITIONS[h.returnCondition]).split(" ")[0] : "—"}{h.returnNotes && <><br /><small className="muted">{h.returnNotes}</small></>}</td>
                 </tr>
               ))}
@@ -189,9 +189,9 @@ export function AssetsTable({ rows, people, today }: { rows: AssetRow[]; people:
                     <div><b>{[r.make, r.model].filter(Boolean).join(" ") || t(ASSET_TYPES[r.type])}</b><small>{ASSET_TYPES[r.type] ? t(ASSET_TYPES[r.type]) : r.type}</small></div></div></td>
                   <td className="num">{r.tag}</td>
                   <td><span className={`chip ${ASSET_STATUS[r.status].cls}`}>{t(ASSET_STATUS[r.status].text)}</span></td>
-                  <td>{r.holderName ? <><b>{r.holderName}</b><br /><small className="muted">{t("since {date}", { date: fmtDY(r.heldSince!) })}</small></> : <span className="muted">—</span>}</td>
+                  <td>{r.holderName ? <><b>{r.holderName}</b><br /><small className="muted">{t("since {date}", { date: formatDayMonthYear(r.heldSince!) })}</small></> : <span className="muted">—</span>}</td>
                   <td className="muted hide-sm">{r.serial ?? "—"}</td>
-                  <td className="muted hide-sm">{r.purchaseDate ? fmtDY(r.purchaseDate) : "—"}</td>
+                  <td className="muted hide-sm">{r.purchaseDate ? formatDayMonthYear(r.purchaseDate) : "—"}</td>
                   <td style={{ whiteSpace: "nowrap", textAlign: "right" }}>
                     {!readOnly && r.status === "AVAILABLE" && <button className="btn btn-sm btn-gold" onClick={() => setDlg({ kind: "assign", asset: r })}>{t("Assign")}</button>}
                     {!readOnly && r.status === "ASSIGNED" && <button className="btn btn-sm" onClick={() => setDlg({ kind: "return", asset: r })}>{t("Take back")}</button>}

@@ -2,9 +2,9 @@
  * Formatting + calendar-date helpers shared by server and client.
  * Calendar dates travel as ISO strings ("2026-10-06"); `@db.Date` columns are UTC-midnight Dates.
  */
-export const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-export const MON3 = MONTHS.map((m) => m.slice(0, 3));
-export const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+export const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+export const MONTH_ABBREVIATIONS = MONTH_NAMES.map((m) => m.slice(0, 3));
+export const WEEKDAY_ABBREVIATIONS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -26,17 +26,17 @@ const parts = (s: string) => {
   return { y, m, d, dow: new Date(Date.UTC(y, m - 1, d)).getUTCDay() };
 };
 
-export const fmtD = (s: string) => { const p = parts(s); return `${p.d} ${MON3[p.m - 1]}`; };
-export const fmtDY = (s: string) => { const p = parts(s); return `${p.d} ${MON3[p.m - 1]} ${p.y}`; };
-export const fmtDL = (s: string) => { const p = parts(s); return `${DOW[p.dow]}, ${p.d} ${MON3[p.m - 1]} ${p.y}`; };
-export const ymLabel = (ym: string) => { const [y, m] = ym.split("-").map(Number); return `${MONTHS[m - 1]} ${y}`; };
+export const formatDayMonth = (s: string) => { const p = parts(s); return `${p.d} ${MONTH_ABBREVIATIONS[p.m - 1]}`; };
+export const formatDayMonthYear = (s: string) => { const p = parts(s); return `${p.d} ${MONTH_ABBREVIATIONS[p.m - 1]} ${p.y}`; };
+export const formatWeekdayDayMonthYear = (s: string) => { const p = parts(s); return `${WEEKDAY_ABBREVIATIONS[p.dow]}, ${p.d} ${MONTH_ABBREVIATIONS[p.m - 1]} ${p.y}`; };
+export const formatMonthLabel = (ym: string) => { const [y, m] = ym.split("-").map(Number); return `${MONTH_NAMES[m - 1]} ${y}`; };
 
-export function fmtDateTime(at: Date, timeZone: string) {
+export function formatDateTime(at: Date, timeZone: string) {
   return new Intl.DateTimeFormat("en-GB", { timeZone, day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true }).format(at);
 }
 
 /** "21 Oct 2026, 8:15:42 pm" (seconds always shown) and the same with milliseconds for tooltips. */
-export function fmtDateTimeSec(at: Date, timeZone: string, millis = false) {
+export function formatDateTimeSeconds(at: Date, timeZone: string, millis = false) {
   const s = new Intl.DateTimeFormat("en-GB", { timeZone, day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true }).format(at);
   return millis ? s.replace(/(\d{2}) ?([ap]m)$/i, (_m, sec: string, ap: string) => `${sec}.${String(at.getMilliseconds()).padStart(3, "0")} ${ap}`) : s;
 }
@@ -47,12 +47,12 @@ export function daysBetween(a: string, b: string) {
 }
 
 /** Paise → "₹1,23,456" (Indian grouping). */
-export const inr = (paise: number | bigint | null | undefined) =>
+export const formatRupees = (paise: number | bigint | null | undefined) =>
   "₹" + Math.round(Number(paise ?? 0) / 100).toLocaleString("en-IN");
 
-export const fmtH = (h: number) => `${Math.floor(h)}h ${pad(Math.round((h % 1) * 60))}m`;
+export const formatHours = (h: number) => `${Math.floor(h)}h ${pad(Math.round((h % 1) * 60))}m`;
 
 export const initials = (n: string) => n.split(/\s+/).filter(Boolean).map((x) => x[0]).slice(0, 2).join("").toUpperCase();
 
 const AVC = ["c0", "c1", "c2", "c3", "c4"];
-export const avc = (s: string) => { let h = 0; for (const ch of s) h = (h * 31 + ch.charCodeAt(0)) % 997; return AVC[h % 5]; };
+export const avatarColorClass = (s: string) => { let h = 0; for (const ch of s) h = (h * 31 + ch.charCodeAt(0)) % 997; return AVC[h % 5]; };

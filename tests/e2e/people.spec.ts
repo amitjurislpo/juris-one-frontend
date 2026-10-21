@@ -92,7 +92,7 @@ test.describe("people operations", () => {
   test("a manager with direct reports can't be exited until they're reassigned", async ({ page }) => {
     await login(page, "JC-012");
     await expectLanded(page, "/home");
-    await page.goto("/employees?q=Nazneen");
+    await page.goto("/employees?search=Nazneen");
     await page.getByRole("button", { name: "Nazneen Khan" }).click();
     await page.getByRole("button", { name: "Mark as past employee" }).click();
     await page.getByRole("button", { name: "Mark as exited" }).click();
@@ -102,7 +102,7 @@ test.describe("people operations", () => {
   test("access toggle: HR disables an employee; the owner (admin) isn't in the list at all", async ({ page }) => {
     await login(page, "JC-012");
     await expectLanded(page, "/home");
-    await page.goto("/employees?q=Naman");
+    await page.goto("/employees?search=Naman");
     await page.getByRole("switch", { name: /portal access for Naman Tyagi/ }).click();
     await expect(toast(page)).toContainText("Naman Tyagi can no longer sign in");
     const [row] = await sql<{ portal_access: boolean }>(`SELECT portal_access FROM employees WHERE code = 'JC-049'`);
@@ -110,10 +110,10 @@ test.describe("people operations", () => {
     const logged = await sql(`SELECT 1 FROM audit_log WHERE action = 'employee.access_toggle' AND entity_id = (SELECT id::text FROM employees WHERE code = 'JC-049')`);
     expect(logged.length).toBeGreaterThan(0);
 
-    await page.goto("/employees?q=Sana");
+    await page.goto("/employees?search=Sana");
     await expect(page.getByRole("button", { name: "Sana Kapoor" })).toHaveCount(0); // (she may still show as someone's manager)
     // nor is the signed-in person
-    await page.goto("/employees?q=JC-012");
+    await page.goto("/employees?search=JC-012");
     await expect(page.locator("tbody tr")).toHaveCount(0);
   });
 
@@ -126,7 +126,7 @@ test.describe("people operations", () => {
     await expect(page.getByRole("button", { name: "Vikas Rao" })).toBeVisible();
     await page.getByLabel("Status").selectOption("Current");
     await page.getByRole("button", { name: /^Employee/ }).click(); // sort by name (asc → desc)
-    await expect(page).toHaveURL(/sort=name&dir=desc/);
+    await expect(page).toHaveURL(/sort=name&sortDirection=desc/);
     // the rows re-sort a moment after the URL changes: poll until the first name sorts after "S"
     await expect.poll(async () => (await page.locator("tbody tr").first().locator(".person b").innerText()).localeCompare("S")).toBeGreaterThan(0);
   });
@@ -134,7 +134,7 @@ test.describe("people operations", () => {
   test("Finance Manager adds into Finance only, as Finance Executive, and sees salary", async ({ page }) => {
     await login(page, "JC-004");
     await expectLanded(page, "/home");
-    await page.goto("/employees?q=Amit");
+    await page.goto("/employees?search=Amit");
     await page.getByRole("button", { name: "Amit Jaspal" }).click();
     await expect(page.getByRole("dialog", { name: "Employee profile" }).getByText("₹1,50,000")).toBeVisible();
     await page.keyboard.press("Escape");

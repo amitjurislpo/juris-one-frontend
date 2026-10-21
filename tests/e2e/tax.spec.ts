@@ -85,7 +85,7 @@ test.describe("tax & declarations", () => {
     const onNew = (await td.getByRole("button", { name: "New regime" }).getAttribute("aria-pressed")) === "true";
     await td.getByRole("button", { name: onNew ? "Old regime" : "New regime" }).click(); // override to the other regime
     await expect(toast(page)).toContainText("Regime set to");
-    await page.goto("/tax?q=Siddharth");
+    await page.goto("/tax?search=Siddharth");
     await expect(page.locator("tbody tr").first()).toContainText("set by Finance");
     const exp = await page.request.get("/api/tax/export");
     expect(exp.status()).toBe(200);
@@ -109,6 +109,6 @@ test.describe("tax & declarations", () => {
       await expectLanded(page, "/home");
     }
     expect((await page.request.get("/api/tax/export")).status()).toBe(403);
-    if (item) expect((await page.request.get(`/api/declarations/proof/${item.id}`)).status()).toBe(403);
+    if (item) expect((await page.request.get(`/api/declarations/proofs/${item.id}`)).status()).toBe(403);
   });
 });

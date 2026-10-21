@@ -3,19 +3,19 @@ import { useRef, useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
 import { ConfirmDialog } from "@/components/ui/Modal";
-import { addDays, dowOf } from "@/lib/attendance/engine";
-import { MONTHS } from "@/lib/format";
+import { addDays, weekdayOf } from "@/lib/attendance/engine";
+import { MONTH_NAMES } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import { useReadOnly } from "@/lib/session";
 import { addHoliday, deleteHoliday } from "./actions";
 
 type Region = "IN" | "US" | "ALL";
-interface H { k: string; n: string; region: Region }
+interface HolidayEntry { date: string; name: string; region: Region }
 const RCLS: Record<Region, string> = { IN: "r-India", US: "r-US", ALL: "r-All" };
 const RNAME: Record<Region, string> = { IN: "India", US: "US", ALL: "Everyone" };
 
 /** Month calendar (tap a date to pre-fill) + add form — prototype tpl-holidays. */
-export function HolidayPlanner({ holidays, today }: { holidays: H[]; today: string }) {
+export function HolidayPlanner({ holidays, today }: { holidays: HolidayEntry[]; today: string }) {
   const toast = useToast();
   const t = useT();
   const readOnly = useReadOnly();
@@ -29,7 +29,7 @@ export function HolidayPlanner({ holidays, today }: { holidays: H[]; today: stri
   const move = (n: number) => setYm(new Date(Date.UTC(Number(ym.slice(0, 4)), Number(ym.slice(5)) - 1 + n, 1)).toISOString().slice(0, 7));
   const first = `${ym}-01`;
   const n = new Date(Date.UTC(Number(ym.slice(0, 4)), Number(ym.slice(5)), 0)).getUTCDate();
-  const lead = (dowOf(first) + 6) % 7;
+  const lead = (weekdayOf(first) + 6) % 7;
 
   const add = () => {
     setTried(true);
@@ -47,7 +47,7 @@ export function HolidayPlanner({ holidays, today }: { holidays: H[]; today: stri
       <section className="card pad enter" style={{ ["--i" as string]: 1, flex: "1 1 380px", minWidth: 0 }}>
         <span className="spot"></span>
         <div className="card-h">
-          <h3>{t(MONTHS[Number(ym.slice(5)) - 1])} {ym.slice(0, 4)}</h3>
+          <h3>{t(MONTH_NAMES[Number(ym.slice(5)) - 1])} {ym.slice(0, 4)}</h3>
           <div className="row" style={{ gap: 6 }}>
             <button className="icon-btn" onClick={() => move(-1)} aria-label={t("Previous month")}><Icon n="chevL" s={16} /></button>
             <button className="icon-btn" onClick={() => move(1)} aria-label={t("Next month")}><Icon n="chevR" s={16} /></button>
@@ -58,14 +58,14 @@ export function HolidayPlanner({ holidays, today }: { holidays: H[]; today: stri
           {Array.from({ length: lead }, (_, i) => <span key={`b${i}`}></span>)}
           {Array.from({ length: n }, (_, i) => {
             const k = addDays(first, i);
-            const hs = holidays.filter((h) => h.k === k);
-            const wk = [0, 6].includes(dowOf(k));
+            const hs = holidays.filter((h) => h.date === k);
+            const wk = [0, 6].includes(weekdayOf(k));
             return (
               <button key={k} type="button" className={[wk && "wk", k === today && "today", hs.length && "has", f.date === k && "sel"].filter(Boolean).join(" ")}
-                title={hs.map((h) => `${h.n} (${t(RNAME[h.region])})`).join(", ") || (readOnly ? undefined : t("Add a holiday on this date"))}
+                title={hs.map((h) => `${h.name} (${t(RNAME[h.region])})`).join(", ") || (readOnly ? undefined : t("Add a holiday on this date"))}
                 onClick={() => { if (readOnly) return; setF({ ...f, date: k }); requestAnimationFrame(() => nameRef.current?.focus()); }}>
                 <b>{i + 1}</b>
-                {hs.map((h) => <small key={h.n + h.region} className={RCLS[h.region]}>{h.n}</small>)}
+                {hs.map((h) => <small key={h.name + h.region} className={RCLS[h.region]}>{h.name}</small>)}
               </button>
             );
           })}

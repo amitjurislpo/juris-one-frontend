@@ -7,9 +7,9 @@ import { PageLoading, useData, usePage } from "@/lib/page";
 
 /** Every notification of the signed-in user, unread first; 30 a page. */
 export default function NotificationsPage() {
-  const { u, t, sp } = usePage();
-  const unreadOnly = sp.filter === "unread";
-  const page = Math.max(1, Number(sp.page) || 1);
+  const { user, t, searchParams } = usePage();
+  const unreadOnly = searchParams.filter === "unread";
+  const page = Math.max(1, Number(searchParams.page) || 1);
   const box = useData<InboxPage>(`/api/notifications?page=${page}${unreadOnly ? "&unread=true" : ""}`);
   if (!box) return <PageLoading />;
   const href = (p: number, unread = unreadOnly) => `/notifications?${new URLSearchParams({ ...(unread ? { filter: "unread" } : {}), ...(p > 1 ? { page: String(p) } : {}) })}`;
@@ -27,7 +27,7 @@ export default function NotificationsPage() {
         <span className="tcount">{t(box.total === 1 ? "{n} notification" : "{n} notifications", { n: box.total })}</span>
       </div>
       <section className="card pad enter" style={{ ["--i" as string]: 2 }}>
-        <NotificationList items={box.items} timeZone={u.timeZone} empty={unreadOnly ? t("No unread notifications.") : t("No notifications yet.")} />
+        <NotificationList items={box.items} timeZone={user.timeZone} empty={unreadOnly ? t("No unread notifications.") : t("No notifications yet.")} />
         {box.pages > 1 && (
           <div className="pager">
             <span>{t("Page {a} of {b}", { a: box.page, b: box.pages })}</span>

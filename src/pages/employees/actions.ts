@@ -14,7 +14,7 @@ export interface Profile {
   photo?: number | null;
   code: string;
   name: string;
-  father: string;
+  fatherName: string;
   email: string;
   phone: string;
   address: string;
@@ -25,8 +25,8 @@ export interface Profile {
   department: string;
   manager: string;
   reports: string[];
-  doj: string;
-  exit: string | null;
+  dateOfJoining: string;
+  exitDate: string | null;
   location: string;
   india: boolean;
   shift: string;
@@ -51,16 +51,16 @@ export async function revealContact(id: string): Promise<ActionResult<{ phone: s
 
 // ───────────────────────── access & exit ─────────────────────────
 
-export async function toggleAccess(id: string, on: boolean): Promise<ActionResult> {
-  return apiAction("PUT", `/api/people/${enc(id)}/access`, { on }, PAGES);
+export async function toggleAccess(id: string, enabled: boolean): Promise<ActionResult> {
+  return apiAction("PUT", `/api/people/${enc(id)}/access`, { enabled }, PAGES);
 }
 
 export async function confirmEmployee(id: string): Promise<ActionResult> {
-  return apiAction("PUT", `/api/people/${enc(id)}/confirm`, undefined, PAGES);
+  return apiAction("PUT", `/api/people/${enc(id)}/status`, { status: "ACTIVE" }, PAGES);
 }
 
 export async function markExited(id: string, exitDate: string): Promise<ActionResult> {
-  return apiAction("PUT", `/api/people/${enc(id)}/exit`, { exitDate }, PAGES);
+  return apiAction("PUT", `/api/people/${enc(id)}/status`, { status: "EXITED", exitDate }, PAGES);
 }
 
 // HR / admin set or remove a person's photo (the same rules as editing that person)

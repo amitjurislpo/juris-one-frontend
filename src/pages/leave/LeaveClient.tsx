@@ -7,9 +7,9 @@ import { ConfirmDialog, Modal } from "@/components/ui/Modal";
 import { useT } from "@/lib/i18n/client";
 import { useReadOnly } from "@/lib/session";
 import { cancelLeave } from "./actions";
-import { ApplyLeave, type TypeOpt } from "./ApplyLeave";
+import { ApplyLeave, type LeaveTypeOption } from "./ApplyLeave";
 
-export function ApplyButton({ types, today, holidays, weeklyOffs, autoOpen }: { types: TypeOpt[]; today: string; holidays: Record<string, string>; weeklyOffs: number[]; autoOpen: boolean }) {
+export function ApplyButton({ types, today, holidays, weeklyOffs, autoOpen }: { types: LeaveTypeOption[]; today: string; holidays: Record<string, string>; weeklyOffs: number[]; autoOpen: boolean }) {
   const t = useT();
   const router = useRouter();
   const path = usePathname();

@@ -4,10 +4,10 @@ import { Icon } from "@/components/Icon";
 import { useT } from "@/lib/i18n/client";
 import { useQuery } from "./useQuery";
 
-/** Prototype `.tsearch` — debounced, writes ?q= */
+/** Prototype `.tsearch` — debounced, writes ?search= */
 export function SearchBox({ placeholder, label, big }: { placeholder: string; label: string; big?: boolean }) {
   const { get, set } = useQuery();
-  const urlQ = get("q");
+  const urlQ = get("search");
   const [v, setV] = useState(urlQ);
   const t = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   // keep the box in sync when the URL changes elsewhere (e.g. "Clear filters")
@@ -26,7 +26,7 @@ export function SearchBox({ placeholder, label, big }: { placeholder: string; la
           const val = e.target.value;
           setV(val);
           clearTimeout(t.current);
-          t.current = setTimeout(() => set({ q: val.trim() || null }), 250);
+          t.current = setTimeout(() => set({ search: val.trim() || null }), 250);
         }}
         placeholder={placeholder}
         aria-label={label}
@@ -37,27 +37,27 @@ export function SearchBox({ placeholder, label, big }: { placeholder: string; la
 }
 
 /** Prototype `.tsel` dropdown filter bound to ?<name>= */
-export function SelectFilter({ name, label, options, dflt }: { name: string; label: string; options: { v: string; l: string }[]; dflt: string }) {
+export function SelectFilter({ name, label, options, dflt }: { name: string; label: string; options: { value: string; label: string }[]; dflt: string }) {
   const { get, set } = useQuery();
   return (
     <label className="tsel">
       <span>{label}</span>
       <select value={get(name, dflt)} onChange={(e) => set({ [name]: e.target.value === dflt ? null : e.target.value })}>
-        {options.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
+        {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
     </label>
   );
 }
 
 /** Prototype `.seg` segmented filter bound to ?<name>= */
-export function SegFilter({ name, options, dflt, label }: { name: string; options: { v: string; l: string }[]; dflt: string; label: string }) {
+export function SegmentedFilter({ name, options, dflt, label }: { name: string; options: { value: string; label: string }[]; dflt: string; label: string }) {
   const { get, set } = useQuery();
   const cur = get(name, dflt);
   return (
     <div className="seg" role="group" aria-label={label}>
       {options.map((o) => (
-        <button key={o.v} type="button" className={cur === o.v ? "on" : undefined} aria-pressed={cur === o.v} onClick={() => set({ [name]: o.v === dflt ? null : o.v })}>
-          {o.l}
+        <button key={o.value} type="button" className={cur === o.value ? "on" : undefined} aria-pressed={cur === o.value} onClick={() => set({ [name]: o.value === dflt ? null : o.value })}>
+          {o.label}
         </button>
       ))}
     </div>
@@ -65,17 +65,17 @@ export function SegFilter({ name, options, dflt, label }: { name: string; option
 }
 
 /** Click-to-sort column header (↑ / ↓ / ↕). */
-export function SortTh({ k, children, right, dflt, dfltDir = "asc", className }: { k: string; children: React.ReactNode; right?: boolean; dflt: string; dfltDir?: "asc" | "desc"; className?: string }) {
+export function SortableHeader({ k, children, right, dflt, dfltDir = "asc", className }: { k: string; children: React.ReactNode; right?: boolean; dflt: string; dfltDir?: "asc" | "desc"; className?: string }) {
   const { get, set } = useQuery();
   const sort = get("sort", dflt);
-  const dir = get("dir", dfltDir);
+  const direction = get("sortDirection", dfltDir);
   const on = sort === k;
-  const next = on ? (dir === "asc" ? "desc" : "asc") : "asc";
+  const next = on ? (direction === "asc" ? "desc" : "asc") : "asc";
   return (
-    <th className={[right && "r", className].filter(Boolean).join(" ") || undefined} aria-sort={on ? (dir === "asc" ? "ascending" : "descending") : "none"}>
-      <button className="sh" type="button" onClick={() => set({ sort: k, dir: next })}>
+    <th className={[right && "r", className].filter(Boolean).join(" ") || undefined} aria-sort={on ? (direction === "asc" ? "ascending" : "descending") : "none"}>
+      <button className="sh" type="button" onClick={() => set({ sort: k, sortDirection: next })}>
         {children}
-        <i>{on ? (dir === "asc" ? "↑" : "↓") : "↕"}</i>
+        <i>{on ? (direction === "asc" ? "↑" : "↓") : "↕"}</i>
       </button>
     </th>
   );

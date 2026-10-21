@@ -2,11 +2,11 @@
 import { useEffect, useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
-import { ClearFilters, SortTh } from "@/components/table/Table";
+import { ClearFilters, SortableHeader } from "@/components/table/Table";
 import { ConfirmDialog, Drawer } from "@/components/ui/Modal";
 import { useT } from "@/lib/i18n/client";
 import { useReadOnly } from "@/lib/session";
-import { fmtDY, inr } from "@/lib/format";
+import { formatDayMonthYear, formatRupees } from "@/lib/format";
 import { EmployeeForm } from "./EmployeeForm";
 import { getProfile, confirmEmployee, markExited, revealContact, toggleAccess, type Profile } from "./actions";
 import { Avatar } from "@/components/Avatar";
@@ -17,14 +17,14 @@ export interface PersonRow {
   code: string;
   name: string;
   title: string;
-  dept: string;
+  department: string;
   manager: string;
-  loc: string;
+  location: string;
   india: boolean;
   role: string;
   status: string;
   access: boolean;
-  doj: string;
+  dateOfJoining: string;
   canToggle: boolean;
 }
 
@@ -65,13 +65,13 @@ export function PeopleTable({ rows }: { rows: PersonRow[] }) {
         <table className="t">
           <thead>
             <tr>
-              <SortTh k="name" dflt="name">{t("Employee")}</SortTh>
-              <SortTh k="dept" dflt="name">{t("Department")}</SortTh>
-              <SortTh k="manager" dflt="name">{t("Reports to")}</SortTh>
-              <SortTh k="loc" dflt="name">{t("Location")}</SortTh>
-              <SortTh k="role" dflt="name">{t("Role")}</SortTh>
-              <SortTh k="status" dflt="name">{t("Status")}</SortTh>
-              <SortTh k="access" dflt="name">{t("Portal access")}</SortTh>
+              <SortableHeader k="name" dflt="name">{t("Employee")}</SortableHeader>
+              <SortableHeader k="department" dflt="name">{t("Department")}</SortableHeader>
+              <SortableHeader k="manager" dflt="name">{t("Reports to")}</SortableHeader>
+              <SortableHeader k="location" dflt="name">{t("Location")}</SortableHeader>
+              <SortableHeader k="role" dflt="name">{t("Role")}</SortableHeader>
+              <SortableHeader k="status" dflt="name">{t("Status")}</SortableHeader>
+              <SortableHeader k="access" dflt="name">{t("Portal access")}</SortableHeader>
             </tr>
           </thead>
           <tbody>
@@ -86,9 +86,9 @@ export function PeopleTable({ rows }: { rows: PersonRow[] }) {
                     </div>
                   </div>
                 </td>
-                <td>{e.dept}</td>
+                <td>{e.department}</td>
                 <td className="muted">{e.manager}</td>
-                <td><span className={`chip nodot ${e.india ? "gold" : "info"}`}>{e.loc}</span></td>
+                <td><span className={`chip nodot ${e.india ? "gold" : "info"}`}>{e.location}</span></td>
                 <td className="muted">{e.role}</td>
                 <td><span className={`chip ${stChip(e.status)}`}>{t(STATUS_LABEL[e.status])}</span></td>
                 <td onClick={(ev) => ev.stopPropagation()}><AccessSwitch id={e.id} name={e.name} on={e.access} disabled={!e.canToggle} /></td>
@@ -170,7 +170,7 @@ function ProfileDrawer({ id, onClose, onEdit }: { id: string; onClose: () => voi
           )}
           <div>
             <div className="eyebrow" style={{ margin: "4px 0 4px" }}>{t("Personal")}</div>
-            {kv(t("Father’s name"), p.father)}
+            {kv(t("Father’s name"), p.fatherName)}
             {kv(t("Official email"), p.email)}
             {kv(t("Phone"), contact?.phone ?? p.phone, true)}
             {kv(t("Address"), contact?.address ?? p.address)}
@@ -191,10 +191,10 @@ function ProfileDrawer({ id, onClose, onEdit }: { id: string; onClose: () => voi
             <div className="eyebrow" style={{ margin: "14px 0 4px" }}>{t("Job")}</div>
             {kv(t("Reporting manager"), p.manager)}
             {kv(t("Direct reports"), p.reports.length ? p.reports.join(", ") : "—")}
-            {kv(t("Date of joining"), fmtDY(p.doj))}
-            {p.exit && kv(t("Last working day"), fmtDY(p.exit))}
+            {kv(t("Date of joining"), formatDayMonthYear(p.dateOfJoining))}
+            {p.exitDate && kv(t("Last working day"), formatDayMonthYear(p.exitDate))}
             {kv(t("Location · shift"), `${p.location} · ${p.shift}`)}
-            {p.gross !== null && kv(t("Monthly gross"), p.gross ? inr(p.gross) : t("Not set"), true)}
+            {p.gross !== null && kv(t("Monthly gross"), p.gross ? formatRupees(p.gross) : t("Not set"), true)}
           </div>
           {p.gross === null && (
             <div style={{ display: "flex", gap: 12, alignItems: "center", padding: 14, borderRadius: 12, border: "1px dashed var(--line2)", background: "var(--sunken)" }}>
@@ -218,7 +218,7 @@ function ProfileDrawer({ id, onClose, onEdit }: { id: string; onClose: () => voi
             if (r.ok) { toast(r.msg!, "bad"); setExitOpen(false); onClose(); }
             else toast(r.error, "bad");
           })}>
-          <label className="field" style={{ marginTop: 14 }}>{t("Last working day *")}<input type="date" value={exitDate} min={p.doj} onChange={(e) => setExitDate(e.target.value)} /></label>
+          <label className="field" style={{ marginTop: 14 }}>{t("Last working day *")}<input type="date" value={exitDate} min={p.dateOfJoining} onChange={(e) => setExitDate(e.target.value)} /></label>
         </ConfirmDialog>
       )}
     </Drawer>

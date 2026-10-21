@@ -3,17 +3,17 @@ import { useRouter } from "@/lib/router";
 import { useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
-import { inr } from "@/lib/format";
+import { formatRupees } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import { useReadOnly } from "@/lib/session";
-import { DECL } from "@/lib/tax/catalogue";
+import { DECLARATION_SECTIONS } from "@/lib/tax/catalogue";
 import { saveItem, saveProfile, setRegime, submitForVerification } from "./actions";
 
 export interface ItemView { id: string; key: string; amount: number; status: string; proofName: string | null; reason: string | null }
 
 const CHIP: Record<string, string> = { DRAFT: "neutral", PENDING: "warn", APPROVED: "ok", REJECTED: "bad" };
 const LABEL: Record<string, string> = { DRAFT: "Draft", PENDING: "Pending", APPROVED: "Approved", REJECTED: "Rejected" };
-const r = (rupees: number) => inr(rupees * 100);
+const r = (rupees: number) => formatRupees(rupees * 100);
 
 export function DeclareClient(p: {
   regime: "NEW" | "OLD"; overridden: boolean; canChangeRegime: boolean; windowOpen: boolean; windowText: string;
@@ -31,7 +31,7 @@ export function DeclareClient(p: {
   const item = (k: string) => p.items.find((i) => i.key === k);
   const better = p.newTax <= p.oldTax ? "NEW" : "OLD";
   const counts = { pending: p.items.filter((i) => i.status === "PENDING").length, approved: p.items.filter((i) => i.status === "APPROVED").length, rejected: p.items.filter((i) => i.status === "REJECTED").length };
-  const secTotal = (s: (typeof DECL)[number]) => s.items.reduce((a, it) => a + (it.auto ? p.epf : Number(draft[it.k] || 0)), 0);
+  const secTotal = (s: (typeof DECLARATION_SECTIONS)[number]) => s.items.reduce((a, it) => a + (it.auto ? p.epf : Number(draft[it.k] || 0)), 0);
   const readOnly = useReadOnly();
   const locked = !p.windowOpen || readOnly;
 
@@ -48,10 +48,10 @@ export function DeclareClient(p: {
     fd.set("item", key);
     fd.set("file", file);
     try {
-      const res = await fetch("/api/declarations/proof", { method: "POST", body: fd });
+      const res = await fetch("/api/declarations/proofs", { method: "POST", body: fd });
       const j = await res.json();
-      if (!res.ok) toast(j.error ?? t("Upload failed"), "bad");
-      else toast(t("Attached {name}", { name: j.name }));
+      if (!res.ok) toast(j.detail ?? j.error ?? t("Upload failed"), "bad");
+      else toast(t("Attached {name}", { name: j.data.name }));
       router.refresh();
     } finally { setUploading(null); }
   };
@@ -89,7 +89,7 @@ export function DeclareClient(p: {
             <span style={{ flex: 1 }}></span>
             {!readOnly && <button className="btn btn-gold" disabled={busy || locked} onClick={() => act(submitForVerification)}><Icon n="upload" s={15} />{t("Submit for verification")}</button>}
           </div>
-          {DECL.map((s, si) => (
+          {DECLARATION_SECTIONS.map((s, si) => (
             <section key={s.sec} className="card enter decl" style={{ ["--i" as string]: si + 3 }}>
               <span className="spot"></span>
               <button type="button" className="decl-h" onClick={() => setOpenSec(openSec === s.sec ? "" : s.sec)} aria-expanded={openSec === s.sec}>
@@ -141,7 +141,7 @@ export function DeclareClient(p: {
                               <input type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" style={{ display: "none" }} disabled={locked || cur?.status === "PENDING"} aria-label={t("Upload proof for {label}", { label: t(it.label) })}
                                 onChange={(e) => { const file = e.target.files?.[0]; if (file) void upload(it.k, file); e.target.value = ""; }} />
                             </label>}
-                            {cur?.proofName && <a className="linkish" style={{ fontSize: 12.5 }} href={`/api/declarations/proof/${cur.id}`} target="_blank" rel="noopener">{cur.proofName}</a>}
+                            {cur?.proofName && <a className="linkish" style={{ fontSize: 12.5 }} href={`/api/declarations/proofs/${cur.id}`} target="_blank" rel="noopener">{cur.proofName}</a>}
                             <span className={`chip ${cur ? CHIP[cur.status] : "neutral"}`} style={{ minWidth: 84, justifyContent: "center" }}>{cur && (cur.amount || cur.proofName) ? t(LABEL[cur.status]) : t("Not declared")}</span>
                           </>
                         )}

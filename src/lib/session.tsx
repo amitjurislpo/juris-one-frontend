@@ -38,7 +38,7 @@ interface MeResponse {
   pendingPolicies: number;
 }
 
-export const ME_KEY = ["api", "/api/me"];
+export const CURRENT_USER_QUERY_KEY = ["api", "/api/me"];
 
 export async function fetchMe(): Promise<CurrentUser | null> {
   const me = await apiGet<MeResponse>("/api/me");
@@ -53,7 +53,7 @@ export async function fetchMe(): Promise<CurrentUser | null> {
  */
 export function useCurrentUser(): { user: CurrentUser | null; loading: boolean } {
   const q = useQuery({
-    queryKey: ME_KEY,
+    queryKey: CURRENT_USER_QUERY_KEY,
     queryFn: fetchMe,
     // keep showing the user while a refetch runs
     placeholderData: (prev) => prev,

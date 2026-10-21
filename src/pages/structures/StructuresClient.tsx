@@ -5,15 +5,15 @@ import { useToast } from "@/components/shell/Toasts";
 import { Drawer, Modal } from "@/components/ui/Modal";
 import { useT } from "@/lib/i18n/client";
 import { useReadOnly } from "@/lib/session";
-import { fmtDY, inr } from "@/lib/format";
+import { formatDayMonthYear, formatRupees } from "@/lib/format";
 import { splitGross } from "@/lib/payroll/engine";
 import { addStructure } from "./actions";
 
-export interface Rev { from: string; basic: number; hra: number; lta: number; special: number; reason: string }
+export interface SalaryRevision { from: string; basic: number; hra: number; lta: number; special: number; reason: string }
 const REASONS = [["JOINING", "Joining"], ["APPRAISAL", "Appraisal"], ["PROMOTION", "Promotion"], ["CORRECTION", "Correction"]] as const;
 const REASON_LABEL: Record<string, string> = Object.fromEntries(REASONS);
 
-export function StructureButton({ emp, current, minFrom }: { emp: { id: string; code: string; name: string; title: string; doj: string }; current: Rev | null; minFrom: string }) {
+export function StructureButton({ emp, current, minFrom }: { emp: { id: string; code: string; name: string; title: string; dateOfJoining: string }; current: SalaryRevision | null; minFrom: string }) {
   const readOnly = useReadOnly();
   const toast = useToast();
   const t = useT();
@@ -58,9 +58,9 @@ export function StructureButton({ emp, current, minFrom }: { emp: { id: string; 
               <label className="field">{t("Special allowance (₹)")}<input type="number" min={0} value={f.special} onChange={(e) => setF({ ...f, special: e.target.value })} /></label>
             </div>
             <div className="summary">
-              <div><small>{t("Monthly gross")}</small><b>{inr(g * 100)}</b></div>
-              <div><small>{t("Employee PF")}</small><b>{inr(pf * 100)}</b></div>
-              <div><small>{t("Annual CTC (incl. employer PF)")}</small><b>{inr((g + pf) * 1200)}</b></div>
+              <div><small>{t("Monthly gross")}</small><b>{formatRupees(g * 100)}</b></div>
+              <div><small>{t("Employee PF")}</small><b>{formatRupees(pf * 100)}</b></div>
+              <div><small>{t("Annual CTC (incl. employer PF)")}</small><b>{formatRupees((g + pf) * 1200)}</b></div>
             </div>
             <p className="faint" style={{ margin: 0, fontSize: 12.5 }}>{t("“Split” uses Basic 50% · HRA 20% · LTA 5% · Special for the rest. Older structures stay in history; payroll picks the one effective on the last day of each month.")}</p>
             {err && <p className="err" role="alert" style={{ margin: 0 }}>{err}</p>}
@@ -71,7 +71,7 @@ export function StructureButton({ emp, current, minFrom }: { emp: { id: string; 
   );
 }
 
-export function HistoryButton({ name, revs, today }: { name: string; revs: Rev[]; today: string }) {
+export function HistoryButton({ name, revs, today }: { name: string; revs: SalaryRevision[]; today: string }) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const current = revs.find((r) => r.from <= today);
@@ -86,9 +86,9 @@ export function HistoryButton({ name, revs, today }: { name: string; revs: Rev[]
           </div>
           {revs.map((s) => (
             <div className="card pad" key={s.from} style={{ boxShadow: "none" }}>
-              <div style={{ display: "flex", justifyContent: "space-between" }}><b>{fmtDY(s.from)}</b><span className={`chip ${s === current ? "ok" : s.from > today ? "info" : "neutral"}`}>{s === current ? t("Current") : s.from > today ? t("Upcoming") : t(REASON_LABEL[s.reason] ?? s.reason)}</span></div>
-              <div className="kv"><span className="muted">{t("Monthly gross")}</span><b className="num">{inr(s.basic + s.hra + s.lta + s.special)}</b></div>
-              <div className="faint" style={{ fontSize: 12.5 }}>{t("Basic {basic} · HRA {hra} · LTA {lta} · Special {special}", { basic: inr(s.basic), hra: inr(s.hra), lta: inr(s.lta), special: inr(s.special) })}</div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}><b>{formatDayMonthYear(s.from)}</b><span className={`chip ${s === current ? "ok" : s.from > today ? "info" : "neutral"}`}>{s === current ? t("Current") : s.from > today ? t("Upcoming") : t(REASON_LABEL[s.reason] ?? s.reason)}</span></div>
+              <div className="kv"><span className="muted">{t("Monthly gross")}</span><b className="num">{formatRupees(s.basic + s.hra + s.lta + s.special)}</b></div>
+              <div className="faint" style={{ fontSize: 12.5 }}>{t("Basic {basic} · HRA {hra} · LTA {lta} · Special {special}", { basic: formatRupees(s.basic), hra: formatRupees(s.hra), lta: formatRupees(s.lta), special: formatRupees(s.special) })}</div>
             </div>
           ))}
         </Drawer>

@@ -9,22 +9,21 @@ import { useSearchRecord } from "./router";
 import { landingPath, useCurrentUser, type CurrentUser } from "./session";
 
 /**
- * What a page needs. Replaces the Next.js server-page preamble:
- *   const u = await requirePage("leave"); const t = await getT(); const sp = await props.searchParams;
- * with   const { u, t, sp, params } = usePage();   (the route already checked access, see RequirePage)
+ * What a page needs. Replaces the old server-page preamble (checking access, loading the translator and the search params) with
+ *   const { user, t, searchParams, params } = usePage();   (the route already checked access, see RequirePage)
  */
-export interface PageCtx {
-  u: CurrentUser;
+export interface PageContext {
+  user: CurrentUser;
   t: T;
   /** URL search params, first value of each. */
-  sp: Record<string, string>;
+  searchParams: Record<string, string>;
   /** Route params (`/platform/:id` → { id }). */
   params: Record<string, string>;
 }
 
-const Ctx = createContext<PageCtx | null>(null);
+const Ctx = createContext<PageContext | null>(null);
 
-export function usePage(): PageCtx {
+export function usePage(): PageContext {
   const c = useContext(Ctx);
   if (!c) throw new Error("usePage() outside a page route");
   return c;
@@ -69,19 +68,19 @@ const OPEN_WITHOUT_SUBSCRIPTION: NavId[] = ["subscription"];
  * `id` is omitted for pages outside the nav (acknowledge, paused): they only need a signed-in user.
  */
 export function RequirePage({ id, children }: { id?: NavId; children: ReactNode }) {
-  const { user: u } = useCurrentUser();
+  const { user } = useCurrentUser();
   const t = useT();
-  const loc = useLocation();
+  const currentLocation = useLocation();
   const params = useParams();
-  const sp = useSearchRecord();
-  const ctx = useMemo<PageCtx | null>(() => (u ? { u, t, sp, params: params as Record<string, string> } : null), [u, t, sp, params]);
-  if (!u || !ctx) return <Navigate to={`/login${loc.pathname !== "/" ? `?next=${encodeURIComponent(loc.pathname + loc.search)}` : ""}`} replace />;
+  const searchParams = useSearchRecord();
+  const ctx = useMemo<PageContext | null>(() => (user ? { user, t, searchParams, params: params as Record<string, string> } : null), [user, t, searchParams, params]);
+  if (!user || !ctx) return <Navigate to={`/login${currentLocation.pathname !== "/" ? `?next=${encodeURIComponent(currentLocation.pathname + currentLocation.search)}` : ""}`} replace />;
   if (id) {
     const item = NAV.find((n) => n.id === id)!;
-    if (item.module && !u.modules.includes(item.module)) return <NotFound />;
-    if (!navAllowed(item, u.perms, u.hasReports)) return <Navigate to={landingPath(u)} replace />;
-    if (u.subscriptionActive === false && !OPEN_WITHOUT_SUBSCRIPTION.includes(id)) return <Navigate to="/paused" replace />;
-    if (u.pendingPolicies > 0 && !u.readOnly) return <Navigate to="/acknowledge" replace />;
+    if (item.module && !user.modules.includes(item.module)) return <NotFound />;
+    if (!navAllowed(item, user.perms, user.hasReports)) return <Navigate to={landingPath(user)} replace />;
+    if (user.subscriptionActive === false && !OPEN_WITHOUT_SUBSCRIPTION.includes(id)) return <Navigate to="/paused" replace />;
+    if (user.pendingPolicies > 0 && !user.readOnly) return <Navigate to="/acknowledge" replace />;
   }
   return <Ctx.Provider value={ctx}>{children}</Ctx.Provider>;
 }

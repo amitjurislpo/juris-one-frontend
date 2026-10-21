@@ -1,8 +1,8 @@
 import { PageHeader } from "@/components/PageHeader";
-import { ClearFilters, Pending, SegFilter, SortTh } from "@/components/table/Table";
-import { qs } from "@/lib/api";
+import { ClearFilters, Pending, SegmentedFilter, SortableHeader } from "@/components/table/Table";
+import { toQueryString } from "@/lib/api";
 import { PageLoading, useData, usePage } from "@/lib/page";
-import { fmtD, fmtDL, MON3 } from "@/lib/format";
+import { formatDayMonth, formatWeekdayDayMonthYear, MONTH_ABBREVIATIONS } from "@/lib/format";
 import { ApplyButton, CancelLeave } from "./LeaveClient";
 
 
@@ -26,18 +26,18 @@ function Ring({ value, max, color, i }: { value: number; max: number; color: str
 }
 
 export default function LeavePage() {
-  const { t, sp } = usePage();
-  const d = useData<{
-    tab: "requests" | "holidays"; st: (typeof STATUS)[number]; today: string; year: string; canApply: boolean; lopYear: number;
+  const { t, searchParams } = usePage();
+  const data = useData<{
+    tab: "requests" | "holidays"; status: (typeof STATUS)[number]; today: string; year: string; canApply: boolean; lopYear: number;
     balances: { code: string; name: string; balance: number; pending: number; paid: boolean; needsBalance: boolean; annual: number }[];
     requests: { id: string; typeName: string; leaveType: string; from: string; to: string; part: string; days: number; lopDays: number; applied: string; reason: string | null; status: string; decidedBy: string | null }[];
     holidays: { id: string; date: string; name: string }[]; holidayMap: Record<string, string>;
     types: { code: string; name: string; paid: boolean; available: number | null; lockedReason: string | null }[]; weeklyOffs: number[];
-  }>(`/api/leave${qs(sp)}`);
-  if (!d) return <PageLoading />;
-  const { tab, st, today, year, balances: bals, requests: reqs, holidays: hols, holidayMap, types, lopYear } = d;
+  }>(`/api/leave${toQueryString(searchParams)}`);
+  if (!data) return <PageLoading />;
+  const { tab, status, today, year, balances, requests, holidays, holidayMap, types, lopYear } = data;
 
-  const bal = (c: string) => bals.find((b) => b.code === c);
+  const bal = (c: string) => balances.find((b) => b.code === c);
   const avail = (c: string) => { const b = bal(c); return b ? Math.round((b.balance - b.pending) * 100) / 100 : 0; };
   const rings: [string, number, number, string, string][] = [
     [t("Casual leave"), avail("CL"), bal("CL")?.annual || 12, "#6E56CF", t("Accrues 1 a month")],
@@ -49,7 +49,7 @@ export default function LeavePage() {
   return (
     <div className="col" style={{ gap: 24 }}>
       <PageHeader eyebrow={t("Leave · {year}", { year })} title={t("Time away,")} em={t("well planned")} sub={t("Apply in three steps — leave type, dates, and an optional reason.")}>
-        {d.canApply && <ApplyButton types={types} today={today} holidays={holidayMap} weeklyOffs={d.weeklyOffs} autoOpen={sp.apply === "1"} />}
+        {data.canApply && <ApplyButton types={types} today={today} holidays={holidayMap} weeklyOffs={data.weeklyOffs} autoOpen={searchParams.apply === "1"} />}
       </PageHeader>
       <div className="kpis">
         {rings.map(([name, v, max, color, note], i) => (
@@ -60,35 +60,35 @@ export default function LeavePage() {
           </div>
         ))}
       </div>
-      <SegFilter name="tab" dflt="requests" label={t("Leave section")} options={[{ v: "requests", l: t("My requests") }, { v: "holidays", l: t("Holiday calendar") }]} />
+      <SegmentedFilter name="tab" dflt="requests" label={t("Leave section")} options={[{ value: "requests", label: t("My requests") }, { value: "holidays", label: t("Holiday calendar") }]} />
       {tab === "requests" ? (
         <>
           <div className="toolbar enter" style={{ ["--i" as string]: 6 }}>
-            <SegFilter name="st" dflt="All" label={t("Status")} options={STATUS.map((s) => ({ v: s, l: s === "All" ? t("All") : t(SLABEL[s]) }))} />
-            <span className="tcount">{t("{n} requests", { n: reqs.length })}</span>
+            <SegmentedFilter name="status" dflt="All" label={t("Status")} options={STATUS.map((s) => ({ value: s, label: s === "All" ? t("All") : t(SLABEL[s]) }))} />
+            <span className="tcount">{t("{n} requests", { n: requests.length })}</span>
           </div>
           <section className="card enter" style={{ ["--i" as string]: 6 }}>
             <Pending>
               <div className="table-wrap">
                 <table className="t">
                   <thead><tr>
-                    <SortTh k="type" dflt="applied" dfltDir="desc">{t("Type")}</SortTh>
-                    <SortTh k="from" dflt="applied" dfltDir="desc">{t("Dates")}</SortTh>
-                    <SortTh k="days" dflt="applied" dfltDir="desc">{t("Days")}</SortTh>
-                    <SortTh k="applied" dflt="applied" dfltDir="desc">{t("Applied")}</SortTh>
+                    <SortableHeader k="type" dflt="applied" dfltDir="desc">{t("Type")}</SortableHeader>
+                    <SortableHeader k="from" dflt="applied" dfltDir="desc">{t("Dates")}</SortableHeader>
+                    <SortableHeader k="days" dflt="applied" dfltDir="desc">{t("Days")}</SortableHeader>
+                    <SortableHeader k="applied" dflt="applied" dfltDir="desc">{t("Applied")}</SortableHeader>
                     <th>{t("Reason")}</th>
-                    <SortTh k="status" dflt="applied" dfltDir="desc">{t("Status")}</SortTh>
+                    <SortableHeader k="status" dflt="applied" dfltDir="desc">{t("Status")}</SortableHeader>
                     <th><span className="sr-only">{t("Actions")}</span></th>
                   </tr></thead>
                   <tbody>
-                    {reqs.map((l, i) => {
+                    {requests.map((l, i) => {
                       const f = l.from, to = l.to;
                       return (
                         <tr key={l.id} style={{ animationDelay: `${i * 50}ms` }}>
                           <td><b>{t(l.typeName)}</b></td>
-                          <td>{fmtD(f)}{to !== f ? ` – ${fmtD(to)}` : ""}<div className="faint" style={{ fontSize: 12 }}>{t(PART[l.part])}{l.lopDays > 0 && l.leaveType !== "LOP" ? ` · ${t("{n}d unpaid", { n: l.lopDays })}` : ""}</div></td>
+                          <td>{formatDayMonth(f)}{to !== f ? ` – ${formatDayMonth(to)}` : ""}<div className="faint" style={{ fontSize: 12 }}>{t(PART[l.part])}{l.lopDays > 0 && l.leaveType !== "LOP" ? ` · ${t("{n}d unpaid", { n: l.lopDays })}` : ""}</div></td>
                           <td className="num">{l.days}</td>
-                          <td className="muted">{fmtD(l.applied)}</td>
+                          <td className="muted">{formatDayMonth(l.applied)}</td>
                           <td className="muted" style={{ maxWidth: 240 }}>{l.reason || "—"}</td>
                           <td><span className={`chip ${SCHIP[l.status]}`}>{t(SLABEL[l.status])}</span>{l.decidedBy && <div className="faint" style={{ fontSize: 11.5, marginTop: 3 }}>{t("by {name}", { name: l.decidedBy })}</div>}</td>
                           <td className="r">{l.status === "PENDING" && <CancelLeave id={l.id} />}</td>
@@ -98,24 +98,24 @@ export default function LeavePage() {
                   </tbody>
                 </table>
               </div>
-              {!reqs.length && <div className="empty"><b>{t("No requests")}</b><span className="muted">{st === "All" ? t("You haven't applied for leave yet.") : t("Nothing with this status.")}</span>{st !== "All" && <ClearFilters />}</div>}
+              {!requests.length && <div className="empty"><b>{t("No requests")}</b><span className="muted">{status === "All" ? t("You haven't applied for leave yet.") : t("Nothing with this status.")}</span>{status !== "All" && <ClearFilters />}</div>}
             </Pending>
           </section>
         </>
       ) : (
         <section className="kpis enter" style={{ ["--i" as string]: 6 }}>
-          {hols.map((h, i) => {
+          {holidays.map((h, i) => {
             const k = h.date;
             const past = k < today;
             return (
               <div className="card pad lift" key={h.id} style={{ opacity: past ? 0.5 : 1, animation: `enter .6s ${i * 50}ms both`, display: "flex", gap: 14, alignItems: "center" }}>
                 <span className="spot" aria-hidden="true"></span>
-                <span className="hol-date"><b>{Number(k.slice(8))}</b><small>{MON3[Number(k.slice(5, 7)) - 1].toUpperCase()}</small></span>
-                <div><b>{h.name}</b><div className="faint" style={{ fontSize: 12.5 }}>{past ? t("{date} · passed", { date: fmtDL(k) }) : fmtDL(k)}</div></div>
+                <span className="hol-date"><b>{Number(k.slice(8))}</b><small>{MONTH_ABBREVIATIONS[Number(k.slice(5, 7)) - 1].toUpperCase()}</small></span>
+                <div><b>{h.name}</b><div className="faint" style={{ fontSize: 12.5 }}>{past ? t("{date} · passed", { date: formatWeekdayDayMonthYear(k) }) : formatWeekdayDayMonthYear(k)}</div></div>
               </div>
             );
           })}
-          {!hols.length && <div className="empty"><b>{t("No holidays yet")}</b><span className="muted">{t("HR hasn't published this year's calendar.")}</span></div>}
+          {!holidays.length && <div className="empty"><b>{t("No holidays yet")}</b><span className="muted">{t("HR hasn't published this year's calendar.")}</span></div>}
         </section>
       )}
     </div>

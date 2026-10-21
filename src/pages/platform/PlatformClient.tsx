@@ -7,7 +7,7 @@ import { useToast } from "@/components/shell/Toasts";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import type { BusinessProfile, PlanRow, RoleTemplate } from "@/lib/api-types";
-import { inr } from "@/lib/format";
+import { formatRupees } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import { phoneProblem, splitPhone } from "@/lib/phone";
 import {
@@ -67,10 +67,10 @@ function SubscriptionFields({ s, set, plans }: { s: SubscriptionInput; set: (s: 
         <label className="field">{t("Plan")}
           <select value={s.planId} onChange={(e) => set({ ...s, planId: e.target.value })}>
             <option value="">{t("— choose a plan —")}</option>
-            {plans.filter((p) => p.active).map((p) => <option key={p.id} value={p.id}>{p.name} · {inr(p.pricePaise)} / {t("{n} mo", { n: p.periodMonths })}</option>)}
+            {plans.filter((p) => p.active).map((p) => <option key={p.id} value={p.id}>{p.name} · {formatRupees(p.pricePaise)} / {t("{n} mo", { n: p.periodMonths })}</option>)}
           </select>
         </label>
-        <label className="field">{t("Price charged (₹)")} <span className="hint">{plan ? t("plan price {price}", { price: inr(plan.pricePaise) }) : t("defaults to the plan")}</span>
+        <label className="field">{t("Price charged (₹)")} <span className="hint">{plan ? t("plan price {price}", { price: formatRupees(plan.pricePaise) }) : t("defaults to the plan")}</span>
           <input type="number" min={0} step="0.01" value={s.price ?? ""} onChange={(e) => set({ ...s, price: e.target.value === "" ? null : Number(e.target.value) })} />
         </label>
       </div>

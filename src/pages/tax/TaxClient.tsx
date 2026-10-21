@@ -6,11 +6,11 @@ import { useToast } from "@/components/shell/Toasts";
 import { Drawer } from "@/components/ui/Modal";
 import { useT } from "@/lib/i18n/client";
 import { useReadOnly } from "@/lib/session";
-import { inr, ymLabel } from "@/lib/format";
+import { formatRupees, formatMonthLabel } from "@/lib/format";
 import type { TaxProjection } from "@/lib/api-types";
 import { overrideRegime, setPreviousEmployer, taxDetail } from "./actions";
 
-const rp = (rupees: number) => inr(rupees * 100);
+const rp = (rupees: number) => formatRupees(rupees * 100);
 const pct = (r: number) => `${Math.round(r * 100)}%`;
 
 /** A table row that opens the computation drawer. */
@@ -64,7 +64,7 @@ function TaxDrawer({ id, onClose }: { id: string; onClose: () => void }) {
           </div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
             <span className="display" style={{ fontSize: 44, lineHeight: 1 }}>{rp(t.monthly)}</span>
-            <span className="muted">{tr(t.monthsLeft === 1 ? "TDS / month · {n} month left · {month}" : "TDS / month · {n} months left · {month}", { n: t.monthsLeft, month: ymLabel(d.month) })}</span>
+            <span className="muted">{tr(t.monthsLeft === 1 ? "TDS / month · {n} month left · {month}" : "TDS / month · {n} months left · {month}", { n: t.monthsLeft, month: formatMonthLabel(d.month) })}</span>
           </div>
           {(["NEW", "OLD"] as const).map((v) => {
             const x = v === "NEW" ? t.newRegime : t.oldRegime;
