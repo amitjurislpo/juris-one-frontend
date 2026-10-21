@@ -20,7 +20,7 @@ test.describe("payroll", () => {
   test("salary structures: add a revision; closed months are protected", async ({ page }) => {
     await login(page, "JC-004");
     await expectLanded(page, "/home");
-    await page.goto("/structures?q=Pooja");
+    await page.goto("/structures?search=Pooja");
     const row = page.locator("tbody tr").first();
     await expect(row).toContainText("₹52,000");
     await row.getByRole("button", { name: "Revise" }).click();
@@ -47,7 +47,7 @@ test.describe("payroll", () => {
       await page.goto(p);
       await expectLanded(page, "/home");
     }
-    expect((await page.request.get(`/api/payroll/export?m=${SEP}&type=bank`)).status()).toBe(403);
+    expect((await page.request.get(`/api/payroll/export?month=${SEP}&type=bank`)).status()).toBe(403);
     expect((await page.request.get(`/api/payslips/2026-08/JC-049`)).status()).toBe(403);
   });
 
@@ -102,10 +102,10 @@ test.describe("payroll", () => {
     await sql(`UPDATE salary_structures SET basic = basic - 100000 WHERE employee_id = (SELECT id FROM employees WHERE code = 'JC-074')`);
 
     // exports
-    const bank = await page.request.get(`/api/payroll/export?m=${SEP}&type=bank`);
+    const bank = await page.request.get(`/api/payroll/export?month=${SEP}&type=bank`);
     expect(bank.status()).toBe(200);
     expect(await bank.text()).toContain("93074.00");
-    expect((await page.request.get(`/api/payroll/export?m=${SEP}&type=ecr`)).status()).toBe(200);
+    expect((await page.request.get(`/api/payroll/export?month=${SEP}&type=ecr`)).status()).toBe(200);
   });
 
   test("employee sees and downloads only their own payslip", async ({ page }) => {

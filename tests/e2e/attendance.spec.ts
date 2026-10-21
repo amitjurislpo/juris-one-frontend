@@ -56,7 +56,7 @@ test.describe("attendance", () => {
   test("My attendance: locked September shows the golden-case figures", async ({ page }) => {
     await login(page, "JC-074");
     await expectLanded(page, "/home");
-    await page.goto("/attendance?m=2026-09");
+    await page.goto("/attendance?month=2026-09");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("September");
     const kpi = (label: string) => page.locator(".kpi", { hasText: label }).locator(".v");
     await expect(kpi("Absent · loss of pay")).toHaveText("1");
@@ -74,7 +74,7 @@ test.describe("attendance", () => {
   test("My attendance: request and withdraw a regularization in an open month", async ({ page }) => {
     await login(page, "JC-074");
     await expectLanded(page, "/home");
-    await page.goto("/attendance?m=2026-10&d=2026-10-05");
+    await page.goto("/attendance?month=2026-10&date=2026-10-05");
     await expect(page.locator(".chip", { hasText: "Absent · LOP" }).first()).toBeVisible();
     await page.getByRole("button", { name: "Request regularization" }).click();
     const dialog = page.getByRole("dialog");
@@ -125,19 +125,19 @@ test.describe("attendance", () => {
   test("register: time zones, (+1) marks, grid, export and access", async ({ page }) => {
     await login(page, "JC-012");
     await expectLanded(page, "/home");
-    await page.goto("/register?day=2026-09-22&q=Amit");
+    await page.goto("/register?date=2026-09-22&search=Amit");
     await expect(page.locator("tbody tr").first()).toContainText("On leave"); // leave without pay
-    await page.goto("/register?day=2026-09-16&q=Kavya");
+    await page.goto("/register?date=2026-09-16&search=Kavya");
     const row = page.locator("tbody tr").first();
     await expect(row).toContainText("Present");
     await expect(row.locator("td").nth(4)).toContainText("(+1)"); // night-shift check-out, IST view
     await page.getByLabel("Show times in").selectOption("America/New_York");
     await expect(row.locator("td").nth(3)).toContainText("EDT");
     await expect(row.locator("td").nth(3)).toContainText("local");
-    await page.goto("/register?view=month&ym=2026-09&q=Amit");
+    await page.goto("/register?view=month&month=2026-09&search=Amit");
     const grid = page.locator("table.reg tbody tr").first();
     await expect(grid.locator("td").nth(22)).toHaveText("L"); // 22 Sep: leave without pay
-    const exp = await page.request.get("/api/attendance/register?view=month&ym=2026-09");
+    const exp = await page.request.get("/api/attendance/register/export?view=month&month=2026-09");
     expect(exp.status()).toBe(200);
     expect(await exp.text()).toContain("Amit Jaspal");
 
@@ -152,7 +152,7 @@ test.describe("attendance", () => {
   test("policies: Admin edits the attendance policy", async ({ page }) => {
     await login(page, OWNER);
     await expectLanded(page, "/overview");
-    await page.goto("/settings?tab=att");
+    await page.goto("/settings?tab=attendance");
     await expect(page.getByLabel("Attendance go-live")).toBeDisabled();
     await page.getByLabel("Late marks per ½ day LOP").fill("4");
     await page.getByRole("button", { name: "Save policy" }).click();

@@ -4,11 +4,13 @@ import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
 import { useT } from "@/lib/i18n/client";
+import { useReadOnly } from "@/lib/session";
 import { createDepartment, deleteDepartment } from "./actions";
 
 export function NewDepartmentButton({ by, heads }: { by: string; heads: { id: string; name: string; title: string }[] }) {
   const toast = useToast();
   const t = useT();
+  const readOnly = useReadOnly();
   const [open, setOpen] = useState(false);
   const [f, setF] = useState({ name: "", headId: "", description: "" });
   const [tried, setTried] = useState(false);
@@ -24,6 +26,7 @@ export function NewDepartmentButton({ by, heads }: { by: string; heads: { id: st
       else setErr(r.error);
     });
   };
+  if (readOnly) return null;
   return (
     <>
       <button className="btn btn-gold btn-lg" onClick={() => setOpen(true)}><Icon n="plus" s={16} />{t("New department")}</button>
@@ -55,9 +58,11 @@ export function NewDepartmentButton({ by, heads }: { by: string; heads: { id: st
 export function DepartmentActions({ id, name }: { id: string; name: string }) {
   const toast = useToast();
   const t = useT();
+  const readOnly = useReadOnly();
   const [ask, setAsk] = useState(false);
   const [busy, start] = useTransition();
   const delParts = t("Delete {name}? It has no current employees. Past employees keep it on their record.", { name: "\u0000" }).split("\u0000");
+  if (readOnly) return null;
   return (
     <>
       <button className="btn btn-sm btn-ghost" onClick={() => setAsk(true)} aria-label={t("Delete {name}", { name })}><Icon n="trash" s={14} /></button>

@@ -5,15 +5,18 @@ import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
 import { ConfirmDialog, Drawer } from "@/components/ui/Modal";
 import { useT } from "@/lib/i18n/client";
-import { inr } from "@/lib/format";
+import { useReadOnly } from "@/lib/session";
+import { formatRupees } from "@/lib/format";
 import { approveAllPending, decideProof, proofDetail, type ProofDetail, type ProofItem } from "./actions";
 
 const CHIP: Record<string, string> = { DRAFT: "neutral", PENDING: "warn", APPROVED: "ok", REJECTED: "bad" };
 const LABEL: Record<string, string> = { DRAFT: "Draft", PENDING: "Pending", APPROVED: "Approved", REJECTED: "Rejected" };
 
 export function ReviewButton({ employeeId, name, gold }: { employeeId: string; name: string; gold: boolean }) {
+  const readOnly = useReadOnly();
   const [open, setOpen] = useState(false);
   const t = useT();
+  if (readOnly) return null;
   return (
     <>
       <button className={`btn btn-sm${gold ? " btn-gold" : ""}`} onClick={() => setOpen(true)} aria-label={t("Review {name}", { name })}>{t("Review")}</button>
@@ -52,23 +55,23 @@ function ReviewDrawer({ employeeId, onClose }: { employeeId: string; onClose: ()
       {d && (
         <>
           <div className="summary">
-            <div><small>{t("TDS / month now")}</small><b>{d.tdsNow === null ? "—" : inr(d.tdsNow * 100)}</b></div>
-            <div><small>{t("If all approved")}</small><b style={{ color: "var(--ok)" }}>{d.tdsIfAll === null ? "—" : inr(d.tdsIfAll * 100)}</b></div>
+            <div><small>{t("TDS / month now")}</small><b>{d.tdsNow === null ? "—" : formatRupees(d.tdsNow * 100)}</b></div>
+            <div><small>{t("If all approved")}</small><b style={{ color: "var(--ok)" }}>{d.tdsIfAll === null ? "—" : formatRupees(d.tdsIfAll * 100)}</b></div>
           </div>
           {d.regime === "NEW" && <p className="faint" style={{ margin: 0, fontSize: 12.5 }}>{t("This employee is on the new regime — proofs only count if they switch to the old regime. The preview assumes the old regime.")}</p>}
           {d.mine && <p className="err" style={{ margin: 0 }}>{t("These are your own declarations — someone else in Finance must verify them.")}</p>}
           <div className="list">
             {d.items.map((x) => (
               <div className="it" key={x.id} style={{ flexWrap: "wrap" }}>
-                <span className="chip gold nodot" style={{ minWidth: 76, justifyContent: "center" }}>{x.sec}</span>
+                <span className="chip gold nodot" style={{ minWidth: 76, justifyContent: "center" }}>{x.section}</span>
                 <div style={{ flex: "1 1 180px", minWidth: 0 }}>
                   <b style={{ fontWeight: 500 }}>{x.label}</b>
                   <div className="faint" style={{ fontSize: 12, display: "flex", gap: 6, alignItems: "center" }}>
-                    <Icon n="doc" s={12} />{x.hasProof ? <a className="linkish" style={{ fontSize: 12 }} href={`/api/declarations/proof/${x.id}`} target="_blank" rel="noopener">{x.proofName ?? t("Open proof")}</a> : t("No proof attached")}
+                    <Icon n="doc" s={12} />{x.hasProof ? <a className="linkish" style={{ fontSize: 12 }} href={`/api/declarations/proofs/${x.id}`} target="_blank" rel="noopener">{x.proofName ?? t("Open proof")}</a> : t("No proof attached")}
                   </div>
                   {x.reason && <div style={{ fontSize: 12, color: "var(--bad)" }}>{t("Rejected: {reason}", { reason: x.reason })}</div>}
                 </div>
-                <b className="num">{inr(x.amount)}</b>
+                <b className="num">{formatRupees(x.amount)}</b>
                 {x.status === "PENDING" && !d.mine ? (
                   <>
                     <button className="btn btn-sm btn-danger" disabled={busy} onClick={() => { setReason(""); setRejecting(x); }}>{t("Reject")}</button>
@@ -85,7 +88,7 @@ function ReviewDrawer({ employeeId, onClose }: { employeeId: string; onClose: ()
         </>
       )}
       {rejecting && (
-        <ConfirmDialog title={t("Reject proof")} danger confirm={t("Reject")} busy={busy} onClose={() => setRejecting(null)} body={<>{t("Reject {label} ({amount})? The employee can fix and resubmit.", { label: rejecting.label, amount: inr(rejecting.amount) })}</>}
+        <ConfirmDialog title={t("Reject proof")} danger confirm={t("Reject")} busy={busy} onClose={() => setRejecting(null)} body={<>{t("Reject {label} ({amount})? The employee can fix and resubmit.", { label: rejecting.label, amount: formatRupees(rejecting.amount) })}</>}
           onConfirm={() => { act(decideProof({ id: rejecting.id, approve: false, reason })); setRejecting(null); }}>
           <label className="field" style={{ marginTop: 14 }}>{t("Reason *")}<input value={reason} maxLength={300} onChange={(e) => setReason(e.target.value)} placeholder={t("e.g. Receipt is for last year")} autoFocus /></label>
         </ConfirmDialog>

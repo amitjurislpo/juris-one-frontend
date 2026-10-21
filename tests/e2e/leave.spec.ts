@@ -88,7 +88,7 @@ test.describe("leave & approvals", () => {
     await expectLanded(page, "/home");
     await page.getByRole("button", { name: /Notifications/ }).click();
     await expect(page.locator(".notif")).toContainText("Casual leave (21 Oct – 22 Oct) approved by Pooja Nair");
-    await page.goto("/attendance?m=2026-10&d=2026-10-21");
+    await page.goto("/attendance?month=2026-10&date=2026-10-21");
     await expect(page.locator(".chip", { hasText: "Casual leave" }).first()).toBeVisible();
   });
 
@@ -104,7 +104,7 @@ test.describe("leave & approvals", () => {
     const hr = await browser.newPage();
     await login(hr, "JC-012");
     await expectLanded(hr, "/home");
-    await hr.goto("/approvals?tab=att");
+    await hr.goto("/approvals?tab=regularizations");
     const hrCard = hr.locator("article.req", { hasText: "Siddharth Krishna" });
     await expect(hrCard).toBeVisible();
 
@@ -125,7 +125,7 @@ test.describe("leave & approvals", () => {
     const before = await ledger("JC-049", "CO");
     await login(page, OWNER);
     await expectLanded(page, "/overview");
-    await page.goto("/approvals?tab=att");
+    await page.goto("/approvals?tab=regularizations");
     const card = page.locator("article.req", { hasText: "Holiday work" });
     await expect(card).toContainText("Worked 8h 40m on Gandhi Jayanti");
     await card.getByRole("button", { name: /Approve/ }).click();

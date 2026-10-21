@@ -50,7 +50,7 @@ export async function loginWithCode(page: Page, id: string, code: string) {
   // wait for hydration — a click can otherwise beat React to the form
   await page.goto("/login", { waitUntil: "networkidle" });
   await page.getByLabel("Email").fill(email);
-  await page.getByRole("button", { name: "Send code" }).click();
+  await page.getByRole("button", { name: "Login", exact: true }).click();
   await page.getByLabel("Digit 1 of 6").fill(code);
 }
 

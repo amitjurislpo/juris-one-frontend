@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { fmtDL, isoInZone } from "@/lib/format";
+import { formatWeekdayDayMonthYear, isoInZone } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 
 /** "Good evening, Amit" with a live clock in the employee's own time zone. */
@@ -19,7 +19,7 @@ export function Greeting({ first, timeZone, initialIso }: { first: string; timeZ
   const clock = new Intl.DateTimeFormat("en-US", { timeZone, hour: "numeric", minute: "2-digit", second: "2-digit" }).format(at);
   return (
     <div>
-      <span className="eyebrow">{fmtDL(isoInZone(at, timeZone))} · <span className="num" suppressHydrationWarning>{clock}</span></span>
+      <span className="eyebrow">{formatWeekdayDayMonthYear(isoInZone(at, timeZone))} · <span className="num" suppressHydrationWarning>{clock}</span></span>
       <h1 className="display" suppressHydrationWarning>{greet}, <em>{first}</em></h1>
       <p>{t("Here's your day at a glance.")}</p>
     </div>

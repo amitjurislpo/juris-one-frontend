@@ -60,7 +60,7 @@ server {
 }
 ```
 
-The one-time link pages (`/invite/…`, `/reset/…`, `/onboard/…`) should also be served with `Referrer-Policy: no-referrer`
+The one-time link pages (`/onboard/…`) should also be served with `Referrer-Policy: no-referrer`
 and `Cache-Control: no-store`.
 
 ## How a page works

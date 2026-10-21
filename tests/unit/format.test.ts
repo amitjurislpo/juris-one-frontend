@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { daysBetween, fmtDL, inr, isoInZone } from "@/lib/format";
+import { daysBetween, formatWeekdayDayMonthYear, formatRupees, isoInZone } from "@/lib/format";
 
 describe("formatting", () => {
   it("formats paise as Indian rupees", () => {
-    expect(inr(1492600)).toBe("₹14,926");
-    expect(inr(BigInt(75000000))).toBe("₹7,50,000");
+    expect(formatRupees(1492600)).toBe("₹14,926");
+    expect(formatRupees(BigInt(75000000))).toBe("₹7,50,000");
   });
 
   it("formats ISO dates without time-zone drift", () => {
-    expect(fmtDL("2026-10-06")).toBe("Tue, 6 Oct 2026");
+    expect(formatWeekdayDayMonthYear("2026-10-06")).toBe("Tue, 6 Oct 2026");
     expect(daysBetween("2026-10-06", "2026-10-20")).toBe(14);
   });
 

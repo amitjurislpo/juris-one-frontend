@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { computePay, eligibleDays, rupeesInWords, splitGross, type Structure } from "@/lib/payroll/engine";
-import { computeTax, fyOf, monthlyTds, NO_DECLARATIONS, oldRegimeDeductions, type TaxYearConfig } from "@/lib/tax/engine";
+import { computeTax, financialYearOf, monthlyTds, NO_DECLARATIONS, oldRegimeDeductions, type TaxYearConfig } from "@/lib/tax/engine";
 
 const NEW: TaxYearConfig = {
   regime: "NEW", stdDeduction: 75000, rebateLimit: 1200000, marginalRelief: true, cessRate: 0.04,
@@ -25,7 +25,7 @@ describe("golden case — JC-074 Amit Jaspal, September 2026 (REQUIREMENTS §7)"
     expect(p.pf).toBe(180_000); // 12% of ₹15,000
   });
   it("monthly TDS ≈ ₹14,926 on the new regime with ₹7.5L / ₹38,000 from the previous employer", () => {
-    const { remainingInclCurrent } = fyOf("2026-09");
+    const { remainingInclCurrent } = financialYearOf("2026-09");
     expect(remainingInclCurrent).toBe(7);
     const juris = 110000 + 150000 * 6; // Sep actual + Oct–Mar projected
     const t = computeTax(juris + 750000, 0, NEW);

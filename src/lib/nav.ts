@@ -1,7 +1,7 @@
 import type { Permission } from "./permissions";
 
 export type NavId =
-  | "platform" | "plans" | "juris-track" | "notifications" | "profile" | "home" | "overview" | "attendance" | "leave" | "payslips" | "declare" | "directory" | "team"
+  | "platform" | "platform-audit" | "plans" | "juris-track" | "notifications" | "profile" | "home" | "overview" | "attendance" | "leave" | "payslips" | "declare" | "directory" | "team"
   | "register" | "approvals" | "employees" | "onboarding" | "departments" | "holidays"
   | "payroll" | "structures" | "tax" | "proofs" | "roles" | "policies" | "settings" | "audit" | "subscription" | "my-policies"
   | "my-assets" | "announcements" | "assets" | "manage-announcements" | "my-letters" | "letters";
@@ -33,6 +33,7 @@ const JURIS_TRACK = "JURIS_TRACK";
 export const NAV: NavItem[] = [
   { id: "platform", label: "Businesses", icon: "building", perm: [PLATFORM_MANAGE], group: "Platform" },
   { id: "plans", label: "Plans", icon: "layers", perm: [PLATFORM_MANAGE], group: "Platform" },
+  { id: "platform-audit", label: "Audit log", icon: "doc", perm: [PLATFORM_MANAGE], group: "Platform" },
   { id: "home", label: "Home", icon: "home", perm: ["self"] },
   { id: "overview", label: "Overview", icon: "home", perm: ["roles.manage"] },
   { id: "notifications", label: "Notifications", icon: "bell", perm: ["self", "dir", "roles.manage"] },

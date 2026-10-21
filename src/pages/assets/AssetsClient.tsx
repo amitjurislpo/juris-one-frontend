@@ -6,8 +6,9 @@ import { useToast } from "@/components/shell/Toasts";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
 import type { AssetAssignment, AssetRow } from "@/lib/api-types";
 import { ASSET_STATUS, ASSET_TYPES, CONDITIONS } from "@/lib/assets";
-import { fmtDY } from "@/lib/format";
+import { formatDayMonthYear } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
+import { useReadOnly } from "@/lib/session";
 import { assignAsset, createAsset, deleteAsset, returnAsset, updateAsset, type AssetInput } from "./actions";
 
 const EMPTY: AssetInput = { tag: "", type: "LAPTOP", make: "", model: "", serial: "", purchaseDate: "", status: "AVAILABLE", notes: "" };
@@ -57,7 +58,9 @@ function AssetForm({ asset, onClose }: { asset?: AssetRow; onClose: () => void }
 
 export function AddAssetButton() {
   const t = useT();
+  const readOnly = useReadOnly();
   const [open, setOpen] = useState(false);
+  if (readOnly) return null;
   return (
     <>
       <button className="btn btn-gold btn-lg" onClick={() => setOpen(true)}><Icon n="plus" s={16} />{t("Add asset")}</button>
@@ -137,8 +140,8 @@ function HistoryDialog({ asset, onClose }: { asset: AssetRow; onClose: () => voi
               {rows.map((h) => (
                 <tr key={h.id}>
                   <td><b>{h.employeeName}</b><br /><small className="muted">{h.employeeCode}</small></td>
-                  <td>{fmtDY(h.assignedOn)}{h.assignNotes && <><br /><small className="muted">{h.assignNotes}</small></>}</td>
-                  <td>{h.returnedOn ? fmtDY(h.returnedOn) : <span className="chip info">{t("Holding now")}</span>}</td>
+                  <td>{formatDayMonthYear(h.assignedOn)}{h.assignNotes && <><br /><small className="muted">{h.assignNotes}</small></>}</td>
+                  <td>{h.returnedOn ? formatDayMonthYear(h.returnedOn) : <span className="chip info">{t("Holding now")}</span>}</td>
                   <td>{h.returnCondition ? t(CONDITIONS[h.returnCondition]).split(" ")[0] : "—"}{h.returnNotes && <><br /><small className="muted">{h.returnNotes}</small></>}</td>
                 </tr>
               ))}
@@ -156,6 +159,7 @@ export function AssetsTable({ rows, people, today }: { rows: AssetRow[]; people:
   const t = useT();
   const toast = useToast();
   const router = useRouter();
+  const readOnly = useReadOnly();
   const [dlg, setDlg] = useState<Dialog>(null);
   const [filter, setFilter] = useState("ALL");
   const [q, setQ] = useState("");
@@ -185,15 +189,15 @@ export function AssetsTable({ rows, people, today }: { rows: AssetRow[]; people:
                     <div><b>{[r.make, r.model].filter(Boolean).join(" ") || t(ASSET_TYPES[r.type])}</b><small>{ASSET_TYPES[r.type] ? t(ASSET_TYPES[r.type]) : r.type}</small></div></div></td>
                   <td className="num">{r.tag}</td>
                   <td><span className={`chip ${ASSET_STATUS[r.status].cls}`}>{t(ASSET_STATUS[r.status].text)}</span></td>
-                  <td>{r.holderName ? <><b>{r.holderName}</b><br /><small className="muted">{t("since {date}", { date: fmtDY(r.heldSince!) })}</small></> : <span className="muted">—</span>}</td>
+                  <td>{r.holderName ? <><b>{r.holderName}</b><br /><small className="muted">{t("since {date}", { date: formatDayMonthYear(r.heldSince!) })}</small></> : <span className="muted">—</span>}</td>
                   <td className="muted hide-sm">{r.serial ?? "—"}</td>
-                  <td className="muted hide-sm">{r.purchaseDate ? fmtDY(r.purchaseDate) : "—"}</td>
+                  <td className="muted hide-sm">{r.purchaseDate ? formatDayMonthYear(r.purchaseDate) : "—"}</td>
                   <td style={{ whiteSpace: "nowrap", textAlign: "right" }}>
-                    {r.status === "AVAILABLE" && <button className="btn btn-sm btn-gold" onClick={() => setDlg({ kind: "assign", asset: r })}>{t("Assign")}</button>}
-                    {r.status === "ASSIGNED" && <button className="btn btn-sm" onClick={() => setDlg({ kind: "return", asset: r })}>{t("Take back")}</button>}
+                    {!readOnly && r.status === "AVAILABLE" && <button className="btn btn-sm btn-gold" onClick={() => setDlg({ kind: "assign", asset: r })}>{t("Assign")}</button>}
+                    {!readOnly && r.status === "ASSIGNED" && <button className="btn btn-sm" onClick={() => setDlg({ kind: "return", asset: r })}>{t("Take back")}</button>}
                     {" "}<button className="btn btn-sm btn-ghost" onClick={() => setDlg({ kind: "history", asset: r })}>{t("History")}</button>
-                    <button className="btn btn-sm btn-ghost" aria-label={t("Edit {tag}", { tag: r.tag })} onClick={() => setDlg({ kind: "edit", asset: r })}><Icon n="edit" s={14} /></button>
-                    <button className="btn btn-sm btn-ghost" aria-label={t("Delete {tag}", { tag: r.tag })} onClick={() => setDlg({ kind: "delete", asset: r })}><Icon n="trash" s={14} /></button>
+                    {!readOnly && <button className="btn btn-sm btn-ghost" aria-label={t("Edit {tag}", { tag: r.tag })} onClick={() => setDlg({ kind: "edit", asset: r })}><Icon n="edit" s={14} /></button>}
+                    {!readOnly && <button className="btn btn-sm btn-ghost" aria-label={t("Delete {tag}", { tag: r.tag })} onClick={() => setDlg({ kind: "delete", asset: r })}><Icon n="trash" s={14} /></button>}
                   </td>
                 </tr>
               ))}

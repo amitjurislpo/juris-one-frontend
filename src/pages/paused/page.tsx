@@ -9,9 +9,9 @@ import { ExportButtons } from "../subscription/ExportButtons";
 
 /** Shown instead of every page while the business has no active subscription (sign-in still works). */
 export default function PausedPage() {
-  const { u, t } = usePage();
-  if (u.subscriptionActive !== false) return <Navigate to={landingPath(u)} replace />;
-  const owner = (u.perms as ReadonlySet<string>).has(BUSINESS_MANAGE);
+  const { user, t } = usePage();
+  if (user.subscriptionActive !== false) return <Navigate to={landingPath(user)} replace />;
+  const owner = (user.perms as ReadonlySet<string>).has(BUSINESS_MANAGE);
 
   return (
     <div className="col" style={{ alignItems: "center", paddingTop: 48 }}>

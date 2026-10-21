@@ -44,6 +44,8 @@ export const APP_ROUTES: RouteDef[] = [
   { path: "audit", title: "Audit log", nav: "audit", Page: page(() => import("@/pages/audit/page")) },
   { path: "subscription", title: "Subscription", nav: "subscription", Page: page(() => import("@/pages/subscription/page")) },
   { path: "platform", title: "Businesses", nav: "platform", Page: page(() => import("@/pages/platform/page")) },
+  { path: "platform/audit", title: "Audit log", nav: "platform-audit", Page: page(() => import("@/pages/platform-audit/page")) },
+  { path: "platform/roles", title: "Role templates", nav: "plans", Page: page(() => import("@/pages/role-templates/page")) },
   { path: "platform/:id", title: "Business", nav: "platform", Page: page(() => import("@/pages/platform/[id]/page")) },
   { path: "plans", title: "Plans", nav: "plans", Page: page(() => import("@/pages/plans/page")) },
   { path: "juris-track", title: "Juris Track", nav: "juris-track", Page: page(() => import("@/pages/juris-track/page")) },
@@ -59,11 +61,8 @@ export const APP_ROUTES: RouteDef[] = [
   { path: "paused", title: "Subscription ended", user: true, Page: page(() => import("@/pages/paused/page")) },
 ];
 
-/** Public pages (no session): sign-in, one-time links and the candidate's onboarding. */
+/** Public pages (no session): sign-in and the candidate's onboarding. */
 export const PUBLIC_ROUTES: { path: string; title: string; Page: ComponentType }[] = [
   { path: "login", title: "Sign in", Page: page(() => import("@/pages/auth/login/page")) },
-  { path: "forgot", title: "Reset password", Page: page(() => import("@/pages/auth/forgot/page")) },
-  { path: "invite/:token", title: "Activate your account", Page: page(() => import("@/pages/auth/invite/[token]/page")) },
-  { path: "reset/:token", title: "Choose a new password", Page: page(() => import("@/pages/auth/reset/[token]/page")) },
   { path: "onboard/:token", title: "Your onboarding", Page: page(() => import("@/pages/auth/onboard/[token]/page")) },
 ];

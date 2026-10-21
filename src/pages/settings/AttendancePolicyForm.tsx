@@ -2,13 +2,16 @@
 import { useState, useTransition } from "react";
 import { useToast } from "@/components/shell/Toasts";
 import { useT } from "@/lib/i18n/client";
+import { useReadOnly } from "@/lib/session";
 import { updateAttendancePolicy, type AttendancePolicyInput } from "./actions";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-export function AttendancePolicyForm({ initial, locked }: { initial: AttendancePolicyInput; locked: boolean }) {
+export function AttendancePolicyForm({ initial, locked: lockedByRules }: { initial: AttendancePolicyInput; locked: boolean }) {
   const toast = useToast();
   const t = useT();
+  const readOnly = useReadOnly();
+  const locked = lockedByRules || readOnly;
   const [f, setF] = useState(initial);
   const [err, setErr] = useState("");
   const [busy, start] = useTransition();
@@ -41,10 +44,12 @@ export function AttendancePolicyForm({ initial, locked }: { initial: AttendanceP
         </div>
       </div>
       {err && <p className="err" role="alert">{err}</p>}
-      <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-        <button className="btn btn-gold" disabled={!dirty || busy} onClick={() => start(async () => { setErr(""); const r = await updateAttendancePolicy(f); if (r.ok) toast(r.msg!); else setErr(r.error); })}>{busy ? t("Saving…") : t("Save policy")}</button>
-        {dirty && <button className="btn btn-ghost" onClick={() => setF(initial)}>{t("Reset")}</button>}
-      </div>
+      {!readOnly && (
+        <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+          <button className="btn btn-gold" disabled={!dirty || busy} onClick={() => start(async () => { setErr(""); const r = await updateAttendancePolicy(f); if (r.ok) toast(r.msg!); else setErr(r.error); })}>{busy ? t("Saving…") : t("Save policy")}</button>
+          {dirty && <button className="btn btn-ghost" onClick={() => setF(initial)}>{t("Reset")}</button>}
+        </div>
+      )}
     </section>
   );
 }

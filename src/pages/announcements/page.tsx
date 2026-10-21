@@ -8,14 +8,14 @@ import { PageLoading, useData, usePage } from "@/lib/page";
 
 /** Every active announcement for the signed-in user, pinned first. */
 export default function AnnouncementsPage() {
-  const { u, t } = usePage();
+  const { user, t } = usePage();
   const items = useData<Announcement[]>("/api/announcements");
   if (!items) return <PageLoading />;
 
   return (
     <div className="col">
       <PageHeader eyebrow={t("Company")} title={<em>{t("Announcements")}</em>} sub={t("News from HR and the leadership team.")}>
-        {can(u, "announcements.manage") && <Link className="btn" href="/manage-announcements">{t("Manage announcements")}</Link>}
+        {can(user, "announcements.manage") && <Link className="btn" href="/manage-announcements">{t("Manage announcements")}</Link>}
       </PageHeader>
       <section className="card pad enter" style={{ ["--i" as string]: 1 }}>
         {items.map((a) => <AnnouncementItem key={a.id} a={a} full />)}

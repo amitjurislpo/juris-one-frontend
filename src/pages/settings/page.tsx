@@ -1,8 +1,8 @@
 import Link from "@/lib/link";
 import { PageHeader } from "@/components/PageHeader";
-import { SegFilter } from "@/components/table/Table";
+import { SegmentedFilter } from "@/components/table/Table";
 import { PageLoading, useData, usePage } from "@/lib/page";
-import { fmtDL, MON3 } from "@/lib/format";
+import { formatWeekdayDayMonthYear, MONTH_ABBREVIATIONS } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import { pick } from "@/lib/list";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -10,25 +10,25 @@ import type { SettingValue } from "@/lib/api-types";
 import { AttendancePolicyForm } from "./AttendancePolicyForm";
 
 
-const TABS = ["access", "leave", "hol", "att"] as const;
+const TABS = ["access", "leave", "holidays", "attendance"] as const;
 const num = (d: number | null) => (d == null ? 0 : d);
 
 interface LeaveTypeView { code: string; name: string; annualQuota: number; accrualPerMonth: number; carryForwardCap: number; maxStretch: number | null; encashPerYear: number; encashAfterMonths: number; expiryDays: number | null }
 interface ShiftView { id: string; code: string; name: string; startLocal: string; endLocal: string; graceMinutes: number; region: "IN" | "US" }
 
 export default function SettingsPage() {
-  const { t, sp } = usePage();
-  const tab = pick(sp, "tab", TABS, "access");
+  const { t, searchParams } = usePage();
+  const tab = pick(searchParams, "tab", TABS, "access");
 
   return (
     <div className="col">
       <PageHeader eyebrow={t("Administration")} title={t("Rules &")} em={t("settings")} sub={t("Who can see what, and the rules the portal runs on.")}>
-        <SegFilter name="tab" dflt="access" label={t("Policy section")} options={[{ v: "access", l: t("Access") }, { v: "leave", l: t("Leave policy") }, { v: "hol", l: t("Holidays") }, { v: "att", l: t("Attendance") }]} />
+        <SegmentedFilter name="tab" dflt="access" label={t("Policy section")} options={[{ value: "access", label: t("Access") }, { value: "leave", label: t("Leave policy") }, { value: "holidays", label: t("Holidays") }, { value: "attendance", label: t("Attendance") }]} />
       </PageHeader>
       {tab === "access" && <AccessMatrix />}
       {tab === "leave" && <LeavePolicy />}
-      {tab === "hol" && <HolidayList />}
-      {tab === "att" && <AttendancePolicy />}
+      {tab === "holidays" && <HolidayList />}
+      {tab === "attendance" && <AttendancePolicy />}
     </div>
   );
 }
@@ -67,9 +67,9 @@ function AccessMatrix() {
 
 function LeavePolicy() {
   const t = useT();
-  const d = useData<{ types: LeaveTypeView[]; attendance: SettingValue<"attendance.policy"> }>("/api/settings/leave");
-  if (!d) return <PageLoading />;
-  const { types, attendance: att } = d;
+  const data = useData<{ types: LeaveTypeView[]; attendance: SettingValue<"attendance.policy"> }>("/api/settings/leave");
+  if (!data) return <PageLoading />;
+  const { types, attendance: att } = data;
   const card = (lt: (typeof types)[number]): [string, string] => {
     if (lt.code === "LOP") return [t("Automatic"), t("Absent without leave · {n} late marks = ½ day · Gross ÷ days in month", { n: att.lateMarksPerHalfDayLop })];
     if (lt.code === "CO") return [t("On approval"), t("For holiday / weekend work of {h}h+ · expires in {d} days", { h: att.halfDayHours, d: lt.expiryDays ?? 60 })];
@@ -107,8 +107,8 @@ function HolidayList() {
           const k = h.date;
           return (
             <div className="it" key={h.id}>
-              <span className="hol-date"><b>{Number(k.slice(8))}</b><small>{MON3[Number(k.slice(5, 7)) - 1].toUpperCase()}</small></span>
-              <div style={{ flex: 1 }}><b style={{ fontWeight: 600 }}>{h.name}</b><div className="faint" style={{ fontSize: 12.5 }}>{fmtDL(k)}</div></div>
+              <span className="hol-date"><b>{Number(k.slice(8))}</b><small>{MONTH_ABBREVIATIONS[Number(k.slice(5, 7)) - 1].toUpperCase()}</small></span>
+              <div style={{ flex: 1 }}><b style={{ fontWeight: 600 }}>{h.name}</b><div className="faint" style={{ fontSize: 12.5 }}>{formatWeekdayDayMonthYear(k)}</div></div>
               <span className={`chip nodot ${h.region === "US" ? "info" : h.region === "ALL" ? "ok" : "gold"}`}>{h.region === "ALL" ? t("Everyone") : h.region === "US" ? t("US") : t("India")}</span>
             </div>
           );
@@ -121,9 +121,9 @@ function HolidayList() {
 
 function AttendancePolicy() {
   const tr = useT();
-  const d = useData<{ policy: SettingValue<"attendance.policy">; shifts: ShiftView[]; locked: boolean }>("/api/settings/attendance");
-  if (!d) return <PageLoading />;
-  const { policy: p, shifts, locked } = d;
+  const data = useData<{ policy: SettingValue<"attendance.policy">; shifts: ShiftView[]; locked: boolean }>("/api/settings/attendance");
+  if (!data) return <PageLoading />;
+  const { policy: p, shifts, locked } = data;
   const grc = shifts[0]?.graceMinutes ?? p.graceMinutes;
   const tm = (hm: string) => { const [h, m] = hm.split(":").map(Number); return `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`; };
   const grace = (hm: string, g: number) => { const [h, m] = hm.split(":").map(Number); const x = h * 60 + m + g; return tm(`${Math.floor(x / 60) % 24}:${x % 60}`); };

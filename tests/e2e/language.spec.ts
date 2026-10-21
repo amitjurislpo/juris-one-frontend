@@ -7,7 +7,7 @@ test.describe("language", () => {
     await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
     await page.getByLabel("Language").selectOption({ label: "हिन्दी" });
     await expect(page.getByRole("heading", { name: "वापसी पर स्वागत है" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "कोड भेजें" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "लॉगिन", exact: true })).toBeVisible();
     await page.reload();
     await expect(page.getByRole("heading", { name: "वापसी पर स्वागत है" })).toBeVisible();
     await page.getByLabel("भाषा").selectOption({ label: "English" });

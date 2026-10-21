@@ -8,12 +8,14 @@ export const AUDIT_GROUPS = {
   payroll: { label: "Salary & payroll", prefixes: ["salary.", "payroll."] },
   tax: { label: "Tax & proofs", prefixes: ["tax.", "declaration.", "proof."] },
   letters: { label: "HR letters", prefixes: ["letter.", "letter_template."] },
+  requests: { label: "API requests", prefixes: ["request."] },
+  pages: { label: "Page views", prefixes: ["page."] },
 } as const;
 export type AuditGroup = keyof typeof AUDIT_GROUPS;
 
 export interface AuditRow {
   id: string;
-  at: string; // ISO timestamp
+  at: string; // ISO timestamp with milliseconds
   actor: string;
   actorCode: string | null;
   action: string;
@@ -24,6 +26,13 @@ export interface AuditRow {
   before: unknown;
   after: unknown;
   redacted: boolean;
+  /** Request rows only (null on older entries). */
+  method?: string | null;
+  path?: string | null;
+  status?: number | null;
+  durationMs?: number | null;
+  /** Platform audit only: the business, or "Platform". */
+  business?: string;
 }
 
 /** "employee.access_toggle" → "Employee · access toggle" */

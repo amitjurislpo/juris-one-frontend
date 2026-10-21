@@ -35,7 +35,7 @@ function Changes({ before, after }: { before: unknown; after: unknown }) {
   );
 }
 
-export function AuditRow({ row, i, when, label, children }: { row: Row; i: number; when: string; label: string; children: React.ReactNode }) {
+export function AuditRow({ row, i, when, whenExact, label, children }: { row: Row; i: number; when: string; whenExact: string; label: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const t = useT();
   return (
@@ -47,13 +47,16 @@ export function AuditRow({ row, i, when, label, children }: { row: Row; i: numbe
       {open && (
         <Drawer label={t("Audit entry")} width={560} onClose={() => setOpen(false)}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div><span className="eyebrow">{when}</span><h2 className="display" style={{ margin: "4px 0 0", fontSize: 28 }}>{label}</h2></div>
+            <div><span className="eyebrow" title={whenExact}>{whenExact}</span><h2 className="display" style={{ margin: "4px 0 0", fontSize: 28 }}>{label}</h2></div>
             <button className="icon-btn" onClick={() => setOpen(false)} aria-label={t("Close")}><Icon n="x" s={16} /></button>
           </div>
           <div>
             <div className="kv"><span className="muted">{t("Who")}</span><b>{row.actor}{row.actorCode ? ` · ${row.actorCode}` : ""}</b></div>
             <div className="kv"><span className="muted">{t("What")}</span><b className="mono" style={{ fontSize: 12.5 }}>{row.action}</b></div>
             <div className="kv"><span className="muted">{t("Record")}</span><b>{row.subject ?? row.entity.replace(/_/g, " ")}{row.entityId && !row.subject ? <span className="faint mono" style={{ fontSize: 11.5, display: "block" }}>{row.entityId}</span> : null}</b></div>
+            {row.business && <div className="kv"><span className="muted">{t("Business")}</span><b>{row.business}</b></div>}
+            {row.method && <div className="kv"><span className="muted">{t("Request")}</span><b className="mono" style={{ fontSize: 12.5 }}>{row.method} {row.path}</b></div>}
+            {row.status != null && <div className="kv"><span className="muted">{t("Result")}</span><b className="mono">{row.status}{row.durationMs != null ? ` · ${row.durationMs} ms` : ""}</b></div>}
             <div className="kv"><span className="muted">{t("IP address")}</span><b className="mono">{row.ip ?? "—"}</b></div>
           </div>
           <div>

@@ -2,12 +2,12 @@ import { Icon } from "@/components/Icon";
 import { PageHeader } from "@/components/PageHeader";
 import type { IssuedLetter } from "@/lib/api-types";
 import { PageLoading, useData, usePage } from "@/lib/page";
-import { fmtDY, isoDateIn } from "@/lib/format";
+import { formatDayMonthYear, isoDateIn } from "@/lib/format";
 
 
 /** Letters HR has issued to the signed-in employee (offer, appointment, experience, relieving, employment verification). */
 export default function MyLettersPage() {
-  const { u, t } = usePage();
+  const { user, t } = usePage();
   const rows = useData<IssuedLetter[]>("/api/letters/mine");
   if (!rows) return <PageLoading />;
 
@@ -21,7 +21,7 @@ export default function MyLettersPage() {
             <span className="slip-ico"><Icon n="doc" s={20} /></span>
             <span style={{ display: "flex", flexDirection: "column", gap: 3, textAlign: "left", flex: 1, minWidth: 0 }}>
               <b className="display" style={{ fontSize: 20 }}>{r.subject}</b>
-              <span className="faint" style={{ fontSize: 12.5 }}>{r.templateName} · {t("issued {date} by {name}", { date: fmtDY(isoDateIn(r.issuedAt, u.timeZone)), name: r.issuedBy })}</span>
+              <span className="faint" style={{ fontSize: 12.5 }}>{r.templateName} · {t("issued {date} by {name}", { date: formatDayMonthYear(isoDateIn(r.issuedAt, user.timeZone)), name: r.issuedBy })}</span>
               <span className="faint mono" style={{ fontSize: 11.5 }}>{r.reference}</span>
             </span>
             <a className="btn btn-sm btn-gold" href={`/api/letters/${r.id}/pdf`} download><Icon n="download" s={14} />{t("PDF")}</a>

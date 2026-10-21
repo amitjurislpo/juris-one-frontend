@@ -1,22 +1,23 @@
 import Link from "@/lib/link";
 import { Icon } from "@/components/Icon";
 import { PageHeader } from "@/components/PageHeader";
-import type { BusinessProfile, ModuleGrant, PlanRow, SubscriptionCurrent, SubscriptionRow } from "@/lib/api-types";
+import type { BusinessProfile, ModuleGrant, PlanRow, RoleTemplates, SubscriptionCurrent, SubscriptionRow } from "@/lib/api-types";
 import { PageLoading, useData, usePage } from "@/lib/page";
-import { fmtDY, inr } from "@/lib/format";
+import { formatDayMonthYear, formatRupees } from "@/lib/format";
 import { MODULE_LABELS, subscriptionChip } from "@/lib/subscription";
 import {
-  AddOwnerButton, AddSubscriptionButton, BusinessStatusButton, CancelSubscriptionButton, EditBusinessButton, GrantJurisTrackButton, OwnerAccessSwitch,
+  AddBusinessRoleButton, AddOwnerButton, AddSubscriptionButton, BusinessRoleActions, BusinessStatusButton, CancelSubscriptionButton, EditBusinessButton, GrantJurisTrackButton, OwnerAccessSwitch,
   RevokeGrantButton,
 } from "../PlatformClient";
 
 
 interface Detail {
   business: BusinessProfile & { id: string; status: "ACTIVE" | "SUSPENDED"; createdAt: string };
-  owners: { id: string; code: string; name: string; email: string; access: boolean; activated: boolean; status: string }[];
+  owners: { id: string; code: string; name: string; email: string; access: boolean; status: string }[];
   subscription: SubscriptionCurrent;
   subscriptions: SubscriptionRow[];
   modules: ModuleGrant[];
+  roles: { id: string; key: string; name: string; employees: number; mandatory: boolean }[];
 }
 
 const GRANT_STATE: Record<ModuleGrant["state"], { cls: string; text: string }> = {
@@ -27,13 +28,14 @@ const GRANT_STATE: Record<ModuleGrant["state"], { cls: string; text: string }> =
 export default function BusinessPage() {
   const { t, params } = usePage();
   const { id } = params;
-  const d = useData<Detail>(`/api/platform/businesses/${encodeURIComponent(id)}`);
+  const data = useData<Detail>(`/api/platform/businesses/${encodeURIComponent(id)}`);
   const plans = useData<PlanRow[]>("/api/platform/plans");
-  if (!d || !plans) return <PageLoading />;
-  const b = d.business;
-  const s = d.subscription;
+  const catalogue = useData<RoleTemplates>("/api/platform/role-templates");
+  if (!data || !plans || !catalogue) return <PageLoading />;
+  const b = data.business;
+  const s = data.subscription;
   const chip = subscriptionChip(s);
-  const chipText = (x: SubscriptionCurrent) => !x || x.state === "NONE" ? t("No plan") : x.state === "UPCOMING" ? t("Starts {date}", { date: fmtDY(x.startsOn!) }) : x.state === "EXPIRED" ? t("Ended {date}", { date: fmtDY(x.endsOn!) }) : x.daysLeft !== null && x.daysLeft <= 7 ? (x.daysLeft === 0 ? t("Ends today") : t(x.daysLeft === 1 ? "{n} day left" : "{n} days left", { n: x.daysLeft })) : t("Until {date}", { date: fmtDY(x.endsOn!) });
+  const chipText = (x: SubscriptionCurrent) => !x || x.state === "NONE" ? t("No plan") : x.state === "UPCOMING" ? t("Starts {date}", { date: formatDayMonthYear(x.startsOn!) }) : x.state === "EXPIRED" ? t("Ended {date}", { date: formatDayMonthYear(x.endsOn!) }) : x.daysLeft !== null && x.daysLeft <= 7 ? (x.daysLeft === 0 ? t("Ends today") : t(x.daysLeft === 1 ? "{n} day left" : "{n} days left", { n: x.daysLeft })) : t("Until {date}", { date: formatDayMonthYear(x.endsOn!) });
   const planHasTrack = !!s.planName && (plans.find((p) => p.name === s.planName)?.modules.includes("JURIS_TRACK") ?? false);
   const today = new Date().toISOString().slice(0, 10);
   const profile: BusinessProfile = {
@@ -43,8 +45,8 @@ export default function BusinessPage() {
 
   return (
     <div className="col">
-      <PageHeader eyebrow={<><Link href="/platform" className="linkish">{t("Businesses")}</Link> / {b.code}</>} title={b.name}
-        sub={<>{t("Created {date} · employee IDs {prefix}-001 · {tz}", { date: fmtDY(b.createdAt.slice(0, 10)), prefix: b.employeePrefix, tz: b.timeZone })}</>}>
+      <PageHeader back="/platform" eyebrow={<><Link href="/platform" className="linkish">{t("Businesses")}</Link> / {b.code}</>} title={b.name}
+        sub={<>{t("Created {date} · employee IDs {prefix}-001 · {tz}", { date: formatDayMonthYear(b.createdAt.slice(0, 10)), prefix: b.employeePrefix, tz: b.timeZone })}</>}>
         <EditBusinessButton id={b.id} profile={profile} hasPeople={s.employees > 0} />
         <BusinessStatusButton id={b.id} name={b.name} status={b.status} />
       </PageHeader>
@@ -59,13 +61,13 @@ export default function BusinessPage() {
       <div className="grid2 enter" style={{ ["--i" as string]: 2, alignItems: "start" }}>
         <section className="card" style={{ padding: 18 }}>
           <div className="card-h"><h3>{t("Sub admins")}</h3><AddOwnerButton id={b.id} /></div>
-          {d.owners.map((o) => (
+          {data.owners.map((o) => (
             <div key={o.id} className="kv" style={{ alignItems: "center" }}>
-              <span><b>{o.name}</b> <span className="muted mono" style={{ fontSize: 12 }}>{o.code}</span><br /><small className="muted">{o.email}{o.activated ? "" : ` · ${t("invite sent")}`}</small></span>
+              <span><b>{o.name}</b> <span className="muted mono" style={{ fontSize: 12 }}>{o.code}</span><br /><small className="muted">{o.email}</small></span>
               <OwnerAccessSwitch businessId={b.id} ownerId={o.id} name={o.name} on={o.access} />
             </div>
           ))}
-          {!d.owners.length && <p className="muted">{t("No sub admin yet — add one so someone can run this business.")}</p>}
+          {!data.owners.length && <p className="muted">{t("No sub admin yet — add one so someone can run this business.")}</p>}
         </section>
 
         <section className="card" style={{ padding: 18 }}>
@@ -77,6 +79,22 @@ export default function BusinessPage() {
         </section>
       </div>
 
+      <section className="card enter" style={{ ["--i" as string]: 3, padding: 18 }}>
+        <div className="card-h">
+          <div>
+            <h3>{t("Roles")}</h3>
+            <small className="muted">{t("What people in this business can be. The business admin can't create roles; they work with these.")}</small>
+          </div>
+          <AddBusinessRoleButton businessId={b.id} templates={catalogue.templates.filter((x) => x.active && !data.roles.some((r) => r.key === x.key))} />
+        </div>
+        {data.roles.map((r) => (
+          <div key={r.id} className="kv" style={{ alignItems: "center" }}>
+            <span><b>{r.name}</b>{r.mandatory && <> <span className="chip neutral">{t("Always included")}</span></>}<br /><small className="muted">{t("{n} people", { n: r.employees })}</small></span>
+            <span style={{ display: "flex", gap: 6 }}><BusinessRoleActions businessId={b.id} role={r} /></span>
+          </div>
+        ))}
+      </section>
+
       <section className="card enter" style={{ ["--i" as string]: 3 }}>
         <div className="card-h" style={{ padding: "16px 18px 0" }}>
           <div>
@@ -85,20 +103,20 @@ export default function BusinessPage() {
           </div>
           <GrantJurisTrackButton id={b.id} />
         </div>
-        {d.modules.length > 0 ? (
+        {data.modules.length > 0 ? (
           <div className="table-wrap">
             <table className="t">
               <thead><tr><th>{t("Type")}</th><th>{t("From")}</th><th>{t("To")}</th><th className="r">{t("Price")}</th><th>{t("Status")}</th><th className="hide-sm">{t("Notes")}</th><th></th></tr></thead>
               <tbody>
-                {d.modules.map((g) => (
+                {data.modules.map((g) => (
                   <tr key={g.id}>
                     <td><b>{g.source === "PAID" ? t("Paid") : t("Complimentary")}</b></td>
-                    <td>{fmtDY(g.startsOn)}</td>
-                    <td>{g.endsOn ? fmtDY(g.endsOn) : <span className="muted">{t("No end")}</span>}</td>
-                    <td className="r num">{g.source === "PAID" ? inr(g.pricePaise) : t("Free")}</td>
+                    <td>{formatDayMonthYear(g.startsOn)}</td>
+                    <td>{g.endsOn ? formatDayMonthYear(g.endsOn) : <span className="muted">{t("No end")}</span>}</td>
+                    <td className="r num">{g.source === "PAID" ? formatRupees(g.pricePaise) : t("Free")}</td>
                     <td><span className={`chip ${GRANT_STATE[g.state].cls}`}>{t(GRANT_STATE[g.state].text)}</span></td>
                     <td className="muted hide-sm">{g.notes ?? ""}</td>
-                    <td className="r">{(g.state === "ACTIVE" || g.state === "UPCOMING") && <RevokeGrantButton businessId={b.id} grantId={g.id} label={t(g.source === "PAID" ? "paid Juris Track from {date}" : "complimentary Juris Track from {date}", { date: fmtDY(g.startsOn) })} />}</td>
+                    <td className="r">{(g.state === "ACTIVE" || g.state === "UPCOMING") && <RevokeGrantButton businessId={b.id} grantId={g.id} label={t(g.source === "PAID" ? "paid Juris Track from {date}" : "complimentary Juris Track from {date}", { date: formatDayMonthYear(g.startsOn) })} />}</td>
                   </tr>
                 ))}
               </tbody>
@@ -116,25 +134,25 @@ export default function BusinessPage() {
           <table className="t">
             <thead><tr><th>{t("Plan")}</th><th>{t("From")}</th><th>{t("To")}</th><th className="r">{t("Price")}</th><th>{t("Status")}</th><th className="hide-sm">{t("Notes")}</th><th></th></tr></thead>
             <tbody>
-              {d.subscriptions.map((x) => {
+              {data.subscriptions.map((x) => {
                 const covers = x.status === "ACTIVE" && x.startsOn <= today && x.endsOn >= today;
                 const past = x.endsOn < today;
                 return (
                   <tr key={x.id}>
                     <td><b>{x.planName}</b></td>
-                    <td>{fmtDY(x.startsOn)}</td>
-                    <td>{fmtDY(x.endsOn)}</td>
-                    <td className="r num">{inr(x.pricePaise)}</td>
+                    <td>{formatDayMonthYear(x.startsOn)}</td>
+                    <td>{formatDayMonthYear(x.endsOn)}</td>
+                    <td className="r num">{formatRupees(x.pricePaise)}</td>
                     <td>{x.status === "CANCELLED" ? <span className="chip neutral">{t("Cancelled")}</span> : covers ? <span className="chip ok">{t("Current")}</span> : past ? <span className="chip neutral">{t("Ended")}</span> : <span className="chip info">{t("Upcoming")}</span>}</td>
                     <td className="muted hide-sm">{x.notes ?? ""}</td>
-                    <td className="r">{x.status === "ACTIVE" && !past && <CancelSubscriptionButton businessId={b.id} subscriptionId={x.id} label={t("{plan} ({from} – {to})", { plan: x.planName, from: fmtDY(x.startsOn), to: fmtDY(x.endsOn) })} />}</td>
+                    <td className="r">{x.status === "ACTIVE" && !past && <CancelSubscriptionButton businessId={b.id} subscriptionId={x.id} label={t("{plan} ({from} – {to})", { plan: x.planName, from: formatDayMonthYear(x.startsOn), to: formatDayMonthYear(x.endsOn) })} />}</td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
         </div>
-        {!d.subscriptions.length && <div className="empty"><Icon n="receipt" s={20} /><span className="muted">{t("No subscription yet. Until one starts, people can sign in but can't use JurisOne.")}</span></div>}
+        {!data.subscriptions.length && <div className="empty"><Icon n="receipt" s={20} /><span className="muted">{t("No subscription yet. Until one starts, people can sign in but can't use JurisOne.")}</span></div>}
       </section>
     </div>
   );

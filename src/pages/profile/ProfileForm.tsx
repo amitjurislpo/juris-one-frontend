@@ -3,6 +3,7 @@ import { useState, useTransition } from "react";
 import { useToast } from "@/components/shell/Toasts";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import { useT } from "@/lib/i18n/client";
+import { useReadOnly } from "@/lib/session";
 import { phoneProblem } from "@/lib/phone";
 import { saveMyProfile } from "./actions";
 
@@ -19,6 +20,7 @@ export interface MyProfile {
 export function ProfileForm({ p }: { p: MyProfile }) {
   const toast = useToast();
   const t = useT();
+  const readOnly = useReadOnly();
   const init = { fatherName: p.fatherName, dateOfBirth: p.dateOfBirth, currentAddress: p.currentAddress, permanentAddress: p.permanentAddress,
     emergencyName: p.emergencyName, emergencyRelation: p.emergencyRelation, emergencyPhoneCountry: p.emergencyPhoneCountry || "+91", emergencyPhone: p.emergencyPhone };
   const [f, setF] = useState(init);
@@ -36,8 +38,8 @@ export function ProfileForm({ p }: { p: MyProfile }) {
   };
   return (
     <section className="card" style={{ padding: 18 }}>
-      <div className="card-h"><h3>{t("Personal details")}</h3><small className="muted">{t("You can edit these")}</small></div>
-      <div className="col" style={{ gap: 12 }}>
+      <div className="card-h"><h3>{t("Personal details")}</h3>{!readOnly && <small className="muted">{t("You can edit these")}</small>}</div>
+      <fieldset disabled={readOnly} className="col" style={{ gap: 12, border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         <div className="grid2">
           <label className="field">{t("Father's name *")}<input value={f.fatherName} onChange={on("fatherName")} maxLength={120} /></label>
           <label className="field">{t("Date of birth")}<input type="date" value={f.dateOfBirth} onChange={on("dateOfBirth")} /></label>
@@ -52,8 +54,8 @@ export function ProfileForm({ p }: { p: MyProfile }) {
           <PhoneInput label={t("Emergency contact phone")} code={f.emergencyPhoneCountry} number={f.emergencyPhone} onChange={(c, n) => { setF({ ...f, emergencyPhoneCountry: c, emergencyPhone: n }); setErr(""); }} />
         </div>
         {err && <div className="err" role="alert">{err}</div>}
-        <div><button className="btn btn-gold" disabled={busy || !dirty} onClick={save}>{busy ? t("Saving…") : t("Save")}</button></div>
-      </div>
+        {!readOnly && <div><button className="btn btn-gold" disabled={busy || !dirty} onClick={save}>{busy ? t("Saving…") : t("Save")}</button></div>}
+      </fieldset>
     </section>
   );
 }

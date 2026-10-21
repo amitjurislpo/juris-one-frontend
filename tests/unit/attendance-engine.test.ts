@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { atLocal, computeDay, shiftWindow, summarize, workDateOf, workedMinutes, type DayInput, type Punch } from "@/lib/attendance/engine";
+import { localDateTime, computeDay, shiftWindow, summarize, workDateOf, workedMinutes, type DayInput, type Punch } from "@/lib/attendance/engine";
 
 const IST = "Asia/Kolkata";
 const NIGHT = { startLocal: "19:30", endLocal: "04:30", graceMinutes: 15 };
@@ -7,12 +7,12 @@ const DAY = { startLocal: "09:30", endLocal: "18:30", graceMinutes: 15 };
 const US = { startLocal: "09:00", endLocal: "18:00", graceMinutes: 15 };
 const POLICY = { fullDayHours: 8, halfDayHours: 4, weeklyOffs: [0, 6], absenceJobBufferMinutes: 120, lateMarksPerHalfDayLop: 3 };
 
-const at = (date: string, hm: string, tz = IST) => atLocal(date, hm, tz);
+const at = (date: string, hm: string, tz = IST) => localDateTime(date, hm, tz);
 const p = (date: string, hm: string, kind: "IN" | "OUT", tz = IST): Punch => ({ at: at(date, hm, tz), kind });
 
 function day(over: Partial<DayInput>): DayInput {
   return {
-    date: "2026-09-16", now: at("2026-10-06", "12:00"), tz: IST, shift: NIGHT, policy: POLICY, doj: "2025-01-01", exitDate: null,
+    date: "2026-09-16", now: at("2026-10-06", "12:00"), tz: IST, shift: NIGHT, policy: POLICY, dateOfJoining: "2025-01-01", exitDate: null,
     trackingStart: "2026-04-01", holiday: null, leave: null, punches: [], reg: { absent: false, lateWaived: false }, ...over,
   };
 }
@@ -103,7 +103,7 @@ describe("day status", () => {
     expect(computeDay(day({ leave: { code: "CL", name: "Casual leave", part: "FULL", paidFraction: 0.5 } }))).toMatchObject({ leaveDays: 0.5, lopDays: 0.5 });
   });
   it("before joining, after exit and before go-live", () => {
-    expect(computeDay(day({ date: "2026-09-07", doj: "2026-09-08" })).status).toBe("BEFORE_JOINING");
+    expect(computeDay(day({ date: "2026-09-07", dateOfJoining: "2026-09-08" })).status).toBe("BEFORE_JOINING");
     expect(computeDay(day({ date: "2026-09-01", exitDate: "2026-08-31" })).status).toBe("AFTER_EXIT");
     expect(computeDay(day({ date: "2026-03-31" })).status).toBe("NOT_TRACKED");
   });

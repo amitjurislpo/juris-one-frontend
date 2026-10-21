@@ -2,13 +2,14 @@
 import { useState, useTransition } from "react";
 import { useToast } from "@/components/shell/Toasts";
 import { Modal } from "@/components/ui/Modal";
-import { dowOf } from "@/lib/attendance/engine";
-import { fmtDL, fmtH } from "@/lib/format";
+import { weekdayOf } from "@/lib/attendance/engine";
+import { formatWeekdayDayMonthYear, formatHours } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
+import { useReadOnly } from "@/lib/session";
 import type { T } from "@/lib/i18n/translate";
-import { cancelRegularization, requestRegularization, type RegInput } from "./actions";
+import { cancelRegularization, requestRegularization, type RegularizationInput } from "./actions";
 
-export interface CalDay {
+export interface CalendarDay {
   date: string;
   status: string;
   label: string;
@@ -27,13 +28,22 @@ export interface CalDay {
   regularized: boolean;
 }
 
-export interface RegView { id: string; date: string; kind: string; status: string; by: string | null; reason: string | null }
+export interface RegularizationView { id: string; date: string; kind: string; status: string; decidedBy: string | null; reason: string | null }
 
 const CLS: Record<string, string> = { PRESENT: "present", HALF_DAY: "present", ABSENT: "absent", HOLIDAY: "holiday", LEAVE: "leave", WEEKLY_OFF: "off" };
 const CHIP: Record<string, string> = { PRESENT: "ok", HALF_DAY: "warn", ABSENT: "bad", HOLIDAY: "gold", LEAVE: "info" };
+/** Short form of a leave day's label for the narrow calendar cell ("Casual leave · half day" → "CL · ½"); other labels are unchanged. */
+const LEAVE_SHORT: Record<string, string> = { "Casual leave": "CL", "Earned leave": "EL", "Comp-off": "CO", "Leave without pay": "LWP" };
+const shortLabel = (status: string, label: string) => {
+  if (status !== "LEAVE") return label;
+  const [name, rest] = label.split(" · ");
+  const code = LEAVE_SHORT[name];
+  return code ? (rest ? `${code} · ½` : code) : label;
+};
+
 const KIND: Record<string, string> = { ABSENT: "Absent", LATE_CHECKIN: "Late check-in", MISSED_CHECKOUT: "Missed check-out", HOLIDAY_WORK: "Holiday work (comp-off)" };
 
-function countsAs(d: CalDay, t: T) {
+function countsAs(d: CalendarDay, t: T) {
   if (d.future) return "—";
   switch (d.status) {
     case "PRESENT": return d.regularized ? t("Paid day (regularized)") : t("Paid day");
@@ -47,7 +57,7 @@ function countsAs(d: CalDay, t: T) {
   }
 }
 
-function explain(d: CalDay, t: T) {
+function explain(d: CalendarDay, t: T) {
   if (d.status === "ABSENT") return d.missedCheckout ? t("Check-out is missing, so the hours don't add up to a working day. Ask for a regularization with your real check-out time.") : t("No check-in and no leave applied. It stays loss of pay unless HR, Finance or Admin approves a regularization before payroll locks.");
   if (d.status === "HALF_DAY") return t("Between 4 and 8 hours worked, so half the day is loss of pay.");
   if (d.late) return t("Checked in after the grace period. Three late marks in a month count as half a day of loss of pay.");
@@ -56,28 +66,29 @@ function explain(d: CalDay, t: T) {
   return t("Nothing to do for this day.");
 }
 
-export function AttendanceCalendar({ days, regs, initialSel, locked, monthLabel }: { days: CalDay[]; regs: RegView[]; initialSel: string; locked: boolean; monthLabel: string }) {
+export function AttendanceCalendar({ days, regs, initialSel, locked, monthLabel }: { days: CalendarDay[]; regs: RegularizationView[]; initialSel: string; locked: boolean; monthLabel: string }) {
   const toast = useToast();
   const t = useT();
+  const readOnly = useReadOnly();
   const [sel, setSel] = useState(initialSel);
   const [open, setOpen] = useState(false);
   const [busy, start] = useTransition();
   const d = days.find((x) => x.date === sel) ?? days[0];
-  const lead = (dowOf(days[0].date) + 6) % 7;
-  const cells: (CalDay | null)[] = [...Array(lead).fill(null), ...days];
+  const lead = (weekdayOf(days[0].date) + 6) % 7;
+  const cells: (CalendarDay | null)[] = [...Array(lead).fill(null), ...days];
   while (cells.length % 7) cells.push(null);
   const dayRegs = regs.filter((r) => r.date === d.date);
   const pending = dayRegs.find((r) => r.status === "PENDING");
   const settled = dayRegs.find((r) => r.status === "APPROVED" || r.status === "DECLINED");
 
-  const kinds: RegInput["kind"][] = [];
+  const kinds: RegularizationInput["kind"][] = [];
   if (d.status === "ABSENT" || d.status === "HALF_DAY") kinds.push("ABSENT");
   if (d.missedCheckout) kinds.push("MISSED_CHECKOUT");
   if (d.late) kinds.push("LATE_CHECKIN");
   if (d.offDayWork) kinds.push("HOLIDAY_WORK");
-  const canRequest = !locked && !d.future && !d.live && kinds.length > 0 && !pending;
+  const canRequest = !readOnly && !locked && !d.future && !d.live && kinds.length > 0 && !pending;
 
-  const [f, setF] = useState<RegInput>({ date: d.date, kind: kinds[0] ?? "ABSENT", proposedIn: "", proposedOut: "", reason: "" });
+  const [f, setF] = useState<RegularizationInput>({ date: d.date, kind: kinds[0] ?? "ABSENT", proposedIn: "", proposedOut: "", reason: "" });
   const openForm = () => { setF({ date: d.date, kind: kinds[0], proposedIn: "", proposedOut: "", reason: "" }); setOpen(true); };
 
   return (
@@ -90,13 +101,13 @@ export function AttendanceCalendar({ days, regs, initialSel, locked, monthLabel 
             {cells.map((c, i) =>
               c ? (
                 <button key={c.date} type="button" className={`d ${c.future && c.status !== "LEAVE" ? "none" : CLS[c.status] ?? "none"}${sel === c.date ? " sel" : ""}${c.today ? " today" : ""}`} style={{ animationDelay: `${i * 12}ms` }}
-                  onClick={() => setSel(c.date)} aria-pressed={sel === c.date} aria-label={`${fmtDL(c.date)}, ${c.label ? t(c.label) : t("no record")}${c.late ? `, ${t("late")}` : ""}`}>
-                  <span style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
+                  onClick={() => setSel(c.date)} aria-pressed={sel === c.date} aria-label={`${formatWeekdayDayMonthYear(c.date)}, ${c.label ? t(c.label) : t("no record")}${c.late ? `, ${t("late")}` : ""}`}>
+                  <span className="cal-top">
                     <b>{Number(c.date.slice(8))}</b>
-                    {c.late && <span className="chip warn" style={{ height: 20, fontSize: 10, padding: "0 7px" }}>{t("LATE")}</span>}
+                    {c.late && <span className="chip warn late-chip">{t("LATE")}</span>}
                   </span>
-                  <small>{c.future && c.status !== "LEAVE" ? "" : t(c.label)}</small>
-                  {c.hours > 0 && <small className="num" style={{ color: "var(--text)" }}>{fmtH(c.hours)}</small>}
+                  <small title={c.status === "LEAVE" ? t(c.label) : undefined}>{c.future && c.status !== "LEAVE" ? "" : c.status === "LEAVE" ? shortLabel(c.status, c.label) : t(c.label)}</small>
+                  {c.hours > 0 && <small className="num" style={{ color: "var(--text)" }}>{formatHours(c.hours)}</small>}
                 </button>
               ) : (
                 <div key={`o${i}`} className="d out" style={{ animationDelay: `${i * 12}ms` }}></div>
@@ -107,26 +118,26 @@ export function AttendanceCalendar({ days, regs, initialSel, locked, monthLabel 
         <section className="card pad enter" style={{ ["--i" as string]: 7, flex: "1 1 320px", position: "sticky", top: 96 }} aria-live="polite">
           <span className="spot" aria-hidden="true"></span>
           <span className="eyebrow">{t("Day detail")}</span>
-          <h2 className="serif" style={{ fontSize: 30, margin: "10px 0 10px", fontWeight: 600 }}>{fmtDL(d.date)}</h2>
+          <h2 className="serif" style={{ fontSize: 30, margin: "10px 0 10px", fontWeight: 600 }}>{formatWeekdayDayMonthYear(d.date)}</h2>
           <span className={`chip ${CHIP[d.status] ?? "neutral"}`}>{d.future && d.status !== "LEAVE" ? t("Upcoming") : d.label ? t(d.label) : t("No record yet")}</span>
           <div style={{ marginTop: 16 }}>
             <div className="kv"><span className="muted">{t("First check-in")}</span><b className="num">{d.firstIn ?? "—"}</b></div>
             <div className="kv"><span className="muted">{t("Last check-out")}</span><b className="num">{d.lastOut ?? (d.live && d.firstIn ? t("Working now") : "—")}</b></div>
-            <div className="kv"><span className="muted">{t("Worked")}</span><b className="num">{d.hours ? fmtH(d.hours) : "—"}</b></div>
+            <div className="kv"><span className="muted">{t("Worked")}</span><b className="num">{d.hours ? formatHours(d.hours) : "—"}</b></div>
             <div className="kv"><span className="muted">{t("Counts as")}</span><b>{countsAs(d, t)}</b></div>
           </div>
           <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.65, margin: "14px 0" }}>{d.future ? t("This day hasn't happened yet.") : explain(d, t)}</p>
           {pending && (
             <div className="col" style={{ gap: 8 }}>
               <div className="chip warn" style={{ height: "auto", padding: "10px 12px", whiteSpace: "normal" }}>{t("{kind} regularization pending — waiting for HR, Finance or Admin", { kind: t(KIND[pending.kind]) })}</div>
-              <button className="btn btn-sm btn-ghost" style={{ alignSelf: "flex-start" }} disabled={busy} onClick={() => start(async () => { const r = await cancelRegularization(pending.id); toast(r.ok ? r.msg! : r.error, r.ok ? "ok" : "bad"); })}>{t("Withdraw request")}</button>
+              {!readOnly && <button className="btn btn-sm btn-ghost" style={{ alignSelf: "flex-start" }} disabled={busy} onClick={() => start(async () => { const r = await cancelRegularization(pending.id); toast(r.ok ? r.msg! : r.error, r.ok ? "ok" : "bad"); })}>{t("Withdraw request")}</button>}
             </div>
           )}
           {!pending && settled && (
             <div className={`chip ${settled.status === "APPROVED" ? "ok" : "bad"}`} style={{ height: "auto", padding: "10px 12px", whiteSpace: "normal", marginBottom: 10 }}>
               {settled.status === "APPROVED"
-                ? (settled.by ? t("{kind} regularization approved by {by}", { kind: t(KIND[settled.kind]), by: settled.by }) : t("{kind} regularization approved", { kind: t(KIND[settled.kind]) }))
-                : (settled.by ? t("{kind} regularization declined by {by}", { kind: t(KIND[settled.kind]), by: settled.by }) : t("{kind} regularization declined", { kind: t(KIND[settled.kind]) }))}
+                ? (settled.decidedBy ? t("{kind} regularization approved by {by}", { kind: t(KIND[settled.kind]), by: settled.decidedBy }) : t("{kind} regularization approved", { kind: t(KIND[settled.kind]) }))
+                : (settled.decidedBy ? t("{kind} regularization declined by {by}", { kind: t(KIND[settled.kind]), by: settled.decidedBy }) : t("{kind} regularization declined", { kind: t(KIND[settled.kind]) }))}
             </div>
           )}
           {canRequest && <button className="btn btn-gold" style={{ width: "100%" }} onClick={openForm}>{t("Request regularization")}</button>}
@@ -135,7 +146,7 @@ export function AttendanceCalendar({ days, regs, initialSel, locked, monthLabel 
       </div>
 
       {open && (
-        <Modal title={t("Regularize this day")} eyebrow={fmtDL(d.date)} size="sm" onClose={() => setOpen(false)}
+        <Modal title={t("Regularize this day")} eyebrow={formatWeekdayDayMonthYear(d.date)} size="sm" onClose={() => setOpen(false)}
           footer={<>
             <span className="faint" style={{ fontSize: 12.5 }}>{t("Goes to HR, Finance and Admin — any one can approve.")}</span>
             <div className="row" style={{ gap: 10 }}>
@@ -148,7 +159,7 @@ export function AttendanceCalendar({ days, regs, initialSel, locked, monthLabel 
           </>}>
           <div className="col" style={{ gap: 14 }}>
             <label className="field">{t("Request type")}
-              <select value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value as RegInput["kind"] })}>{kinds.map((k) => <option key={k} value={k}>{t(KIND[k])}</option>)}</select>
+              <select value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value as RegularizationInput["kind"] })}>{kinds.map((k) => <option key={k} value={k}>{t(KIND[k])}</option>)}</select>
             </label>
             {(f.kind === "ABSENT" || f.kind === "MISSED_CHECKOUT" || f.kind === "LATE_CHECKIN") && (
               <div className="grid2">

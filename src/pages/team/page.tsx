@@ -1,23 +1,24 @@
 import { PageHeader } from "@/components/PageHeader";
-import { ClearFilters, Pending, SearchBox, SortTh } from "@/components/table/Table";
+import { ClearFilters, Pending, SearchBox, SortableHeader } from "@/components/table/Table";
 import { PageLoading, useData, usePage } from "@/lib/page";
-import { qs } from "@/lib/api";
-import { avc, DOW, fmtD, initials, isoToDate } from "@/lib/format";
+import { toQueryString } from "@/lib/api";
+import { WEEKDAY_ABBREVIATIONS, formatDayMonth, isoToDate } from "@/lib/format";
+import { Avatar } from "@/components/Avatar";
 
 
 type TodayStatus = { label: string; tone: "ok" | "info" | "warn" | "gold" | "neutral" };
 type Team = {
   size: number; counts: { in: number; leave: number; notIn: number };
-  rows: { id: string; code: string; fullName: string; designation: string; shift: string; st: TodayStatus }[];
+  rows: { id: string; photo?: number | null; code: string; fullName: string; designation: string; shift: string; status: TodayStatus }[];
   days: string[]; away: { id: string; fullName: string; cells: ("" | "lv" | "pend" | "hol")[] }[];
 };
 
 /** Anyone with active direct reports. Read-only — approvals stay with HR (REQUIREMENTS §5.13). */
 export default function TeamPage() {
-  const { t, sp } = usePage();
-  const d = useData<Team>(`/api/team${qs(sp)}`);
-  if (!d) return <PageLoading />;
-  const { size, counts, rows, days, away } = d;
+  const { t, searchParams } = usePage();
+  const data = useData<Team>(`/api/team${toQueryString(searchParams)}`);
+  if (!data) return <PageLoading />;
+  const { size, counts, rows, days, away } = data;
 
   return (
     <div className="col" style={{ gap: 24 }}>
@@ -38,21 +39,21 @@ export default function TeamPage() {
             <table className="t">
               <thead>
                 <tr>
-                  <SortTh k="name" dflt="name">{t("Member")}</SortTh>
-                  <SortTh k="id" dflt="name">{t("ID")}</SortTh>
-                  <SortTh k="title" dflt="name">{t("Designation")}</SortTh>
+                  <SortableHeader k="name" dflt="name">{t("Member")}</SortableHeader>
+                  <SortableHeader k="id" dflt="name">{t("ID")}</SortableHeader>
+                  <SortableHeader k="title" dflt="name">{t("Designation")}</SortableHeader>
                   <th>{t("Shift")}</th>
-                  <SortTh k="st" dflt="name">{t("Today")}</SortTh>
+                  <SortableHeader k="status" dflt="name">{t("Today")}</SortableHeader>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((m, i) => (
                   <tr key={m.id} style={{ animationDelay: `${i * 50}ms` }}>
-                    <td><div className="person"><span className={`avatar ${avc(initials(m.fullName))}`}>{initials(m.fullName)}</span><div><b>{m.fullName}</b><small>{m.designation}</small></div></div></td>
+                    <td><div className="person"><Avatar id={m.id} name={m.fullName} photo={m.photo} /><div><b>{m.fullName}</b><small>{m.designation}</small></div></div></td>
                     <td className="muted num">{m.code}</td>
                     <td className="muted">{m.designation}</td>
                     <td className="muted">{m.shift}</td>
-                    <td><span className={`chip ${m.st.tone}`}>{t(m.st.label)}</span></td>
+                    <td><span className={`chip ${m.status.tone}`}>{t(m.status.label)}</span></td>
                   </tr>
                 ))}
               </tbody>
@@ -64,12 +65,12 @@ export default function TeamPage() {
       <section className="card pad enter" style={{ ["--i" as string]: 6 }}>
         <span className="spot"></span>
         <div className="card-h">
-          <h3>{t("Who's away · week of {date}", { date: fmtD(days[0]) })}</h3>
+          <h3>{t("Who's away · week of {date}", { date: formatDayMonth(days[0]) })}</h3>
           <span className="row" style={{ gap: 12, fontSize: 12 }}><span className="chip info">{t("Approved leave")}</span><span className="chip warn">{t("Pending")}</span><span className="chip gold">{t("Holiday")}</span></span>
         </div>
         <div className="table-wrap">
           <table className="t" style={{ minWidth: 640 }}>
-            <thead><tr><th>{t("Member")}</th>{days.map((d) => <th key={d} style={{ textAlign: "center" }}>{t(DOW[isoToDate(d).getUTCDay()])} {Number(d.slice(8))}</th>)}</tr></thead>
+            <thead><tr><th>{t("Member")}</th>{days.map((d) => <th key={d} style={{ textAlign: "center" }}>{t(WEEKDAY_ABBREVIATIONS[isoToDate(d).getUTCDay()])} {Number(d.slice(8))}</th>)}</tr></thead>
             <tbody>
               {away.map((r) => (
                 <tr key={r.id}>

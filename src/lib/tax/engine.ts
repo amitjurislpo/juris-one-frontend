@@ -83,7 +83,7 @@ export function computeTax(gross: number, deductions: number, c: TaxYearConfig):
 
 // ───────────────────────── old-regime deductions ─────────────────────────
 
-export interface Caps { c80C: number; c80CCD1B: number; c80DSelf: number; c80DParents: number; c80DParentsSenior: number; c24B: number; c80TTA: number }
+export interface DeductionCaps { c80C: number; c80CCD1B: number; c80DSelf: number; c80DParents: number; c80DParentsSenior: number; c24B: number; c80TTA: number }
 
 export interface Declared {
   rent: number; metro: boolean; parentsSenior: boolean;
@@ -96,7 +96,7 @@ export const NO_DECLARATIONS: Declared = { rent: 0, metro: false, parentsSenior:
 export interface Deductions { total: number; lines: [string, number][]; hraExemption: number; c80C: number }
 
 /** HRA exemption = least of (HRA received, rent − 10% of Basic, 50% metro / 40% of Basic); caps per section. */
-export function oldRegimeDeductions(basicAnnual: number, hraAnnual: number, epfAnnual: number, d: Declared, caps: Caps, labels: Record<string, string> = {}): Deductions {
+export function oldRegimeDeductions(basicAnnual: number, hraAnnual: number, epfAnnual: number, d: Declared, caps: DeductionCaps, labels: Record<string, string> = {}): Deductions {
   const L = (k: string, dflt: string) => labels[k] ?? dflt;
   const hra = d.rent ? Math.max(0, Math.min(hraAnnual, d.rent - 0.1 * basicAnnual, (d.metro ? 0.5 : 0.4) * basicAnnual)) : 0;
   const c80C = Math.min(caps.c80C, epfAnnual + d.ppf + d.elss + d.lic + d.ssy + d.tuition + d.hlp + d.nsc);
@@ -120,7 +120,7 @@ export function oldRegimeDeductions(basicAnnual: number, hraAnnual: number, epfA
 // ───────────────────────── monthly TDS ─────────────────────────
 
 /** FY months from April: "2026-09" → index 5; remaining months including the current one. */
-export function fyOf(ym: string): { fy: string; index: number; remainingInclCurrent: number } {
+export function financialYearOf(ym: string): { fy: string; index: number; remainingInclCurrent: number } {
   const [y, m] = ym.split("-").map(Number);
   const start = m >= 4 ? y : y - 1;
   const index = (m - 4 + 12) % 12;

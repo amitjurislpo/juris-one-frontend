@@ -15,11 +15,7 @@ export default function LoginPage() {
   if (user) return <Navigate to={landingPath(user)} replace />;
   const notice = q.signedout
     ? t("Signed out securely.")
-    : q.reset
-      ? t("Password updated. Sign in with your new password.")
-      : q.activated
-        ? t("Your account is ready. Sign in with your new password.")
-        : undefined;
+    : undefined;
   return (
     <AuthFrame>
       <LoginForm notice={notice} next={q.next} devCode={DEV_CODE} />

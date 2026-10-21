@@ -35,7 +35,7 @@ export interface DayInput {
   tz: string;
   shift: ShiftDef;
   policy: Policy;
-  doj: string;
+  dateOfJoining: string;
   exitDate: string | null;
   trackingStart: string;
   holiday: string | null;
@@ -91,10 +91,10 @@ function localParts(at: Date, tz: string): { date: string; minutes: number; dow:
 }
 
 export const addDays = (iso: string, n: number) => new Date(Date.parse(`${iso}T00:00:00Z`) + n * 86400_000).toISOString().slice(0, 10);
-export const dowOf = (iso: string) => new Date(`${iso}T00:00:00Z`).getUTCDay();
+export const weekdayOf = (iso: string) => new Date(`${iso}T00:00:00Z`).getUTCDay();
 
 /** The instant of a local wall-clock time on `date` in `tz`. */
-export function atLocal(date: string, hm: string, tz: string): Date {
+export function localDateTime(date: string, hm: string, tz: string): Date {
   const [y, m, d] = date.split("-").map(Number);
   const [h, mi] = hm.split(":").map(Number);
   return new Date(new TZDate(y, m - 1, d, h, mi, 0, tz).getTime());
@@ -111,9 +111,9 @@ export function workDateOf(at: Date, shift: ShiftDef, tz: string): string {
 
 /** Shift start, grace deadline and end for a work date (end rolls to the next day for night shifts). */
 export function shiftWindow(date: string, shift: ShiftDef, tz: string) {
-  const start = atLocal(date, shift.startLocal, tz);
+  const start = localDateTime(date, shift.startLocal, tz);
   const crosses = toMin(shift.endLocal) <= toMin(shift.startLocal);
-  const end = atLocal(crosses ? addDays(date, 1) : date, shift.endLocal, tz);
+  const end = localDateTime(crosses ? addDays(date, 1) : date, shift.endLocal, tz);
   return { start, graceUntil: new Date(start.getTime() + shift.graceMinutes * 60_000), end };
 }
 
@@ -152,7 +152,7 @@ export function computeDay(i: DayInput): DayResult {
   };
   if (i.date < i.trackingStart) return { ...base, status: "NOT_TRACKED", label: "Not tracked" };
   if (i.exitDate && i.date > i.exitDate) return { ...base, status: "AFTER_EXIT", label: "After exit" };
-  if (i.date < i.doj) return { ...base, status: "BEFORE_JOINING", label: "Before joining" };
+  if (i.date < i.dateOfJoining) return { ...base, status: "BEFORE_JOINING", label: "Before joining" };
 
   const win = shiftWindow(i.date, i.shift, i.tz);
   const dayOver = i.now.getTime() >= win.end.getTime() + i.policy.absenceJobBufferMinutes * 60_000;
@@ -169,7 +169,7 @@ export function computeDay(i: DayInput): DayResult {
   };
 
   // Off days: never leave or LOP; work on them is a comp-off candidate.
-  const off = i.holiday ?? (i.policy.weeklyOffs.includes(dowOf(i.date)) ? "Weekly off" : null);
+  const off = i.holiday ?? (i.policy.weeklyOffs.includes(weekdayOf(i.date)) ? "Weekly off" : null);
   if (off) {
     return { ...base, ...punchFacts, late: false, lateWaived: false, status: i.holiday ? "HOLIDAY" : "WEEKLY_OFF", label: off, offDayWork: w.minutes >= i.policy.halfDayHours * 60 };
   }

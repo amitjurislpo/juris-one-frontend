@@ -17,11 +17,11 @@ export interface BusinessInput {
   address?: string;
   gstin?: string;
 }
-export interface OwnerInput { name: string; email: string; password?: string }
+export interface OwnerInput { name: string; email: string }
 export interface SubscriptionInput { planId: string; startsOn?: string; endsOn?: string; price?: number | null; notes?: string }
 export interface PlanInput { name: string; description?: string; price: number; periodMonths: number; maxEmployees: number | null; modules: string[]; active: boolean }
 
-export async function createBusiness(i: { business: BusinessInput; subscription?: SubscriptionInput; owner?: OwnerInput }): Promise<ActionResult<{ id: string }>> {
+export async function createBusiness(i: { business: BusinessInput; subscription?: SubscriptionInput; owner?: OwnerInput; roles?: string[] }): Promise<ActionResult<{ id: string }>> {
   return apiAction("POST", "/api/platform/businesses", i, PAGES);
 }
 
@@ -37,8 +37,8 @@ export async function addOwner(id: string, i: OwnerInput): Promise<ActionResult<
   return apiAction("POST", `/api/platform/businesses/${enc(id)}/owners`, i, [...PAGES, `/platform/${id}`]);
 }
 
-export async function setOwnerAccess(id: string, ownerId: string, on: boolean): Promise<ActionResult> {
-  return apiAction("PUT", `/api/platform/businesses/${enc(id)}/owners/${enc(ownerId)}/access`, { on }, [`/platform/${id}`]);
+export async function setOwnerAccess(id: string, ownerId: string, enabled: boolean): Promise<ActionResult> {
+  return apiAction("PUT", `/api/platform/businesses/${enc(id)}/owners/${enc(ownerId)}/access`, { enabled }, [`/platform/${id}`]);
 }
 
 export async function addSubscription(id: string, i: SubscriptionInput): Promise<ActionResult<{ id: string }>> {
@@ -65,4 +65,32 @@ export async function grantModule(businessId: string, i: GrantInput): Promise<Ac
 
 export async function revokeModule(businessId: string, grantId: string): Promise<ActionResult> {
   return apiAction("DELETE", `/api/platform/modules/${enc(grantId)}`, undefined, [...PAGES, `/platform/${businessId}`]);
+}
+
+export interface RoleTemplateInput { name: string; permissions: string[]; assignable: string[]; active?: boolean }
+
+const TEMPLATE_PAGES = ["/platform/roles", ...PAGES];
+
+export async function createRoleTemplate(i: RoleTemplateInput): Promise<ActionResult<{ key: string }>> {
+  return apiAction("POST", "/api/platform/role-templates", i, TEMPLATE_PAGES);
+}
+
+export async function updateRoleTemplate(key: string, i: RoleTemplateInput): Promise<ActionResult> {
+  return apiAction("PUT", `/api/platform/role-templates/${enc(key)}`, i, TEMPLATE_PAGES);
+}
+
+export async function deleteRoleTemplate(key: string): Promise<ActionResult> {
+  return apiAction("DELETE", `/api/platform/role-templates/${enc(key)}`, undefined, TEMPLATE_PAGES);
+}
+
+export async function addBusinessRole(businessId: string, templateKey: string): Promise<ActionResult<{ id: string }>> {
+  return apiAction("POST", `/api/platform/businesses/${enc(businessId)}/roles`, { templateKey }, [`/platform/${businessId}`]);
+}
+
+export async function removeBusinessRole(businessId: string, roleId: string): Promise<ActionResult> {
+  return apiAction("DELETE", `/api/platform/businesses/${enc(businessId)}/roles/${enc(roleId)}`, undefined, [`/platform/${businessId}`]);
+}
+
+export async function syncBusinessRole(businessId: string, roleId: string): Promise<ActionResult> {
+  return apiAction("POST", `/api/platform/businesses/${enc(businessId)}/roles/${enc(roleId)}/template-syncs`, undefined, [`/platform/${businessId}`]);
 }

@@ -67,7 +67,7 @@ export function LoginForm({ notice, next, devCode }: { notice?: string; next?: s
         </label>
         {sent.error && <div className="err" role="alert">{sent.error}</div>}
         <button className="btn btn-gold btn-lg" type="submit" disabled={sending} style={{ width: "100%" }}>
-          {sending ? t("Sending code…") : t("Send code")}
+          {sending ? t("Sending code…") : t("Login")}
           {!sending && <Icon n="arrow" s={16} />}
         </button>
       </form>
