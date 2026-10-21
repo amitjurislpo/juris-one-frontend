@@ -1,6 +1,6 @@
 import { apiCall, apiData, navigate } from "@/lib/api";
 import { queryClient } from "@/lib/query";
-import { fetchMe, ME_KEY } from "@/lib/session";
+import { fetchMe, CURRENT_USER_QUERY_KEY } from "@/lib/session";
 
 import type { FormState } from "./form-state";
 
@@ -18,7 +18,7 @@ function leave(to: string) {
 async function enter(to: string) {
   queryClient.clear();
   await Promise.all([
-    queryClient.fetchQuery({ queryKey: ME_KEY, queryFn: fetchMe }),
+    queryClient.fetchQuery({ queryKey: CURRENT_USER_QUERY_KEY, queryFn: fetchMe }),
     queryClient.prefetchQuery({ queryKey: ["api", "/api/shell"], queryFn: () => apiData("/api/shell") }),
   ]);
   navigate(to);
@@ -28,7 +28,6 @@ export async function loginAction(_prev: FormState, form: FormData): Promise<For
   const identifier = String(form.get("identifier") ?? "");
   const r = await apiCall<{ redirect: string }>("POST", "/api/auth/session", {
     identifier,
-    password: String(form.get("password") ?? ""),
     otp: String(form.get("otp") ?? ""),
     remember: form.get("remember") === "on",
     next: String(form.get("next") ?? ""),
@@ -50,15 +49,3 @@ export async function logoutAction() {
   leave("/login?signedout=1");
 }
 
-export async function forgotAction(_prev: FormState, form: FormData): Promise<FormState> {
-  const r = await apiCall("POST", "/api/auth/password-resets", { identifier: String(form.get("identifier") ?? "") });
-  return r.body.ok ? { ok: r.body.msg } : { error: r.body.error };
-}
-
-export async function setPasswordAction(_prev: FormState, form: FormData): Promise<FormState> {
-  const r = await apiCall<{ redirect: string }>("PUT", "/api/auth/password",
-    Object.fromEntries(["token", "purpose", "password", "confirm"].map((k) => [k, String(form.get(k) ?? "")])));
-  if (!r.body.ok) return { error: r.body.error };
-  leave(r.body.data!.redirect);
-  return {};
-}

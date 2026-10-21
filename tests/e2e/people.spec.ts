@@ -21,7 +21,7 @@ test.describe("people operations", () => {
   test.beforeAll(cleanup);
   test.afterAll(cleanup);
 
-  test("HR Manager adds an India employee in three steps; Finance is notified and an invite is sent", async ({ page }) => {
+  test("HR Manager adds an India employee in three steps; Finance is notified", async ({ page }) => {
     await login(page, "JC-012");
     await expectLanded(page, "/home");
     await page.goto("/employees");
@@ -69,8 +69,6 @@ test.describe("people operations", () => {
     expect(e.aadhaar_last4).toBe("0123");
     const notes = await sql(`SELECT 1 FROM notifications n JOIN employees x ON x.id = n.employee_id WHERE x.code = 'JC-004' AND n.text LIKE '%Meera Joshi%salary structure pending%'`);
     expect(notes.length).toBe(1);
-    const mails = await sql(`SELECT 1 FROM email_outbox WHERE "to" = $1 AND subject LIKE 'Welcome to JurisOne%'`, [NEW_EMAIL]);
-    expect(mails.length).toBe(1);
     const auditRows = await sql(`SELECT 1 FROM audit_log WHERE action = 'employee.create' AND entity_id = (SELECT id::text FROM employees WHERE email = $1)`, [NEW_EMAIL]);
     expect(auditRows.length).toBe(1);
 
@@ -94,7 +92,7 @@ test.describe("people operations", () => {
   test("a manager with direct reports can't be exited until they're reassigned", async ({ page }) => {
     await login(page, "JC-012");
     await expectLanded(page, "/home");
-    await page.goto("/employees?q=Nazneen");
+    await page.goto("/employees?search=Nazneen");
     await page.getByRole("button", { name: "Nazneen Khan" }).click();
     await page.getByRole("button", { name: "Mark as past employee" }).click();
     await page.getByRole("button", { name: "Mark as exited" }).click();
@@ -104,7 +102,7 @@ test.describe("people operations", () => {
   test("access toggle: HR disables an employee; the owner (admin) isn't in the list at all", async ({ page }) => {
     await login(page, "JC-012");
     await expectLanded(page, "/home");
-    await page.goto("/employees?q=Naman");
+    await page.goto("/employees?search=Naman");
     await page.getByRole("switch", { name: /portal access for Naman Tyagi/ }).click();
     await expect(toast(page)).toContainText("Naman Tyagi can no longer sign in");
     const [row] = await sql<{ portal_access: boolean }>(`SELECT portal_access FROM employees WHERE code = 'JC-049'`);
@@ -112,10 +110,10 @@ test.describe("people operations", () => {
     const logged = await sql(`SELECT 1 FROM audit_log WHERE action = 'employee.access_toggle' AND entity_id = (SELECT id::text FROM employees WHERE code = 'JC-049')`);
     expect(logged.length).toBeGreaterThan(0);
 
-    await page.goto("/employees?q=Sana");
+    await page.goto("/employees?search=Sana");
     await expect(page.getByRole("button", { name: "Sana Kapoor" })).toHaveCount(0); // (she may still show as someone's manager)
     // nor is the signed-in person
-    await page.goto("/employees?q=JC-012");
+    await page.goto("/employees?search=JC-012");
     await expect(page.locator("tbody tr")).toHaveCount(0);
   });
 
@@ -128,7 +126,7 @@ test.describe("people operations", () => {
     await expect(page.getByRole("button", { name: "Vikas Rao" })).toBeVisible();
     await page.getByLabel("Status").selectOption("Current");
     await page.getByRole("button", { name: /^Employee/ }).click(); // sort by name (asc → desc)
-    await expect(page).toHaveURL(/sort=name&dir=desc/);
+    await expect(page).toHaveURL(/sort=name&sortDirection=desc/);
     // the rows re-sort a moment after the URL changes: poll until the first name sorts after "S"
     await expect.poll(async () => (await page.locator("tbody tr").first().locator(".person b").innerText()).localeCompare("S")).toBeGreaterThan(0);
   });
@@ -136,7 +134,7 @@ test.describe("people operations", () => {
   test("Finance Manager adds into Finance only, as Finance Executive, and sees salary", async ({ page }) => {
     await login(page, "JC-004");
     await expectLanded(page, "/home");
-    await page.goto("/employees?q=Amit");
+    await page.goto("/employees?search=Amit");
     await page.getByRole("button", { name: "Amit Jaspal" }).click();
     await expect(page.getByRole("dialog", { name: "Employee profile" }).getByText("₹1,50,000")).toBeVisible();
     await page.keyboard.press("Escape");
@@ -221,42 +219,22 @@ test.describe("directory, departments, roles, team", () => {
     await expect(page.getByRole("button", { name: "Delete Technology" })).toHaveCount(0);
   });
 
-  test("roles: the owner toggles a permission (effective immediately) and manages custom roles", async ({ page, browser }) => {
+  test("roles: the owner can look but not change (roles are set up by JurisOne)", async ({ page }) => {
     await login(page, OWNER);
     await expectLanded(page, "/overview");
     await page.goto("/roles");
+    await expect(page.getByText("Roles are set up for your business by JurisOne.")).toBeVisible();
     await page.getByRole("button", { name: /^Employee \d/ }).click();
-    const attAll = page.getByRole("switch", { name: "View everyone’s attendance (with time zones)" });
-    await expect(attAll).toHaveAttribute("aria-checked", "false");
-    await attAll.click();
-    await expect(toast(page)).toContainText("granted");
-
-    // an employee now sees the register — permissions are read per request
-    const emp = await browser.newPage();
-    await login(emp, "JC-058");
-    await expectLanded(emp, "/home");
-    await expect(emp.getByRole("link", { name: "Attendance register" })).toBeVisible();
-
-    await attAll.click();
-    await expect(toast(page)).toContainText("removed");
-    await emp.reload();
-    await expect(emp.getByRole("link", { name: "Attendance register" })).toHaveCount(0);
-    await emp.close();
-
-    // the Owner role is locked
-    await page.getByRole("button", { name: /^Owner \d/ }).click();
-    await expect(page.getByRole("switch").first()).toBeDisabled();
-
-    // custom role: create from a copy, then delete
-    await page.getByRole("button", { name: "New role" }).click();
-    await page.getByLabel("Role name *").fill("E2E Payroll Auditor");
-    await page.getByLabel("Start from").selectOption({ label: "Finance Executive" });
-    await page.getByRole("button", { name: "Create role" }).click();
-    await expect(toast(page)).toContainText("E2E Payroll Auditor");
-    await expect(page.getByRole("switch", { name: "View & edit payroll" })).toHaveAttribute("aria-checked", "true");
-    await page.getByRole("button", { name: "Delete role" }).click();
-    await page.getByRole("dialog").getByRole("button", { name: "Delete role" }).click();
-    await expect(toast(page)).toContainText("deleted");
+    // nothing to change: no new/delete role, no enabled permission switch
+    await expect(page.getByRole("button", { name: "New role" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Delete role" })).toHaveCount(0);
+    await expect(page.locator('[role="switch"]:not([disabled])')).toHaveCount(0);
+    // ...and the API refuses it as well (only the super admin changes roles)
+    const roles = await (await page.request.get("/api/roles")).json();
+    const employee = roles.data.find((r: { key: string }) => r.key === "employee");
+    expect(employee.canEdit).toBe(false);
+    const res = await page.request.put(`/api/roles/${employee.id}/permissions/att.all`, { headers: { origin: new URL(page.url()).origin } });
+    expect(res.status()).toBe(403);
 
     // policies matrix reflects the roles table
     await page.goto("/settings");

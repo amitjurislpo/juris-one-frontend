@@ -88,7 +88,7 @@ export const LOCATIONS = [
 ] as const;
 
 // ─── identity validation ───
-export const PAN_RE = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
+export const PAN_PATTERN = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
 const digits = (s: string) => s.replace(/\D/g, "");
 export const validAadhaar = (s: string) => digits(s).length === 12;
 export const validUan = (s: string) => digits(s).length === 12;

@@ -6,6 +6,7 @@ import { useToast } from "@/components/shell/Toasts";
 import { Modal } from "@/components/ui/Modal";
 import type { LetterField, LetterTemplateRow, LetterType } from "@/lib/api-types";
 import { useT } from "@/lib/i18n/client";
+import { useReadOnly } from "@/lib/session";
 import { createTemplate, issueLetter, previewLetter, templateDetail, updateTemplate } from "./actions";
 
 export const TYPE_LABEL: Record<LetterType, string> = {
@@ -16,6 +17,7 @@ export interface EmployeeChoice { id: string; code: string; name: string; design
 
 /** Pick a template and an employee, preview the text, issue it. */
 export function IssueLetter({ templates, employees, canSalary }: { templates: LetterTemplateRow[]; employees: EmployeeChoice[]; canSalary: boolean }) {
+  const readOnly = useReadOnly();
   const t = useT();
   const toast = useToast();
   const router = useRouter();
@@ -36,6 +38,7 @@ export function IssueLetter({ templates, employees, canSalary }: { templates: Le
     if (r.ok) { toast(r.msg!); setPreview(null); setF({ ...f, lastWorkingDate: "" }); router.refresh(); } else setErr(r.error);
   });
 
+  if (readOnly) return null;
   return (
     <section className="card enter" style={{ ["--i" as string]: 1, padding: 18 }}>
       <div className="card-h"><h3>{t("Issue a letter")}</h3></div>
@@ -140,12 +143,13 @@ function TemplateEditor({ id, fields, onClose }: { id: string | null; fields: Le
 
 export function TemplatesTable({ templates, fields }: { templates: LetterTemplateRow[]; fields: LetterField[] }) {
   const t = useT();
+  const readOnly = useReadOnly();
   const [editing, setEditing] = useState<string | null | undefined>(undefined); // undefined = closed, null = new
   return (
     <section className="card enter" style={{ ["--i" as string]: 2 }}>
       <div className="card-h" style={{ padding: "16px 18px 0" }}>
         <h3>{t("Templates")}</h3>
-        <button className="btn btn-sm" onClick={() => setEditing(null)}><Icon n="plus" s={14} />{t("New template")}</button>
+        {!readOnly && <button className="btn btn-sm" onClick={() => setEditing(null)}><Icon n="plus" s={14} />{t("New template")}</button>}
       </div>
       <div className="table-wrap">
         <table className="t">
@@ -160,7 +164,7 @@ export function TemplatesTable({ templates, fields }: { templates: LetterTemplat
                   {tp.needsSalary && <span className="chip warn nodot" style={{ marginLeft: 6 }}>{t("States salary")}</span>}
                 </td>
                 <td className="num hide-sm">v{tp.version}</td>
-                <td className="r"><button className="btn btn-sm" onClick={() => setEditing(tp.id)}>{t("Edit")}</button></td>
+                <td className="r">{!readOnly && <button className="btn btn-sm" onClick={() => setEditing(tp.id)}>{t("Edit")}</button>}</td>
               </tr>
             ))}
           </tbody>

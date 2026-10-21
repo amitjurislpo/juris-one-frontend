@@ -5,11 +5,12 @@ import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
 import { Drawer } from "@/components/ui/Modal";
 import { useT } from "@/lib/i18n/client";
-import { inr, ymLabel } from "@/lib/format";
+import { useReadOnly } from "@/lib/session";
+import { formatRupees, formatMonthLabel } from "@/lib/format";
 import type { TaxProjection } from "@/lib/api-types";
 import { overrideRegime, setPreviousEmployer, taxDetail } from "./actions";
 
-const rp = (rupees: number) => inr(rupees * 100);
+const rp = (rupees: number) => formatRupees(rupees * 100);
 const pct = (r: number) => `${Math.round(r * 100)}%`;
 
 /** A table row that opens the computation drawer. */
@@ -28,6 +29,7 @@ function TaxDrawer({ id, onClose }: { id: string; onClose: () => void }) {
   const router = useRouter();
   const toast = useToast();
   const tr = useT();
+  const readOnly = useReadOnly();
   const [d, setD] = useState<{ month: string; tax: TaxProjection; name: string; code: string; title: string } | null>(null);
   const [prev, setPrev] = useState({ income: "", tds: "" });
   const [busy, start] = useTransition();
@@ -57,12 +59,12 @@ function TaxDrawer({ id, onClose }: { id: string; onClose: () => void }) {
         <>
           <div className="field">{tr("Tax regime")} <span className="hint">{t.regimeOverridden ? tr("Employee's choice — currently set by Finance; Finance can override") : tr("Employee's choice; Finance can override")}</span>
             <div className="seg" style={{ width: "100%" }} role="group" aria-label={tr("Tax regime")}>
-              {(["NEW", "OLD"] as const).map((v) => <button key={v} type="button" className={t.regime === v ? "on" : undefined} aria-pressed={t.regime === v} disabled={busy} onClick={() => t.regime !== v && act(overrideRegime(id, v))}>{v === "NEW" ? tr("New regime") : tr("Old regime")}</button>)}
+              {(["NEW", "OLD"] as const).map((v) => <button key={v} type="button" className={t.regime === v ? "on" : undefined} aria-pressed={t.regime === v} disabled={busy || readOnly} onClick={() => t.regime !== v && act(overrideRegime(id, v))}>{v === "NEW" ? tr("New regime") : tr("Old regime")}</button>)}
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
             <span className="display" style={{ fontSize: 44, lineHeight: 1 }}>{rp(t.monthly)}</span>
-            <span className="muted">{tr(t.monthsLeft === 1 ? "TDS / month · {n} month left · {month}" : "TDS / month · {n} months left · {month}", { n: t.monthsLeft, month: ymLabel(d.month) })}</span>
+            <span className="muted">{tr(t.monthsLeft === 1 ? "TDS / month · {n} month left · {month}" : "TDS / month · {n} months left · {month}", { n: t.monthsLeft, month: formatMonthLabel(d.month) })}</span>
           </div>
           {(["NEW", "OLD"] as const).map((v) => {
             const x = v === "NEW" ? t.newRegime : t.oldRegime;
@@ -93,10 +95,10 @@ function TaxDrawer({ id, onClose }: { id: string; onClose: () => void }) {
           <div className="card pad" style={{ boxShadow: "none" }}>
             <div className="eyebrow" style={{ marginBottom: 8 }}>{tr("Previous employer this FY (Form 12B)")}</div>
             <div className="grid2">
-              <label className="field">{tr("Income (₹)")}<input type="number" min={0} value={prev.income} onChange={(e) => setPrev({ ...prev, income: e.target.value })} /></label>
-              <label className="field">{tr("TDS deducted (₹)")}<input type="number" min={0} value={prev.tds} onChange={(e) => setPrev({ ...prev, tds: e.target.value })} /></label>
+              <label className="field">{tr("Income (₹)")}<input type="number" min={0} value={prev.income} disabled={readOnly} onChange={(e) => setPrev({ ...prev, income: e.target.value })} /></label>
+              <label className="field">{tr("TDS deducted (₹)")}<input type="number" min={0} value={prev.tds} disabled={readOnly} onChange={(e) => setPrev({ ...prev, tds: e.target.value })} /></label>
             </div>
-            <button className="btn btn-sm" style={{ marginTop: 10 }} disabled={busy} onClick={() => act(setPreviousEmployer({ employeeId: id, income: Math.round(Number(prev.income) || 0), tds: Math.round(Number(prev.tds) || 0) }))}>{tr("Save")}</button>
+            {!readOnly && <button className="btn btn-sm" style={{ marginTop: 10 }} disabled={busy} onClick={() => act(setPreviousEmployer({ employeeId: id, income: Math.round(Number(prev.income) || 0), tds: Math.round(Number(prev.tds) || 0) }))}>{tr("Save")}</button>}
           </div>
         </>
       )}

@@ -6,7 +6,7 @@ import { apiAction, apiCall } from "@/lib/api";
 const PAGES = ["/proofs", "/tax", "/declare", "/payroll"];
 const enc = encodeURIComponent;
 
-export interface ProofItem { id: string; key: string; label: string; sec: string; amount: number; status: string; proofName: string | null; hasProof: boolean; reason: string | null }
+export interface ProofItem { id: string; key: string; label: string; section: string; amount: number; status: string; proofName: string | null; hasProof: boolean; reason: string | null }
 export interface ProofDetail { name: string; code: string; regime: "NEW" | "OLD"; metro: boolean; landlordPan: string | null; items: ProofItem[]; tdsNow: number | null; tdsIfAll: number | null; mine: boolean }
 
 /** Drawer contents: items + TDS now vs. if everything pending is approved. */

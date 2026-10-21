@@ -1,7 +1,7 @@
 import { PageHeader } from "@/components/PageHeader";
 import type { PlanRow } from "@/lib/api-types";
 import { PageLoading, useData, usePage } from "@/lib/page";
-import { inr } from "@/lib/format";
+import { formatRupees } from "@/lib/format";
 import { MODULE_LABELS } from "@/lib/subscription";
 import { PlanButton } from "./PlansClient";
 
@@ -27,7 +27,7 @@ export default function PlansPage() {
               {plans.map((p) => (
                 <tr key={p.id}>
                   <td><b>{p.name}</b>{p.description && <><br /><small className="muted">{p.description}</small></>}</td>
-                  <td className="r num">{inr(p.pricePaise)}</td>
+                  <td className="r num">{formatRupees(p.pricePaise)}</td>
                   <td>{t(p.periodMonths === 1 ? "{n} month" : "{n} months", { n: p.periodMonths })}</td>
                   <td>{p.maxEmployees ? t("Up to {n}", { n: p.maxEmployees }) : t("No limit")}</td>
                   <td>{p.modules.length ? p.modules.map((m) => <span key={m} className="chip gold">{t(MODULE_LABELS[m] ?? m)}</span>) : <span className="muted">{t("Core HR")}</span>}</td>

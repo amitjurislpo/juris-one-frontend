@@ -1,23 +1,24 @@
 import { PageHeader } from "@/components/PageHeader";
-import { ClearFilters, Pending, SearchBox, SegFilter, SortTh } from "@/components/table/Table";
+import { ClearFilters, Pending, SearchBox, SegmentedFilter, SortableHeader } from "@/components/table/Table";
 import { PageLoading, useData, usePage } from "@/lib/page";
-import { qs } from "@/lib/api";
-import { avc, inr, initials } from "@/lib/format";
+import { toQueryString } from "@/lib/api";
+import { formatRupees } from "@/lib/format";
 import { ReviewButton } from "./ProofsClient";
+import { Avatar } from "@/components/Avatar";
 
 
 export default function ProofsPage() {
-  const { t, sp } = usePage();
-  const d = useData<{ rows: { id: string; name: string; code: string; dept: string; reg: "NEW" | "OLD"; dec: number; pend: number; appr: number }[]; total: number }>(`/api/proofs${qs(sp)}`);
-  if (!d) return <PageLoading />;
-  const { rows, total } = d;
+  const { t, searchParams } = usePage();
+  const data = useData<{ rows: { id: string; photo?: number | null; name: string; code: string; department: string; regime: "NEW" | "OLD"; declared: number; pending: number; approved: number }[]; total: number }>(`/api/proofs${toQueryString(searchParams)}`);
+  if (!data) return <PageLoading />;
+  const { rows, total } = data;
 
   return (
     <div className="col">
       <PageHeader eyebrow={t("Finance · Old-regime declarations")} title={t("Investment")} em={t("proofs")} sub={t("Verify what employees declared. Approved amounts reduce their TDS from the next payroll.")} />
       <div className="toolbar enter" style={{ ["--i" as string]: 1 }}>
         <SearchBox placeholder={t("Search name, ID or department")} label={t("Search proofs")} />
-        <SegFilter name="st" dflt="All" label={t("Status")} options={[{ v: "All", l: t("All") }, { v: "Pending", l: t("To verify") }, { v: "Verified", l: t("Verified") }]} />
+        <SegmentedFilter name="status" dflt="All" label={t("Status")} options={[{ value: "All", label: t("All") }, { value: "Pending", label: t("To verify") }, { value: "Verified", label: t("Verified") }]} />
         <span className="tcount">{t("{a} of {b}", { a: rows.length, b: total })}</span>
       </div>
       <section className="card enter" style={{ ["--i" as string]: 1 }}>
@@ -26,21 +27,21 @@ export default function ProofsPage() {
             <table className="t">
               <thead>
                 <tr>
-                  <SortTh k="name" dflt="pend" dfltDir="desc">{t("Employee")}</SortTh>
-                  <SortTh k="reg" dflt="pend" dfltDir="desc">{t("Regime")}</SortTh>
-                  <SortTh k="dec" dflt="pend" dfltDir="desc" right>{t("Declared")}</SortTh>
-                  <SortTh k="pend" dflt="pend" dfltDir="desc">{t("Status")}</SortTh>
+                  <SortableHeader k="name" dflt="pend" dfltDir="desc">{t("Employee")}</SortableHeader>
+                  <SortableHeader k="reg" dflt="pend" dfltDir="desc">{t("Regime")}</SortableHeader>
+                  <SortableHeader k="dec" dflt="pend" dfltDir="desc" right>{t("Declared")}</SortableHeader>
+                  <SortableHeader k="pend" dflt="pend" dfltDir="desc">{t("Status")}</SortableHeader>
                   <th><span className="sr-only">{t("Actions")}</span></th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((r, i) => (
                   <tr key={r.id} style={{ animationDelay: `${i * 40}ms` }}>
-                    <td><div className="person"><span className={`avatar ${avc(initials(r.name))}`}>{initials(r.name)}</span><div><b>{r.name}</b><small>{r.code} · {r.dept}</small></div></div></td>
-                    <td><span className={`chip nodot ${r.reg === "OLD" ? "info" : "gold"}`}>{r.reg === "OLD" ? t("Old") : t("New")}</span></td>
-                    <td className="r num">{inr(r.dec)}</td>
-                    <td>{r.pend ? <span className="chip warn">{t("{n} to verify", { n: r.pend })}</span> : r.appr ? <span className="chip ok">{t("Verified")}</span> : <span className="chip neutral">{t("Nothing submitted")}</span>}</td>
-                    <td className="r"><ReviewButton employeeId={r.id} name={r.name} gold={r.pend > 0} /></td>
+                    <td><div className="person"><Avatar id={r.id} name={r.name} photo={r.photo} /><div><b>{r.name}</b><small>{r.code} · {r.department}</small></div></div></td>
+                    <td><span className={`chip nodot ${r.regime === "OLD" ? "info" : "gold"}`}>{r.regime === "OLD" ? t("Old") : t("New")}</span></td>
+                    <td className="r num">{formatRupees(r.declared)}</td>
+                    <td>{r.pending ? <span className="chip warn">{t("{n} to verify", { n: r.pending })}</span> : r.approved ? <span className="chip ok">{t("Verified")}</span> : <span className="chip neutral">{t("Nothing submitted")}</span>}</td>
+                    <td className="r"><ReviewButton employeeId={r.id} name={r.name} gold={r.pending > 0} /></td>
                   </tr>
                 ))}
               </tbody>

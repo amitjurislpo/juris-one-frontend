@@ -78,7 +78,7 @@ describe("status and reporting lines", () => {
 });
 
 describe("form validation", () => {
-  const base: EmployeeInput = { firstName: "Meera", middleName: "", lastName: "Joshi", fatherName: "Prakash Joshi", email: "meera.joshi@jurislpo.com", phoneCountry: "+91", phone: "9876543210", location: "IN_IST", joiningOffice: "", pan: "ABCDE1234F", aadhaar: "2345 6789 0123", uan: "", address: "", designation: "Associate", departmentId: "x", managerId: "y", doj: "2026-10-12", shift: "IN_NIGHT", roleId: "r" };
+  const base: EmployeeInput = { firstName: "Meera", middleName: "", lastName: "Joshi", fatherName: "Prakash Joshi", email: "meera.joshi@jurislpo.com", phoneCountry: "+91", phone: "9876543210", location: "IN_IST", joiningOffice: "", pan: "ABCDE1234F", aadhaar: "2345 6789 0123", uan: "", address: "", designation: "Associate", departmentId: "x", managerId: "y", dateOfJoining: "2026-10-12", shift: "IN_NIGHT", roleId: "r" };
   it("PAN and Aadhaar are optional, but checked when given", () => {
     expect(stepErrors(2, { ...base, pan: "", aadhaar: "" }, false)).toEqual({});
     expect(stepErrors(2, { ...base, pan: "abcde1234f" }, false).pan).toBeUndefined();

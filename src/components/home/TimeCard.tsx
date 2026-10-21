@@ -4,23 +4,25 @@ import { useEffect, useState, useTransition } from "react";
 import { punch } from "@/pages/home/actions";
 import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
+import { useReadOnly } from "@/lib/session";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
 export interface TimeCardProps {
-  on: boolean;
+  checkedIn: boolean;
   openSince: string | null; // ISO
   closedMinutes: number;
   shiftText: string;
   ticks: string[];
   targetHours: number;
-  log: { t: string; l: string; d: string }[];
+  log: { time: string; label: string; detail: string }[];
 }
 
 /** Prototype check-in card: live timer, 9h progress track, punch log. */
 export function TimeCard(p: TimeCardProps) {
   const router = useRouter();
   const toast = useToast();
+  const readOnly = useReadOnly();
   const [busy, start] = useTransition();
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
@@ -30,7 +32,7 @@ export function TimeCard(p: TimeCardProps) {
     return () => clearInterval(t);
   }, []);
 
-  const liveMs = p.on && p.openSince && now ? Math.max(0, now - Date.parse(p.openSince)) : 0;
+  const liveMs = p.checkedIn && p.openSince && now ? Math.max(0, now - Date.parse(p.openSince)) : 0;
   const secs = Math.floor(p.closedMinutes * 60 + liveMs / 1000);
   const target = p.targetHours * 3600;
   const pct = Math.min(1, secs / target);
@@ -38,7 +40,7 @@ export function TimeCard(p: TimeCardProps) {
 
   const go = () =>
     start(async () => {
-      const r = await punch(p.on ? "OUT" : "IN");
+      const r = await punch(p.checkedIn ? "OUT" : "IN");
       if (r.ok) toast(r.msg!);
       else toast(r.error, "bad");
       router.refresh();
@@ -50,7 +52,7 @@ export function TimeCard(p: TimeCardProps) {
       <div className="aur"></div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, position: "relative" }}>
         <div><span className="eyebrow">Today&apos;s shift</span><div style={{ fontWeight: 600, marginTop: 2 }}>{p.shiftText}</div></div>
-        <span className={`chip ${p.on ? "ok" : "neutral"}`}>{p.on ? "Checked in" : "Checked out"}</span>
+        <span className={`chip ${p.checkedIn ? "ok" : "neutral"}`}>{p.checkedIn ? "Checked in" : "Checked out"}</span>
       </div>
       <div style={{ position: "relative" }}>
         <div className="bigtime" aria-label="Worked today" suppressHydrationWarning>
@@ -66,20 +68,22 @@ export function TimeCard(p: TimeCardProps) {
         <div className="shift-ticks" style={{ marginTop: 10 }}>{p.ticks.map((t) => <span key={t}>{t}</span>)}</div>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", position: "relative" }}>
-        <div className="punch">
-          {!p.on && <span className="halo"></span>}
-          <button className="btn btn-gold btn-lg" style={{ minWidth: 160 }} disabled={busy} onClick={go}>
-            <Icon n={p.on ? "logout" : "sunrise"} s={16} />{busy ? "Saving…" : p.on ? "Check out" : "Check in"}
-          </button>
-        </div>
+        {!readOnly && (
+          <div className="punch">
+            {!p.checkedIn && <span className="halo"></span>}
+            <button className="btn btn-gold btn-lg" style={{ minWidth: 160 }} disabled={busy} onClick={go}>
+              <Icon n={p.checkedIn ? "logout" : "sunrise"} s={16} />{busy ? "Saving…" : p.checkedIn ? "Check out" : "Check in"}
+            </button>
+          </div>
+        )}
         <span className="muted" style={{ fontSize: 13 }}>
-          {p.on ? (pct >= 1 ? "Shift target reached" : `${Math.floor(left / 3600)}h ${pad(Math.floor((left % 3600) / 60))}m left in your shift`) : "Not tracking right now"}
+          {p.checkedIn ? (pct >= 1 ? "Shift target reached" : `${Math.floor(left / 3600)}h ${pad(Math.floor((left % 3600) / 60))}m left in your shift`) : "Not tracking right now"}
         </span>
       </div>
       {p.log.length > 0 && (
         <div className="timeline" style={{ position: "relative" }}>
           {p.log.map((e, i) => (
-            <div className="t" key={i}><b>{e.t}</b><span>{e.l}</span><span className="faint" style={{ marginLeft: "auto", fontSize: 12.5 }}>{e.d}</span></div>
+            <div className="t" key={i}><b>{e.time}</b><span>{e.label}</span><span className="faint" style={{ marginLeft: "auto", fontSize: 12.5 }}>{e.detail}</span></div>
           ))}
         </div>
       )}

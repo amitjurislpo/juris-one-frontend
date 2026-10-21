@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/PageHeader";
 import type { AssetAssignment } from "@/lib/api-types";
 import { ASSET_TYPES, CONDITIONS } from "@/lib/assets";
 import { PageLoading, useData, usePage } from "@/lib/page";
-import { fmtDY } from "@/lib/format";
+import { formatDayMonthYear } from "@/lib/format";
 
 
 const describe = (a: AssetAssignment, t: (s: string) => string) => [a.make, a.model].filter(Boolean).join(" ") || (ASSET_TYPES[a.type] ? t(ASSET_TYPES[a.type]) : a.type);
@@ -11,9 +11,9 @@ const describe = (a: AssetAssignment, t: (s: string) => string) => [a.make, a.mo
 /** The company equipment assigned to the signed-in user, now and before. */
 export default function MyAssetsPage() {
   const { t } = usePage();
-  const d = useData<{ current: AssetAssignment[]; past: AssetAssignment[] }>("/api/assets/mine");
-  if (!d) return <PageLoading />;
-  const { current, past } = d;
+  const data = useData<{ current: AssetAssignment[]; past: AssetAssignment[] }>("/api/assets/mine");
+  if (!data) return <PageLoading />;
+  const { current, past } = data;
 
   return (
     <div className="col">
@@ -29,7 +29,7 @@ export default function MyAssetsPage() {
                   <td><div className="person"><span className="kpi-ico" style={{ width: 34, height: 34, background: "var(--accentsoft)", color: "var(--accent)" }}><Icon n="layers" s={16} /></span><div><b>{describe(a, t)}</b><small>{ASSET_TYPES[a.type] ? t(ASSET_TYPES[a.type]) : a.type}</small></div></div></td>
                   <td className="num">{a.tag}</td>
                   <td className="muted hide-sm">{a.serial ?? "—"}</td>
-                  <td>{fmtDY(a.assignedOn)}</td>
+                  <td>{formatDayMonthYear(a.assignedOn)}</td>
                   <td className="muted hide-sm">{a.assignNotes ?? "—"}</td>
                 </tr>
               ))}
@@ -49,8 +49,8 @@ export default function MyAssetsPage() {
                   <tr key={a.id}>
                     <td><b>{describe(a, t)}</b></td>
                     <td className="num">{a.tag}</td>
-                    <td>{fmtDY(a.assignedOn)}</td>
-                    <td>{a.returnedOn ? fmtDY(a.returnedOn) : "—"}</td>
+                    <td>{formatDayMonthYear(a.assignedOn)}</td>
+                    <td>{a.returnedOn ? formatDayMonthYear(a.returnedOn) : "—"}</td>
                     <td>{a.returnCondition ? t(CONDITIONS[a.returnCondition]) : "—"}</td>
                   </tr>
                 ))}

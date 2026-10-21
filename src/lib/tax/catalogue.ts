@@ -2,7 +2,7 @@
 interface DeclItem { k: string; label: string; hint?: string; auto?: boolean; cap?: number }
 export interface DeclSection { sec: string; key: string; title: string; cap?: number; note: string; items: DeclItem[] }
 
-export const DECL: DeclSection[] = [
+export const DECLARATION_SECTIONS: DeclSection[] = [
   { sec: "HRA", key: "HRA", title: "House rent allowance", note: "Exemption = least of HRA received, rent − 10% of Basic, or 50% (metro) / 40% of Basic.", items: [{ k: "rent", label: "Annual rent paid", hint: "Rent receipts; landlord PAN if rent is above ₹1,00,000 a year" }] },
   { sec: "80C", key: "80C", title: "Section 80C", cap: 150000, note: "Combined limit ₹1,50,000. Your PF contribution is included automatically.", items: [
     { k: "epf", label: "Employee provident fund (auto)", auto: true }, { k: "ppf", label: "Public provident fund (PPF)" }, { k: "elss", label: "ELSS mutual funds" },

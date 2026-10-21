@@ -1,7 +1,7 @@
 /**
  * Leave maths — pure functions (REQUIREMENTS §5.6). Dates are ISO strings in the employee's zone.
  */
-import { addDays, dowOf } from "../attendance/engine";
+import { addDays, weekdayOf } from "../attendance/engine";
 
 export type Part = "FULL" | "FIRST_HALF" | "SECOND_HALF";
 
@@ -10,7 +10,7 @@ export function workingDays(from: string, to: string, weeklyOffs: number[], holi
   const dates: string[] = [];
   const skipped: { date: string; name: string }[] = [];
   for (let d = from; d <= to; d = addDays(d, 1)) {
-    if (weeklyOffs.includes(dowOf(d))) continue;
+    if (weeklyOffs.includes(weekdayOf(d))) continue;
     const h = holidays.get(d);
     if (h) { skipped.push({ date: d, name: h }); continue; }
     dates.push(d);

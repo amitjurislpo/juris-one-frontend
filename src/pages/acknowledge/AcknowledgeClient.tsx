@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
 import type { PolicyToRead } from "@/lib/api-types";
-import { fmtDY } from "@/lib/format";
+import { formatDayMonthYear } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import { acknowledgePolicy } from "../policies/actions";
 import { PolicyText } from "../my-policies/PolicyText";
@@ -28,7 +28,7 @@ export function AcknowledgeClient({ policy, left, name }: { policy: PolicyToRead
         <header style={{ padding: "20px 24px 12px", borderBottom: "1px solid var(--line)" }}>
           <span className="eyebrow">{t("Before you continue")}{left > 1 ? ` · ${t("{n} policies to accept", { n: left })}` : ""}</span>
           <h1 id="ack-title" className="display" style={{ fontSize: 28, margin: "4px 0 2px" }}>{policy.title}</h1>
-          <small className="muted">{t("Version {v} · published {date}", { v: policy.version, date: fmtDY(policy.publishedAt.slice(0, 10)) })}</small>
+          <small className="muted">{t("Version {v} · published {date}", { v: policy.version, date: formatDayMonthYear(policy.publishedAt.slice(0, 10)) })}</small>
         </header>
         <div style={{ padding: "16px 24px", overflowY: "auto", flex: 1 }}>
           {policy.body ? <PolicyText body={policy.body} /> : <p className="muted">{t("This policy is in the attached PDF.")}</p>}

@@ -3,7 +3,7 @@ import { useRouter } from "@/lib/router";
 import { useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
 import { PhoneInput } from "@/components/ui/PhoneInput";
-import { fmtDY } from "@/lib/format";
+import { formatDayMonthYear } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import { removeCandidateDocument, saveCandidateForm, submitOnboarding, type CandidateForm } from "../actions";
 
@@ -49,7 +49,7 @@ export function CandidateClient({ token, v }: { token: string; v: CandidateView 
     fd.set("kind", kind);
     fd.set("file", file);
     try {
-      const res = await fetch(`/api/onboarding/${encodeURIComponent(token)}/documents`, { method: "POST", body: fd });
+      const res = await fetch(`/api/public/onboardings/${encodeURIComponent(token)}/documents`, { method: "POST", body: fd });
       const j = await res.json().catch(() => ({}));
       setMsg({ ok: res.ok, text: res.ok ? j.msg ?? t("Uploaded") : j.detail ?? t("Upload failed") });
       router.refresh();
@@ -68,9 +68,9 @@ export function CandidateClient({ token, v }: { token: string; v: CandidateView 
         <h1 className="display" style={{ fontSize: 34, margin: "4px 0 6px" }}>{t("Welcome, {name}", { name: f.firstName || v.candidateName.split(" ")[0] })}</h1>
         <p className="muted" style={{ margin: 0 }}>
           {v.designation
-            ? (v.joiningDate ? t("You're joining as {role} on {date}.", { role: v.designation, date: fmtDY(v.joiningDate) }) : t("You're joining as {role}.", { role: v.designation }))
-            : (v.joiningDate ? t("You're joining the team on {date}.", { date: fmtDY(v.joiningDate) }) : t("You're joining the team."))}
-          {" "}{t("Fill in your details and upload your documents; HR will review them. Your link works until {date}.", { date: fmtDY(v.linkExpiresAt.slice(0, 10)) })}
+            ? (v.joiningDate ? t("You're joining as {role} on {date}.", { role: v.designation, date: formatDayMonthYear(v.joiningDate) }) : t("You're joining as {role}.", { role: v.designation }))
+            : (v.joiningDate ? t("You're joining the team on {date}.", { date: formatDayMonthYear(v.joiningDate) }) : t("You're joining the team."))}
+          {" "}{t("Fill in your details and upload your documents; HR will review them. Your link works until {date}.", { date: formatDayMonthYear(v.linkExpiresAt.slice(0, 10)) })}
         </p>
       </header>
 
@@ -131,7 +131,7 @@ export function CandidateClient({ token, v }: { token: string; v: CandidateView 
               <tbody>
                 {v.documents.map((d) => (
                   <tr key={d.id}>
-                    <td><b>{d.label}</b><br /><a className="linkish" href={`/api/onboarding/${encodeURIComponent(token)}/documents/${d.id}/file`} target="_blank" rel="noopener">{d.fileName}</a></td>
+                    <td><b>{d.label}</b><br /><a className="linkish" href={`/api/public/onboardings/${encodeURIComponent(token)}/documents/${d.id}/file`} target="_blank" rel="noopener">{d.fileName}</a></td>
                     <td><span className={`chip ${DOC_CHIP[d.status].cls}`}>{t(DOC_CHIP[d.status].text)}</span>{d.comment && <><br /><small className="muted">{d.comment}</small></>}</td>
                     <td className="r">{!ro && d.status !== "VERIFIED" && <button className="btn btn-sm btn-ghost" disabled={busy} onClick={() => remove(d.id)} aria-label={t("Remove {name}", { name: d.fileName })}><Icon n="trash" s={14} /></button>}</td>
                   </tr>

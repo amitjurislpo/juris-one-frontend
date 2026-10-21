@@ -2,7 +2,7 @@ import Link from "@/lib/link";
 import { Icon } from "@/components/Icon";
 import { PageHeader } from "@/components/PageHeader";
 import { PageLoading, useData, usePage } from "@/lib/page";
-import { fmtDY } from "@/lib/format";
+import { formatDayMonthYear } from "@/lib/format";
 import { DefaultDocumentsButton, StartOnboardingButton } from "./OnboardingClient";
 import { ONBOARDING_STATUS } from "./status";
 
@@ -39,10 +39,10 @@ export default function OnboardingPage() {
                     </Link>
                   </td>
                   <td className="hide-sm">{r.designation ?? "—"}<br /><small className="muted">{r.department ?? ""}</small></td>
-                  <td>{r.joiningDate ? fmtDY(r.joiningDate) : <span className="muted">—</span>}</td>
+                  <td>{r.joiningDate ? formatDayMonthYear(r.joiningDate) : <span className="muted">—</span>}</td>
                   <td className="num">{t("{verified}/{total} verified", { verified: r.verified, total: r.documents })}</td>
                   <td><span className={`chip ${ONBOARDING_STATUS[r.status].cls}`}>{t(ONBOARDING_STATUS[r.status].text)}</span>{r.employeeCode && <small className="muted mono"> {r.employeeCode}</small>}</td>
-                  <td className="muted hide-sm">{fmtDY(r.updatedAt.slice(0, 10))}</td>
+                  <td className="muted hide-sm">{formatDayMonthYear(r.updatedAt.slice(0, 10))}</td>
                 </tr>
               ))}
             </tbody>

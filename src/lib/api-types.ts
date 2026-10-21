@@ -7,8 +7,8 @@ import type { DEFAULT_SETTINGS } from "./settings-defaults";
 
 /** One line in the notification bell. */
 export interface ShellNote {
-  t: string;
-  s: string;
+  text: string;
+  meta: string;
   href?: string;
   /** set for a stored notification (system lines such as "3 requests waiting" have none) */
   id?: string | null;
@@ -51,7 +51,7 @@ export interface Preview {
 
 /** One payroll row (paise). */
 export interface PayView {
-  employeeId: string; code: string; name: string; department: string; regime: "NEW" | "OLD";
+  employeeId: string; photo?: number | null; code: string; name: string; department: string; regime: "NEW" | "OLD";
   monthlyGross: number; lop: number; attendanceLop: number; paid: number; days: number; bonus: number; earned: number; pfPt: number; tds: number; other: number; net: number;
   edited: boolean; note: string | null;
 }
@@ -224,4 +224,21 @@ export interface LetterField { name: string; label: string; salary: boolean }
 export interface IssuedLetter {
   id: string; reference: string; type: LetterType; templateName: string; subject: string; employeeId: string; employeeCode: string; employeeName: string;
   issuedBy: string; issuedAt: string; needsSalary: boolean; canOpen: boolean;
+}
+
+/** A role the super admin hands to businesses (copied into a business when assigned). */
+export interface RoleTemplate {
+  key: string;
+  name: string;
+  locked: boolean;
+  mandatory: boolean;
+  active: boolean;
+  permissions: string[];
+  assignable: string[];
+  businesses: number;
+}
+
+export interface RoleTemplates {
+  templates: RoleTemplate[];
+  groups: { name: string; permissions: { key: string; label: string }[] }[];
 }

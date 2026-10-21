@@ -3,21 +3,21 @@ import { Icon } from "@/components/Icon";
 import { PageHeader } from "@/components/PageHeader";
 import { Pending, SearchBox, SelectFilter } from "@/components/table/Table";
 import { PageLoading, useData, usePage } from "@/lib/page";
-import { qs } from "@/lib/api";
-import { fmtDY, ymLabel } from "@/lib/format";
+import { toQueryString } from "@/lib/api";
+import { formatDayMonthYear, formatMonthLabel } from "@/lib/format";
 import type { PayView } from "@/lib/api-types";
 import { CloseButton, MonthSeg, PayrollKpis, PayrollTable } from "./PayrollClient";
 
 
 export default function PayrollPage() {
-  const { t, sp } = usePage();
-  const d = useData<{
+  const { t, searchParams } = usePage();
+  const data = useData<{
     month: string; months: string[]; closed: boolean; attendanceLocked: boolean; approved: boolean; closedOn: string | null; missing: string[];
     rows: PayView[]; view: PayView[]; canClose: boolean; canStructures: boolean;
-  }>(`/api/payroll${qs(sp)}`);
-  if (!d) return <PageLoading />;
-  const { month, months, closed, attendanceLocked, approved, rows, view } = d;
-  const missing = d.missing.map((fullName) => ({ fullName }));
+  }>(`/api/payroll${toQueryString(searchParams)}`);
+  if (!data) return <PageLoading />;
+  const { month, months, closed, attendanceLocked, approved, rows, view } = data;
+  const missing = data.missing.map((fullName) => ({ fullName }));
   const stages = [
     { l: t("Lock attendance"), done: attendanceLocked },
     { l: t("Compute"), done: attendanceLocked },
@@ -30,9 +30,9 @@ export default function PayrollPage() {
 
   return (
     <div className="col">
-      <PageHeader eyebrow={t("Finance · Payroll")} title={ymLabel(month).split(" ")[0]} em={t("payroll")} sub={t("Salary comes from each employee's current salary structure. Edit LOP, bonus or deductions before closing.")}>
+      <PageHeader eyebrow={t("Finance · Payroll")} title={formatMonthLabel(month).split(" ")[0]} em={t("payroll")} sub={t("Salary comes from each employee's current salary structure. Edit LOP, bonus or deductions before closing.")}>
         <MonthSeg months={months} value={month} />
-        {d.canClose || closed
+        {data.canClose || closed
           ? <CloseButton month={month} closed={closed} locked={attendanceLocked} count={rows.length} />
           : <span className="chip warn nodot" title={t("Only the Finance Manager can close payroll")}>{t("Closing needs Finance Manager")}</span>}
       </PageHeader>
@@ -48,7 +48,7 @@ export default function PayrollPage() {
           ))}
         </div>
         <p className="faint" style={{ margin: "14px 0 0", fontSize: 12.5 }}>
-          {closed ? t("Closed on {date} · payslips are visible to employees.", { date: fmtDY(d.closedOn!) }) : attendanceLocked ? t("Closing publishes payslips to every employee for this month.") : t("Attendance for {month} locks on the 1st of next month at 10:00 AM — figures can still change until then.", { month: ymLabel(month) })}
+          {closed ? t("Closed on {date} · payslips are visible to employees.", { date: formatDayMonthYear(data.closedOn!) }) : attendanceLocked ? t("Closing publishes payslips to every employee for this month.") : t("Attendance for {month} locks on the 1st of next month at 10:00 AM — figures can still change until then.", { month: formatMonthLabel(month) })}
         </p>
       </section>
 
@@ -57,7 +57,7 @@ export default function PayrollPage() {
           <span className="spot"></span>
           <span className="kpi-ico" style={{ background: "var(--warnbg)", color: "var(--warn)" }}><Icon n="info" s={18} /></span>
           <div style={{ flex: 1 }}><b>{t("{n} employee(s) without a salary structure", { n: missing.length })}</b><div className="muted" style={{ fontSize: 13 }}>{t("{names} — set it up once and it applies every month.", { names: missing.map((e) => e.fullName).join(", ") })}</div></div>
-          {d.canStructures && <Link className="btn" href="/structures?set=Missing">{t("Set up structure")}</Link>}
+          {data.canStructures && <Link className="btn" href="/structures?structureStatus=Missing">{t("Set up structure")}</Link>}
         </section>
       )}
 
@@ -65,13 +65,13 @@ export default function PayrollPage() {
 
       <div className="toolbar enter" style={{ ["--i" as string]: 8 }}>
         <SearchBox placeholder={t("Search name, ID or department")} label={t("Search payroll")} />
-        <SelectFilter name="show" label={t("Show")} dflt="All" options={[{ v: "All", l: t("Everyone") }, { v: "LOP", l: t("With loss of pay") }, { v: "Edited", l: t("Edited this month") }, { v: "NEW", l: t("New regime") }, { v: "OLD", l: t("Old regime") }]} />
+        <SelectFilter name="filter" label={t("Show")} dflt="All" options={[{ value: "All", label: t("Everyone") }, { value: "LOP", label: t("With loss of pay") }, { value: "Edited", label: t("Edited this month") }, { value: "NEW", label: t("New regime") }, { value: "OLD", label: t("Old regime") }]} />
         <span className="tcount">{t("{a} of {b}", { a: view.length, b: rows.length })}</span>
         <details className="menu-anchor" style={{ position: "relative" }}>
           <summary className="btn" style={{ listStyle: "none" }}><Icon n="download" s={15} />{t("Export")}</summary>
           <div className="menu" style={{ minWidth: 220 }}>
             {[["bank", t("Bank transfer file")], ["ecr", t("PF ECR")], ["pt", t("Professional tax summary")], ["tds", t("TDS summary")], ["register", t("Payroll register")]].map(([k, l]) => (
-              <a key={k} href={`/api/payroll/export?m=${month}&type=${k}`} download>{l}</a>
+              <a key={k} href={`/api/payroll/export?month=${month}&type=${k}`} download>{l}</a>
             ))}
           </div>
         </details>

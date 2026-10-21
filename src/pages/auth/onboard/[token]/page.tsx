@@ -12,7 +12,7 @@ export default function OnboardPage() {
   const t = useT();
   const q = useQuery({
     queryKey: ["api", "onboard", token],
-    queryFn: () => apiCall<CandidateView & { form: CandidateForm }>("GET", `/api/onboarding/${encodeURIComponent(token)}`),
+    queryFn: () => apiCall<CandidateView & { form: CandidateForm }>("GET", `/api/public/onboardings/${encodeURIComponent(token)}`),
   });
   if (!q.data) return <main style={{ minHeight: "100vh", background: "var(--bg)" }} aria-busy="true" />;
   const r = q.data;

@@ -1,4 +1,4 @@
-/** URL search params on list pages (the API applies ?q=&sort=&dir=&page= and the filters). */
+/** URL search params on list pages (the API applies ?search=&sort=&sortDirection=&page= and the filters). */
 export type SearchParams = Record<string, string | string[] | undefined>;
 
 const str = (sp: SearchParams, k: string, dflt = "") => {

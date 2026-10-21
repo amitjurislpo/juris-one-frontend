@@ -9,6 +9,8 @@ export interface CurrentUser {
   name: string;
   email: string;
   designation: string;
+  /** Epoch millis of the profile photo's last change; null/absent = no photo. */
+  photo?: number | null;
   roleId: string;
   roleKey: string;
   roleName: string;
@@ -20,6 +22,8 @@ export interface CurrentUser {
   sessionId: string;
   /** Whether the user's business may use JurisOne today; null for the super admin. */
   subscriptionActive: boolean | null;
+  /** The business's subscription has ended: everything can be viewed and the owner can export, but nothing can be changed. */
+  readOnly: boolean;
   /** Modules the business can use today (e.g. JURIS_TRACK). */
   modules: string[];
   /** Published policies this user still has to accept (they see only the acknowledgement screen until then). */
@@ -27,18 +31,19 @@ export interface CurrentUser {
 }
 
 interface MeResponse {
-  user: Omit<CurrentUser, "perms" | "subscriptionActive" | "modules" | "pendingPolicies"> & { perms: Permission[] };
+  user: Omit<CurrentUser, "perms" | "subscriptionActive" | "readOnly" | "modules" | "pendingPolicies"> & { perms: Permission[] };
   subscriptionActive: boolean | null;
+  readOnly: boolean;
   modules: string[];
   pendingPolicies: number;
 }
 
-export const ME_KEY = ["api", "/api/me"];
+export const CURRENT_USER_QUERY_KEY = ["api", "/api/me"];
 
 export async function fetchMe(): Promise<CurrentUser | null> {
   const me = await apiGet<MeResponse>("/api/me");
   if (!me) return null;
-  return { ...me.user, perms: new Set(me.user.perms), subscriptionActive: me.subscriptionActive, modules: me.modules, pendingPolicies: me.pendingPolicies };
+  return { ...me.user, perms: new Set(me.user.perms), subscriptionActive: me.subscriptionActive, readOnly: me.readOnly, modules: me.modules, pendingPolicies: me.pendingPolicies };
 }
 
 /**
@@ -48,12 +53,17 @@ export async function fetchMe(): Promise<CurrentUser | null> {
  */
 export function useCurrentUser(): { user: CurrentUser | null; loading: boolean } {
   const q = useQuery({
-    queryKey: ME_KEY,
+    queryKey: CURRENT_USER_QUERY_KEY,
     queryFn: fetchMe,
     // keep showing the user while a refetch runs
     placeholderData: (prev) => prev,
   });
   return { user: q.data ?? null, loading: q.isPending };
+}
+
+/** True while the business's subscription has ended: the UI hides every action (the API refuses writes with 402). */
+export function useReadOnly(): boolean {
+  return useCurrentUser().user?.readOnly ?? false;
 }
 
 export const can = (u: CurrentUser | null, ...perms: Permission[]) => !!u && perms.some((p) => u.perms.has(p));
