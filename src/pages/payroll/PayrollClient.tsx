@@ -6,9 +6,11 @@ import { SortTh } from "@/components/table/Table";
 import { useQuery } from "@/components/table/useQuery";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
 import { useT } from "@/lib/i18n/client";
-import { avc, inr, initials, ymLabel } from "@/lib/format";
+import { useReadOnly } from "@/lib/session";
+import { inr, ymLabel } from "@/lib/format";
 import type { PayView } from "@/lib/api-types";
 import { approveAndClose, resetAdjustment, saveAdjustment } from "./actions";
+import { Avatar } from "@/components/Avatar";
 
 // "Hide amounts" is a per-viewer preference kept in localStorage (shared across payroll pages).
 const KEY = "jo_hide_amounts";
@@ -51,12 +53,14 @@ export function PayrollKpis({ tot }: { tot: { n: number; earned: number; lop: nu
 }
 
 export function CloseButton({ month, closed, locked, count }: { month: string; closed: boolean; locked: boolean; count: number }) {
+  const readOnly = useReadOnly();
   const toast = useToast();
   const t = useT();
   const [ask, setAsk] = useState(false);
   const [busy, start] = useTransition();
   const { set } = useQuery();
   if (closed) return <button className="btn btn-gold" disabled>{t("Closed ✓")}</button>;
+  if (readOnly) return null;
   return (
     <>
       <button className="btn btn-gold" disabled={!locked || busy} title={locked ? undefined : t("Attendance isn't locked yet")} onClick={() => setAsk(true)}>{busy ? t("Closing…") : t("Approve & close")}</button>
@@ -71,6 +75,7 @@ export function CloseButton({ month, closed, locked, count }: { month: string; c
 
 export function PayrollTable({ rows, month, closed }: { rows: PayView[]; month: string; closed: boolean }) {
   const t = useT();
+  const readOnly = useReadOnly();
   const [hidden] = useHidden();
   const [editing, setEditing] = useState<PayView | null>(null);
   const m = (v: number) => (hidden ? "••••" : inr(v));
@@ -95,7 +100,7 @@ export function PayrollTable({ rows, month, closed }: { rows: PayView[]; month: 
           <tbody>
             {rows.map((r, i) => (
               <tr key={r.employeeId} style={{ animationDelay: `${i * 35}ms` }}>
-                <td><div className="person"><span className={`avatar ${avc(initials(r.name))}`}>{initials(r.name)}</span><div><b>{r.name}</b><small>{r.code} · {r.regime === "OLD" ? t("Old regime") : t("New regime")}{r.edited ? ` · ${t("edited")}` : ""}</small></div></div></td>
+                <td><div className="person"><Avatar id={r.employeeId} name={r.name} photo={r.photo} /><div><b>{r.name}</b><small>{r.code} · {r.regime === "OLD" ? t("Old regime") : t("New regime")}{r.edited ? ` · ${t("edited")}` : ""}</small></div></div></td>
                 <td className="r num muted">{m(r.monthlyGross)}</td>
                 <td className="r num" style={{ color: r.lop ? "var(--bad)" : "var(--faint)" }}>{r.lop}</td>
                 <td className="r num">{r.paid}/{r.days}</td>
@@ -104,7 +109,7 @@ export function PayrollTable({ rows, month, closed }: { rows: PayView[]; month: 
                 <td className="r num muted">{m(r.pfPt)}</td>
                 <td className="r num muted">{m(r.tds)}</td>
                 <td className="r num" style={{ color: "var(--accenttext)", fontWeight: 600 }}>{m(r.net)}</td>
-                <td className="r">{closed ? <span className="faint" style={{ fontSize: 12 }}>{t("Locked")}</span> : <button className="btn btn-sm btn-ghost" onClick={() => setEditing(r)} aria-label={t("Edit payroll for {name}", { name: r.name })}><Icon n="edit" s={14} />{t("Edit")}</button>}</td>
+                <td className="r">{closed ? <span className="faint" style={{ fontSize: 12 }}>{t("Locked")}</span> : readOnly ? null : <button className="btn btn-sm btn-ghost" onClick={() => setEditing(r)} aria-label={t("Edit payroll for {name}", { name: r.name })}><Icon n="edit" s={14} />{t("Edit")}</button>}</td>
               </tr>
             ))}
           </tbody>

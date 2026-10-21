@@ -613,3 +613,29 @@ main.content:focus{outline:none}
 
 /* Fonts (bundled with @fontsource, imported in main.tsx; these names replaced the next/font variables) */
 :root{--font-geist:"Geist";--font-geist-mono:"Geist Mono";--font-bodoni:"Bodoni Moda";--font-devanagari:"Noto Sans Devanagari"}
+
+/* attendance calendar: the LATE tag must fit inside a narrow day cell (next to a highlighted date) */
+.cal .d{min-width:0;overflow:hidden}
+.cal-top{display:flex;justify-content:space-between;align-items:center;gap:4px;width:100%;min-width:0}
+.cal .late-chip{height:18px;font-size:9.5px;padding:0 6px;gap:0;flex:0 1 auto;min-width:0;letter-spacing:.02em}
+.cal .late-chip::before{display:none}
+
+/* page header: a compact Back pill on the same line as the eyebrow */
+.page-top{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;margin-bottom:6px}
+.page-top .eyebrow{display:inline-block;margin:0}
+.back-btn{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 12px 0 8px;border:1px solid var(--line);border-radius:999px;background:var(--surface,transparent);color:var(--text);font:inherit;font-size:13px;font-weight:500;line-height:1;cursor:pointer;text-decoration:none;white-space:nowrap}
+.back-btn:hover{border-color:var(--line3);box-shadow:var(--shadow)}
+.back-btn svg{flex:none}
+
+/* employee drawer: the 'Make permanent' call-to-action sits right under the portal-access row and stays readable on narrow screens */
+.confirm-row{margin-top:10px;background:var(--warnbg);border-color:transparent;flex-wrap:wrap;gap:10px}
+.confirm-row>div{flex:1 1 200px;min-width:0}
+.confirm-row .btn{flex:none}
+
+/* narrow screens: the top bar keeps only the page title (ellipsised) so its buttons never overlap it */
+@media(max-width:560px){.top{gap:6px}.crumbs{flex:1 1 0;min-width:0;overflow:hidden}.crumbs>span,.crumbs>svg{display:none}.crumbs b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.top .grow{display:none}.top select{max-width:92px}}
+
+/* avatars: a photo fills the circle */
+.avatar{position:relative;overflow:hidden}
+.avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.avatar.photo-lg{width:84px;height:84px;font-size:28px}

@@ -16,7 +16,7 @@ export default function PolicyPage() {
 
   return (
     <div className="col">
-      <PageHeader eyebrow={<><Link href="/policies" className="linkish">{t("Company policies")}</Link> / {p.version ? t("version {n}", { n: p.version }) : t("draft")}</>} title={p.title}
+      <PageHeader back="/policies" eyebrow={<><Link href="/policies" className="linkish">{t("Company policies")}</Link> / {p.version ? t("version {n}", { n: p.version }) : t("draft")}</>} title={p.title}
         sub={p.status === "PUBLISHED" ? (p.hasChanges ? t("Published — the draft below has changes that aren't published yet.") : t("Published. Edit the draft and publish again to make a new version."))
           : p.status === "ARCHIVED" ? t("Archived — employees no longer see it. Publish it again to bring it back.") : t("Draft — nobody sees it until you publish it.")}>
         <PolicyActions p={p} />

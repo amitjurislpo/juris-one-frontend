@@ -81,7 +81,7 @@ export function RequirePage({ id, children }: { id?: NavId; children: ReactNode 
     if (item.module && !u.modules.includes(item.module)) return <NotFound />;
     if (!navAllowed(item, u.perms, u.hasReports)) return <Navigate to={landingPath(u)} replace />;
     if (u.subscriptionActive === false && !OPEN_WITHOUT_SUBSCRIPTION.includes(id)) return <Navigate to="/paused" replace />;
-    if (u.pendingPolicies > 0) return <Navigate to="/acknowledge" replace />;
+    if (u.pendingPolicies > 0 && !u.readOnly) return <Navigate to="/acknowledge" replace />;
   }
   return <Ctx.Provider value={ctx}>{children}</Ctx.Provider>;
 }

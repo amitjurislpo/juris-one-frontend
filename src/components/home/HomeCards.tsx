@@ -1,7 +1,8 @@
 import Link from "@/lib/link";
 import { Icon } from "@/components/Icon";
-import { avc, fmtD, initials, ymLabel } from "@/lib/format";
+import { fmtD, ymLabel } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
+import { Avatar } from "@/components/Avatar";
 
 const LCHIP: Record<string, string> = { PENDING: "warn", APPROVED: "ok", DECLINED: "bad", CANCELLED: "neutral" };
 const LLABEL: Record<string, string> = { PENDING: "Pending", APPROVED: "Approved", DECLINED: "Declined", CANCELLED: "Cancelled" };
@@ -10,7 +11,7 @@ const LLABEL: Record<string, string> = { PENDING: "Pending", APPROVED: "Approved
 /** Permission-driven Home cards, from /api/home (salary is never included). */
 export interface HomeCardsData {
   myLeaves: { id: string; type: string; from: string; to: string; days: number; status: string }[] | null;
-  team: { id: string; name: string; title: string; st: { label: string; tone: "ok" | "info" | "warn" | "gold" | "neutral" } }[] | null;
+  team: { id: string; photo?: number | null; name: string; title: string; st: { label: string; tone: "ok" | "info" | "warn" | "gold" | "neutral" } }[] | null;
   approvals: { leaveToo: boolean; count: number } | null;
   payroll: { month: string; status: "Closed" | "Approved" | "In review"; proofs: number | null; regs: number } | null;
   payslip: { month: string; ready: boolean } | null;
@@ -45,7 +46,7 @@ export function HomeCards({ c, i0 }: { c: HomeCardsData; i0: number }) {
           <div className="list">
             {c.team.map((m) => (
               <div className="it" key={m.id}>
-                <span className={`avatar ${avc(initials(m.name))}`}>{initials(m.name)}</span>
+                <Avatar id={m.id} name={m.name} photo={m.photo} />
                 <div style={{ flex: 1, minWidth: 0 }}><b style={{ fontSize: 13.5, fontWeight: 600 }}>{m.name}</b><div className="faint" style={{ fontSize: 12 }}>{m.title}</div></div>
                 <span className={`chip ${m.st.tone}`}>{t(m.st.label)}</span>
               </div>

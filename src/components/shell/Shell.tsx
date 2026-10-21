@@ -7,7 +7,9 @@ import { markAllNotifications, markNotification } from "@/pages/notification-act
 import { Icon } from "@/components/Icon";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useT } from "@/lib/i18n/client";
-import { fmtDL, initials } from "@/lib/format";
+import { Avatar } from "@/components/Avatar";
+import { fmtDL } from "@/lib/format";
+import { useCurrentUser } from "@/lib/session";
 import { PAGE_TITLES, type NavId } from "@/lib/nav";
 import { ToastProvider } from "./Toasts";
 import { currentTheme, setTheme, type Theme } from "./theme";
@@ -41,6 +43,7 @@ interface Act { g: string; label: string; icon: string; run: () => void; idx: nu
 export function Shell(props: ShellProps) {
   const { me, groups, badges, notes, landing, canSelf, businessName } = props;
   const t = useT();
+  const { user } = useCurrentUser();
   const router = useRouter();
   const pathname = usePathname();
   const page = (pathname.split("/")[1] || "home") as NavId;
@@ -218,14 +221,14 @@ export function Shell(props: ShellProps) {
             </div>
             <div className="menu-anchor" style={{ position: "relative" }}>
               <button className="profile" onClick={() => { setMenu(!menu); setNotif(false); }} aria-haspopup="menu" aria-expanded={menu}>
-                <span className="avatar">{initials(me.name)}</span>
+                <Avatar id={user?.id} name={me.name} photo={user?.photo} plain />
                 <span className="who"><b>{me.name}</b><small>{me.designation}</small></span>
                 <Icon n="chevD" s={14} />
               </button>
               {menu && (
                 <div className="menu" role="menu">
                   <div className="head">
-                    <span className="avatar lg">{initials(me.name)}</span>
+                    <Avatar id={user?.id} name={me.name} photo={user?.photo} lg plain />
                     <div style={{ display: "flex", flexDirection: "column", gap: 3, minWidth: 0 }}><b>{me.name}</b><span className="faint" style={{ fontSize: 12.5 }}>{me.code} · {me.roleName}</span></div>
                   </div>
                   <button role="menuitem" onClick={() => { setMenu(false); openProfile(); }}><Icon n="user" s={16} />{t("My profile")}</button>
@@ -246,7 +249,7 @@ export function Shell(props: ShellProps) {
             <div className="modal sm" role="dialog" aria-modal="true" aria-labelledby="pf-t">
               <div className="modal-h">
                 <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-                  <span className="avatar lg">{initials(me.name)}</span>
+                  <Avatar id={user?.id} name={me.name} photo={user?.photo} lg plain />
                   <div><span className="eyebrow">{me.code}</span><h2 id="pf-t" className="display">{me.name}</h2></div>
                 </div>
                 <button className="icon-btn" onClick={() => setProfile(false)} aria-label={t("Close")}><Icon n="x" s={16} /></button>

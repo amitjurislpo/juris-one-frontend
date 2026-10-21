@@ -3,7 +3,7 @@ import { emailOf, expectLanded, OTP, OWNER, sql } from "./helpers";
 
 // Sign-in is by emailed code only. The e2e backend uses the fixed code 000000 (scripts/e2e-env.mjs) and does not
 // throttle code requests.
-const BAD = "That code is wrong or has expired. Request a new one.";
+const BAD = "That code is wrong or has expired. Request a new one. If it keeps failing, your account may be disabled or your organisation suspended: contact your administrator.";
 const box = (page: Page, n: number) => page.getByLabel(`Digit ${n} of 6`);
 
 async function openLogin(page: Page) {
@@ -12,7 +12,7 @@ async function openLogin(page: Page) {
 
 async function requestCode(page: Page, email: string) {
   await page.getByLabel("Email").fill(email);
-  await page.getByRole("button", { name: "Send code" }).click();
+  await page.getByRole("button", { name: "Login", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
 }
 
@@ -23,7 +23,7 @@ test.describe("email code sign-in", () => {
 
   test("the only way in is the email code: no password field or option", async ({ page }) => {
     await openLogin(page);
-    await expect(page.getByRole("button", { name: "Send code" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Login", exact: true })).toBeVisible();
     await expect(page.getByLabel("Password", { exact: true })).toHaveCount(0);
     await expect(page.getByText(/use password/i)).toHaveCount(0);
     await expect(page.getByRole("link", { name: "Forgot?" })).toHaveCount(0);
@@ -76,11 +76,11 @@ test.describe("email code sign-in", () => {
     await page.getByRole("button", { name: "Change email" }).click();
     await expect(page.getByLabel("Email")).toHaveValue("wrong.address@example.com"); // filled in, ready to edit
     await page.getByLabel("Email").fill(await emailOf("JC-049"));
-    await page.getByRole("button", { name: "Send code" }).click();
+    await page.getByRole("button", { name: "Login", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
     await page.getByRole("button", { name: "Back" }).click();
-    await expect(page.getByRole("button", { name: "Send code" })).toBeVisible();
-    await page.getByRole("button", { name: "Send code" }).click();
+    await expect(page.getByRole("button", { name: "Login", exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Login", exact: true }).click();
     await box(page, 1).fill(OTP);
     await expectLanded(page, "/home");
   });
@@ -96,7 +96,7 @@ test.describe("email code sign-in", () => {
   test("an invalid email is refused before any code is sent", async ({ page }) => {
     await openLogin(page);
     await page.getByLabel("Email").fill("not-an-email");
-    await page.getByRole("button", { name: "Send code" }).click();
+    await page.getByRole("button", { name: "Login", exact: true }).click();
     await expect(page.locator(".err")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Check your email" })).toHaveCount(0);
   });

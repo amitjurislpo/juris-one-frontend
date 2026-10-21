@@ -2,15 +2,16 @@ import { PageHeader } from "@/components/PageHeader";
 import { ClearFilters, Pending, SearchBox, SegFilter, SelectFilter, SortTh } from "@/components/table/Table";
 import { PageLoading, useData, usePage } from "@/lib/page";
 import { qs } from "@/lib/api";
-import { avc, fmtDY, inr, initials } from "@/lib/format";
+import { fmtDY, inr } from "@/lib/format";
 import { HistoryButton, StructureButton, type Rev } from "./StructuresClient";
+import { Avatar } from "@/components/Avatar";
 
 
 
 export default function StructuresPage() {
   const { t, sp } = usePage();
   const d = useData<{
-    rows: { id: string; code: string; name: string; title: string; doj: string; revs: Rev[]; cur: Rev | null; g: number }[];
+    rows: { id: string; photo?: number | null; code: string; name: string; title: string; doj: string; revs: Rev[]; cur: Rev | null; g: number }[];
     total: number; depts: { id: string; name: string }[]; today: string; minFrom: string;
   }>(`/api/structures${qs(sp)}`);
   if (!d) return <PageLoading />;
@@ -43,7 +44,7 @@ export default function StructuresPage() {
               <tbody>
                 {rows.map((r, i) => (
                   <tr key={r.id} style={{ animationDelay: `${i * 35}ms` }}>
-                    <td><div className="person"><span className={`avatar ${avc(initials(r.name))}`}>{initials(r.name)}</span><div><b>{r.name}</b><small>{r.code} · {r.title}</small></div></div></td>
+                    <td><div className="person"><Avatar id={r.id} name={r.name} photo={r.photo} /><div><b>{r.name}</b><small>{r.code} · {r.title}</small></div></div></td>
                     {r.cur ? (
                       <>
                         <td className="r num muted">{inr(r.cur.basic)}</td><td className="r num muted">{inr(r.cur.hra)}</td><td className="r num muted">{inr(r.cur.lta)}</td><td className="r num muted">{inr(r.cur.special)}</td>

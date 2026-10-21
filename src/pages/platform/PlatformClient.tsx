@@ -1,14 +1,17 @@
 
+import Link from "@/lib/link";
 import { useRouter } from "@/lib/router";
 import { useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
-import type { BusinessProfile, PlanRow } from "@/lib/api-types";
+import { PhoneInput } from "@/components/ui/PhoneInput";
+import type { BusinessProfile, PlanRow, RoleTemplate } from "@/lib/api-types";
 import { inr } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
+import { phoneProblem, splitPhone } from "@/lib/phone";
 import {
-  addOwner, addSubscription, cancelSubscription, createBusiness, grantModule, revokeModule, setBusinessStatus, setOwnerAccess, updateBusiness,
+  addBusinessRole, addOwner, addSubscription, cancelSubscription, createBusiness, grantModule, removeBusinessRole, revokeModule, setBusinessStatus, setOwnerAccess, syncBusinessRole, updateBusiness,
   type BusinessInput, type GrantInput, type OwnerInput, type SubscriptionInput,
 } from "./actions";
 
@@ -37,7 +40,7 @@ function ProfileFields({ f, set, lockPrefix }: { f: BusinessInput; set: (f: Busi
       </div>
       <div className="grid3">
         <label className="field">{t("Contact email")}<input type="email" value={v("contactEmail")} onChange={on("contactEmail")} maxLength={200} /></label>
-        <label className="field">{t("Phone")}<input value={v("contactPhone")} onChange={on("contactPhone")} maxLength={30} /></label>
+        <div className="field">{t("Phone")}<PhoneInput {...splitPhone(v("contactPhone"))} onChange={(c, n) => set({ ...f, contactPhone: n ? `${c} ${n}` : "" })} /></div>
         <label className="field">{t("GSTIN")}<input value={v("gstin")} onChange={on("gstin")} maxLength={15} placeholder="22AAAAA0000A1Z5" /></label>
       </div>
       <label className="field">{t("Address")}<input value={v("address")} onChange={on("address")} maxLength={400} /></label>
@@ -51,9 +54,6 @@ function OwnerFields({ o, set }: { o: OwnerInput; set: (o: OwnerInput) => void }
     <div className="grid3">
       <label className="field">{t("Name *")}<input value={o.name} onChange={(e) => set({ ...o, name: e.target.value })} maxLength={120} /></label>
       <label className="field">{t("Email (signs in with it) *")}<input type="email" value={o.email} onChange={(e) => set({ ...o, email: e.target.value })} maxLength={200} /></label>
-      <label className="field">{t("Password")} <span className="hint">{t("empty = email an invite")}</span>
-        <input type="text" value={o.password ?? ""} onChange={(e) => set({ ...o, password: e.target.value })} autoComplete="new-password" />
-      </label>
     </div>
   );
 }
@@ -83,21 +83,30 @@ function SubscriptionFields({ s, set, plans }: { s: SubscriptionInput; set: (s: 
   );
 }
 
+/** Problem with the business phone ("+91 8888788888"), or null when it is blank or valid. */
+const businessPhoneProblem = (b: BusinessInput) => {
+  const { code, number } = splitPhone(b.contactPhone ?? "");
+  return number ? phoneProblem(code, number) : null;
+};
+
 const clean = <T extends object>(o: T): T => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== "" && v !== null && v !== undefined)) as T;
 
-export function NewBusinessButton({ plans }: { plans: PlanRow[] }) {
+export function NewBusinessButton({ plans, templates }: { plans: PlanRow[]; templates: RoleTemplate[] }) {
   const toast = useToast();
   const t = useT();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [b, setB] = useState<BusinessInput>(blankProfile);
   const [s, setS] = useState<SubscriptionInput>({ planId: "" });
-  const [o, setO] = useState<OwnerInput>({ name: "", email: "", password: "" });
+  const [o, setO] = useState<OwnerInput>({ name: "", email: "" });
+  const [roles, setRoles] = useState<string[]>([]);
   const [err, setErr] = useState("");
   const [busy, start] = useTransition();
-  const close = () => { setOpen(false); setErr(""); setB(blankProfile); setS({ planId: "" }); setO({ name: "", email: "", password: "" }); };
+  const close = () => { setOpen(false); setErr(""); setB(blankProfile); setS({ planId: "" }); setO({ name: "", email: "" }); setRoles([]); };
   const save = () => start(async () => {
-    const r = await createBusiness({ business: clean(b), subscription: s.planId ? clean(s) : undefined, owner: o.name || o.email ? clean(o) : undefined });
+    const bad = businessPhoneProblem(b);
+    if (bad) { setErr(bad); return; }
+    const r = await createBusiness({ business: clean(b), subscription: s.planId ? clean(s) : undefined, owner: o.name || o.email ? clean(o) : undefined, roles });
     if (r.ok) { toast(r.msg!); close(); router.push(`/platform/${r.data!.id}`); } else setErr(r.error);
   });
   return (
@@ -112,9 +121,92 @@ export function NewBusinessButton({ plans }: { plans: PlanRow[] }) {
             <SubscriptionFields s={s} set={(x) => { setS(x); setErr(""); }} plans={plans} />
             <h4 style={{ margin: "6px 0 0" }}>{t("Sub admin")} <span className="hint muted">{t("— runs the business; optional, can be added later")}</span></h4>
             <OwnerFields o={o} set={(x) => { setO(x); setErr(""); }} />
+            <h4 style={{ margin: "6px 0 0" }}>{t("Roles for this business")} <span className="hint muted">{t("— the business admin can't create roles, so pick what it needs")}</span></h4>
+            <RolePicker templates={templates} chosen={roles} set={(x) => { setRoles(x); setErr(""); }} />
             {err && <div className="err" role="alert">{err}</div>}
           </div>
         </Modal>
+      )}
+    </>
+  );
+}
+
+/** Mandatory roles are always given; the rest are ticked per business. */
+function RolePicker({ templates, chosen, set }: { templates: RoleTemplate[]; chosen: string[]; set: (keys: string[]) => void }) {
+  const t = useT();
+  return (
+    <div className="grid3">
+      {templates.filter((x) => x.active).map((x) => (
+        <label key={x.key} style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 400 }}>
+          <input type="checkbox" checked={x.mandatory || chosen.includes(x.key)} disabled={x.mandatory}
+            onChange={(e) => set(e.target.checked ? [...chosen, x.key] : chosen.filter((k) => k !== x.key))} />
+          {x.name}{x.mandatory && <span className="hint muted">{t("always included")}</span>}
+        </label>
+      ))}
+    </div>
+  );
+}
+
+export function AddBusinessRoleButton({ businessId, templates }: { businessId: string; templates: RoleTemplate[] }) {
+  const toast = useToast();
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const [key, setKey] = useState(templates[0]?.key ?? "");
+  const [err, setErr] = useState("");
+  const [busy, start] = useTransition();
+  const none = templates.length === 0;
+  const close = () => { setOpen(false); setErr(""); };
+  return (
+    <>
+      <button className="btn btn-sm" onClick={() => { setKey(templates[0]?.key ?? ""); setOpen(true); }}><Icon n="plus" s={14} />{t("Add role")}</button>
+      {open && (
+        <Modal title={t("Add role")} eyebrow={t("Gives this business a role from the catalogue")} size="sm" onClose={close}
+          footer={none ? <button className="btn btn-gold" onClick={close}>{t("OK")}</button> : <><button className="btn btn-ghost" onClick={close}>{t("Cancel")}</button>
+            <button className="btn btn-gold" disabled={busy} onClick={() => start(async () => {
+              const r = await addBusinessRole(businessId, key);
+              if (r.ok) { toast(t("Role added")); close(); } else setErr(r.error);
+            })}>{busy ? t("Adding…") : t("Add role")}</button></>}>
+          {none ? (
+            <p className="muted" style={{ margin: 0 }}>
+              {t("This business already has every available role. To give it a different one, first create it under")} <Link className="linkish" href="/platform/roles">{t("Role templates")}</Link>.
+            </p>
+          ) : <div className="col" style={{ gap: 14 }}>
+            <label className="field">{t("Role")}
+              <select value={key} onChange={(e) => { setKey(e.target.value); setErr(""); }}>{templates.map((x) => <option key={x.key} value={x.key}>{x.name}</option>)}</select>
+            </label>
+            {err && <div className="err" role="alert">{err}</div>}
+          </div>}
+        </Modal>
+      )}
+    </>
+  );
+}
+
+/** Update-from-template and remove for one role of a business. */
+export function BusinessRoleActions({ businessId, role }: { businessId: string; role: { id: string; name: string; employees: number; mandatory: boolean } }) {
+  const toast = useToast();
+  const t = useT();
+  const [ask, setAsk] = useState<"sync" | "remove" | null>(null);
+  const [busy, start] = useTransition();
+  const why = role.mandatory ? t("Every business has this role") : role.employees > 0 ? t("Move people to another role first") : undefined;
+  const run = (act: () => Promise<{ ok: boolean; msg?: string; error?: string }>) => start(async () => {
+    const r = await act();
+    toast(r.ok ? (r.msg ?? t("Done")) : (r.error ?? t("Failed")), r.ok ? undefined : "bad");
+    setAsk(null);
+  });
+  return (
+    <>
+      <button className="btn btn-sm btn-ghost" onClick={() => setAsk("sync")}>{t("Update from template")}</button>
+      <button className="btn btn-sm btn-ghost" disabled={!!why} title={why} onClick={() => setAsk("remove")} aria-label={t("Remove {name}", { name: role.name })}><Icon n="trash" s={14} /></button>
+      {ask === "sync" && (
+        <ConfirmDialog title={t("Update from template")} confirm={t("Update role")} busy={busy} onClose={() => setAsk(null)}
+          body={<>{t("Copy the current permissions of the {name} template over this business's role? People holding it get the new permissions straight away.", { name: role.name })}</>}
+          onConfirm={() => run(() => syncBusinessRole(businessId, role.id))} />
+      )}
+      {ask === "remove" && (
+        <ConfirmDialog title={t("Remove role")} danger confirm={t("Remove")} busy={busy} onClose={() => setAsk(null)}
+          body={<>{t("Remove the {name} role from this business?", { name: role.name })}</>}
+          onConfirm={() => run(() => removeBusinessRole(businessId, role.id))} />
       )}
     </>
   );
@@ -129,6 +221,8 @@ export function EditBusinessButton({ id, profile, hasPeople }: { id: string; pro
   const [err, setErr] = useState("");
   const [busy, start] = useTransition();
   const save = () => start(async () => {
+    const bad = businessPhoneProblem(b);
+    if (bad) { setErr(bad); return; }
     const r = await updateBusiness(id, b);
     if (r.ok) { toast(r.msg!); setOpen(false); } else setErr(r.error);
   });
@@ -170,10 +264,10 @@ export function AddOwnerButton({ id }: { id: string }) {
   const toast = useToast();
   const t = useT();
   const [open, setOpen] = useState(false);
-  const [o, setO] = useState<OwnerInput>({ name: "", email: "", password: "" });
+  const [o, setO] = useState<OwnerInput>({ name: "", email: "" });
   const [err, setErr] = useState("");
   const [busy, start] = useTransition();
-  const close = () => { setOpen(false); setErr(""); setO({ name: "", email: "", password: "" }); };
+  const close = () => { setOpen(false); setErr(""); setO({ name: "", email: "" }); };
   const save = () => start(async () => {
     const r = await addOwner(id, clean(o));
     if (r.ok) { toast(r.msg!); close(); } else setErr(r.error);

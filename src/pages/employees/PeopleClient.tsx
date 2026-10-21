@@ -5,12 +5,15 @@ import { useToast } from "@/components/shell/Toasts";
 import { ClearFilters, SortTh } from "@/components/table/Table";
 import { ConfirmDialog, Drawer } from "@/components/ui/Modal";
 import { useT } from "@/lib/i18n/client";
-import { avc, fmtDY, inr, initials } from "@/lib/format";
+import { useReadOnly } from "@/lib/session";
+import { fmtDY, inr } from "@/lib/format";
 import { EmployeeForm } from "./EmployeeForm";
-import { getProfile, markExited, resendInvite, revealContact, toggleAccess, type Profile } from "./actions";
+import { getProfile, confirmEmployee, markExited, revealContact, toggleAccess, type Profile } from "./actions";
+import { Avatar } from "@/components/Avatar";
 
 export interface PersonRow {
   id: string;
+  photo?: number | null;
   code: string;
   name: string;
   title: string;
@@ -29,12 +32,14 @@ const STATUS_LABEL: Record<string, string> = { ACTIVE: "Active", PROBATION: "Pro
 const stChip = (s: string) => (s === "ACTIVE" ? "ok" : s === "EXITED" ? "neutral" : s === "ONBOARDING" ? "info" : "warn");
 
 function AccessSwitch({ id, name, on, disabled, onDone }: { id: string; name: string; on: boolean; disabled: boolean; onDone?: (v: boolean) => void }) {
+  const readOnly = useReadOnly();
   const toast = useToast();
   const t = useT();
   const [busy, start] = useTransition();
   const [val, setVal] = useState(on);
   const [lastOn, setLastOn] = useState(on);
   if (lastOn !== on) { setLastOn(on); setVal(on); }
+  if (readOnly) return null;
   return (
     <span style={{ display: "inline-flex", alignItems: "center", whiteSpace: "nowrap" }}>
       <button className="switch" role="switch" aria-checked={val} disabled={disabled || busy} aria-label={val ? t("Disable portal access for {name}", { name }) : t("Enable portal access for {name}", { name })}
@@ -74,7 +79,7 @@ export function PeopleTable({ rows }: { rows: PersonRow[] }) {
               <tr key={e.id} onClick={() => setOpen(e.id)} style={{ cursor: "pointer", animationDelay: `${i * 30}ms` }} className={e.status === "EXITED" ? "dim" : undefined}>
                 <td>
                   <div className="person">
-                    <span className={`avatar ${avc(initials(e.name))}`}>{initials(e.name)}</span>
+                    <Avatar id={e.id} name={e.name} photo={e.photo} />
                     <div>
                       <b><button className="linkish" style={{ color: "inherit", fontWeight: 600 }} onClick={(ev) => { ev.stopPropagation(); setOpen(e.id); }}>{e.name}</button></b>
                       <small>{e.code} · {e.title}</small>
@@ -94,14 +99,16 @@ export function PeopleTable({ rows }: { rows: PersonRow[] }) {
       </div>
       {!rows.length && <div className="empty"><b>{t("No one matches")}</b><span className="muted">{t("Try a different search or filter.")}</span><ClearFilters /></div>}
       {open && <ProfileDrawer id={open} onClose={() => setOpen(null)} onEdit={(id) => { setOpen(null); setEditId(id); }} />}
-      {editId && <EmployeeForm editId={editId} onClose={() => setEditId(null)} />}
+      {editId && <EmployeeForm editId={editId} photo={rows.find((r) => r.id === editId)?.photo} onClose={() => setEditId(null)} />}
     </>
   );
 }
 
 export function AddEmployeeButton() {
+  const readOnly = useReadOnly();
   const t = useT();
   const [adding, setAdding] = useState(false);
+  if (readOnly) return null;
   return (
     <>
       <button className="btn btn-gold btn-lg" onClick={() => setAdding(true)}><Icon n="plus" s={16} />{t("Add employee")}</button>
@@ -111,6 +118,7 @@ export function AddEmployeeButton() {
 }
 
 function ProfileDrawer({ id, onClose, onEdit }: { id: string; onClose: () => void; onEdit: (id: string) => void }) {
+  const readOnly = useReadOnly();
   const toast = useToast();
   const t = useT();
   const [p, setP] = useState<Profile | null>(null);
@@ -135,7 +143,7 @@ function ProfileDrawer({ id, onClose, onEdit }: { id: string; onClose: () => voi
   return (
     <Drawer label={t("Employee profile")} onClose={onClose} width={520}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <span className={`avatar lg ${p ? avc(initials(p.name)) : ""}`}>{p ? initials(p.name) : ""}</span>
+        <Avatar id={p?.id} name={p?.name ?? ""} photo={p?.photo} lg />
         <button className="icon-btn" onClick={onClose} aria-label={t("Close")}><Icon n="x" s={16} /></button>
       </div>
       {err && <div className="err">{err}</div>}
@@ -148,9 +156,18 @@ function ProfileDrawer({ id, onClose, onEdit }: { id: string; onClose: () => voi
             <span className="muted">{p.designation} · {p.department}</span>
           </div>
           <div className="access-row">
-            <div><b>{t("Portal access")}</b><div className="faint" style={{ fontSize: 12.5 }}>{p.status === "EXITED" ? t("Removed on exit") : p.access ? (p.invitePending ? t("Invite sent — password not set yet") : t("Can sign in to JurisOne")) : t("Sign-in is blocked")}</div></div>
+            <div><b>{t("Portal access")}</b><div className="faint" style={{ fontSize: 12.5 }}>{p.status === "EXITED" ? t("Removed on exit") : p.access ? t("Can sign in to JurisOne") : t("Sign-in is blocked")}</div></div>
             <AccessSwitch id={p.id} name={p.name} on={p.access} disabled={!p.canToggle} onDone={(v) => setP({ ...p, access: v })} />
           </div>
+          {p.canConfirm && !readOnly && (
+            <div className="access-row confirm-row">
+              <div><b>{t("Probation")}</b><div className="faint" style={{ fontSize: 12.5 }}>{t("Make this person a permanent employee now, without waiting for the probation period to end.")}</div></div>
+              <button className="btn btn-gold" disabled={busy} onClick={() => start(async () => {
+                const r = await confirmEmployee(p.id);
+                if (r.ok) { toast(r.msg!, "ok"); setP({ ...p, status: "ACTIVE", canConfirm: false }); } else toast(r.error, "bad");
+              })}>{t("Make permanent")}</button>
+            </div>
+          )}
           <div>
             <div className="eyebrow" style={{ margin: "4px 0 4px" }}>{t("Personal")}</div>
             {kv(t("Father’s name"), p.father)}
@@ -185,12 +202,9 @@ function ProfileDrawer({ id, onClose, onEdit }: { id: string; onClose: () => voi
               <div><b style={{ fontWeight: 600 }}>{t("Compensation")}</b><div className="muted" style={{ fontSize: 13 }}>{t("Salary and tax details are visible to Finance only.")}</div></div>
             </div>
           )}
-          {p.canEdit && (
+          {p.canEdit && !readOnly && (
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button className="btn btn-gold" onClick={() => onEdit(p.id)}><Icon n="edit" s={15} />{t("Edit details")}</button>
-              {p.invitePending && p.access && (
-                <button className="btn" disabled={busy} onClick={() => start(async () => { const r = await resendInvite(p.id); toast(r.ok ? r.msg! : r.error, r.ok ? "ok" : "bad"); })}>{t("Resend invite")}</button>
-              )}
               <button className="btn btn-danger" onClick={() => setExitOpen(true)}>{t("Mark as past employee")}</button>
             </div>
           )}

@@ -2,13 +2,14 @@ import { PageHeader } from "@/components/PageHeader";
 import { ClearFilters, Pending, SearchBox, SegFilter, SortTh } from "@/components/table/Table";
 import { PageLoading, useData, usePage } from "@/lib/page";
 import { qs } from "@/lib/api";
-import { avc, inr, initials } from "@/lib/format";
+import { inr } from "@/lib/format";
 import { ReviewButton } from "./ProofsClient";
+import { Avatar } from "@/components/Avatar";
 
 
 export default function ProofsPage() {
   const { t, sp } = usePage();
-  const d = useData<{ rows: { id: string; name: string; code: string; dept: string; reg: "NEW" | "OLD"; dec: number; pend: number; appr: number }[]; total: number }>(`/api/proofs${qs(sp)}`);
+  const d = useData<{ rows: { id: string; photo?: number | null; name: string; code: string; dept: string; reg: "NEW" | "OLD"; dec: number; pend: number; appr: number }[]; total: number }>(`/api/proofs${qs(sp)}`);
   if (!d) return <PageLoading />;
   const { rows, total } = d;
 
@@ -36,7 +37,7 @@ export default function ProofsPage() {
               <tbody>
                 {rows.map((r, i) => (
                   <tr key={r.id} style={{ animationDelay: `${i * 40}ms` }}>
-                    <td><div className="person"><span className={`avatar ${avc(initials(r.name))}`}>{initials(r.name)}</span><div><b>{r.name}</b><small>{r.code} · {r.dept}</small></div></div></td>
+                    <td><div className="person"><Avatar id={r.id} name={r.name} photo={r.photo} /><div><b>{r.name}</b><small>{r.code} · {r.dept}</small></div></div></td>
                     <td><span className={`chip nodot ${r.reg === "OLD" ? "info" : "gold"}`}>{r.reg === "OLD" ? t("Old") : t("New")}</span></td>
                     <td className="r num">{inr(r.dec)}</td>
                     <td>{r.pend ? <span className="chip warn">{t("{n} to verify", { n: r.pend })}</span> : r.appr ? <span className="chip ok">{t("Verified")}</span> : <span className="chip neutral">{t("Nothing submitted")}</span>}</td>

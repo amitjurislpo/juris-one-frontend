@@ -5,6 +5,7 @@ import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
 import { inr } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
+import { useReadOnly } from "@/lib/session";
 import { DECL } from "@/lib/tax/catalogue";
 import { saveItem, saveProfile, setRegime, submitForVerification } from "./actions";
 
@@ -31,7 +32,8 @@ export function DeclareClient(p: {
   const better = p.newTax <= p.oldTax ? "NEW" : "OLD";
   const counts = { pending: p.items.filter((i) => i.status === "PENDING").length, approved: p.items.filter((i) => i.status === "APPROVED").length, rejected: p.items.filter((i) => i.status === "REJECTED").length };
   const secTotal = (s: (typeof DECL)[number]) => s.items.reduce((a, it) => a + (it.auto ? p.epf : Number(draft[it.k] || 0)), 0);
-  const locked = !p.windowOpen;
+  const readOnly = useReadOnly();
+  const locked = !p.windowOpen || readOnly;
 
   const act = (fn: () => Promise<{ ok: boolean; msg?: string; error?: string }>) => start(async () => {
     const res = await fn();
@@ -55,7 +57,7 @@ export function DeclareClient(p: {
   };
 
   const regimeCard = (v: "NEW" | "OLD", title: string, blurb: string, tax: number) => (
-    <button type="button" className={`card regime${p.regime === v ? " on" : ""}`} aria-pressed={p.regime === v} disabled={busy || p.overridden || !p.canChangeRegime}
+    <button type="button" className={`card regime${p.regime === v ? " on" : ""}`} aria-pressed={p.regime === v} disabled={busy || readOnly || p.overridden || !p.canChangeRegime}
       onClick={() => act(() => setRegime(v))}>
       <span className="spot"></span>
       <span style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}><b>{title}</b>{better === v && <span className="chip ok nodot">{t("Saves more")}</span>}</span>
@@ -85,7 +87,7 @@ export function DeclareClient(p: {
           <div className="row enter" style={{ ["--i" as string]: 2, alignItems: "center" }}>
             <span className="chip warn">{t("{n} pending", { n: counts.pending })}</span><span className="chip ok">{t("{n} approved", { n: counts.approved })}</span>{counts.rejected > 0 && <span className="chip bad">{t("{n} rejected", { n: counts.rejected })}</span>}
             <span style={{ flex: 1 }}></span>
-            <button className="btn btn-gold" disabled={busy || locked} onClick={() => act(submitForVerification)}><Icon n="upload" s={15} />{t("Submit for verification")}</button>
+            {!readOnly && <button className="btn btn-gold" disabled={busy || locked} onClick={() => act(submitForVerification)}><Icon n="upload" s={15} />{t("Submit for verification")}</button>}
           </div>
           {DECL.map((s, si) => (
             <section key={s.sec} className="card enter decl" style={{ ["--i" as string]: si + 3 }}>
@@ -134,11 +136,11 @@ export function DeclareClient(p: {
                                 onChange={(e) => setDraft({ ...draft, [it.k]: e.target.value })}
                                 onBlur={() => { const v = Math.round(Number(draft[it.k] || 0)); if (v !== (cur?.amount ?? 0)) act(() => saveItem({ key: it.k, amount: v })); }} />
                             </label>
-                            <label className={`btn btn-sm${locked || cur?.status === "PENDING" ? " disabled" : ""}`} style={{ cursor: "pointer" }} title={cur?.proofName ?? undefined}>
+                            {!readOnly && <label className={`btn btn-sm${locked || cur?.status === "PENDING" ? " disabled" : ""}`} style={{ cursor: "pointer" }} title={cur?.proofName ?? undefined}>
                               <Icon n="upload" s={14} />{uploading === it.k ? t("Uploading…") : cur?.proofName ? t("Replace") : t("Proof")}
                               <input type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" style={{ display: "none" }} disabled={locked || cur?.status === "PENDING"} aria-label={t("Upload proof for {label}", { label: t(it.label) })}
                                 onChange={(e) => { const file = e.target.files?.[0]; if (file) void upload(it.k, file); e.target.value = ""; }} />
-                            </label>
+                            </label>}
                             {cur?.proofName && <a className="linkish" style={{ fontSize: 12.5 }} href={`/api/declarations/proof/${cur.id}`} target="_blank" rel="noopener">{cur.proofName}</a>}
                             <span className={`chip ${cur ? CHIP[cur.status] : "neutral"}`} style={{ minWidth: 84, justifyContent: "center" }}>{cur && (cur.amount || cur.proofName) ? t(LABEL[cur.status]) : t("Not declared")}</span>
                           </>

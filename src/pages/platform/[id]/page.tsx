@@ -1,22 +1,23 @@
 import Link from "@/lib/link";
 import { Icon } from "@/components/Icon";
 import { PageHeader } from "@/components/PageHeader";
-import type { BusinessProfile, ModuleGrant, PlanRow, SubscriptionCurrent, SubscriptionRow } from "@/lib/api-types";
+import type { BusinessProfile, ModuleGrant, PlanRow, RoleTemplates, SubscriptionCurrent, SubscriptionRow } from "@/lib/api-types";
 import { PageLoading, useData, usePage } from "@/lib/page";
 import { fmtDY, inr } from "@/lib/format";
 import { MODULE_LABELS, subscriptionChip } from "@/lib/subscription";
 import {
-  AddOwnerButton, AddSubscriptionButton, BusinessStatusButton, CancelSubscriptionButton, EditBusinessButton, GrantJurisTrackButton, OwnerAccessSwitch,
+  AddBusinessRoleButton, AddOwnerButton, AddSubscriptionButton, BusinessRoleActions, BusinessStatusButton, CancelSubscriptionButton, EditBusinessButton, GrantJurisTrackButton, OwnerAccessSwitch,
   RevokeGrantButton,
 } from "../PlatformClient";
 
 
 interface Detail {
   business: BusinessProfile & { id: string; status: "ACTIVE" | "SUSPENDED"; createdAt: string };
-  owners: { id: string; code: string; name: string; email: string; access: boolean; activated: boolean; status: string }[];
+  owners: { id: string; code: string; name: string; email: string; access: boolean; status: string }[];
   subscription: SubscriptionCurrent;
   subscriptions: SubscriptionRow[];
   modules: ModuleGrant[];
+  roles: { id: string; key: string; name: string; employees: number; mandatory: boolean }[];
 }
 
 const GRANT_STATE: Record<ModuleGrant["state"], { cls: string; text: string }> = {
@@ -29,7 +30,8 @@ export default function BusinessPage() {
   const { id } = params;
   const d = useData<Detail>(`/api/platform/businesses/${encodeURIComponent(id)}`);
   const plans = useData<PlanRow[]>("/api/platform/plans");
-  if (!d || !plans) return <PageLoading />;
+  const catalogue = useData<RoleTemplates>("/api/platform/role-templates");
+  if (!d || !plans || !catalogue) return <PageLoading />;
   const b = d.business;
   const s = d.subscription;
   const chip = subscriptionChip(s);
@@ -43,7 +45,7 @@ export default function BusinessPage() {
 
   return (
     <div className="col">
-      <PageHeader eyebrow={<><Link href="/platform" className="linkish">{t("Businesses")}</Link> / {b.code}</>} title={b.name}
+      <PageHeader back="/platform" eyebrow={<><Link href="/platform" className="linkish">{t("Businesses")}</Link> / {b.code}</>} title={b.name}
         sub={<>{t("Created {date} · employee IDs {prefix}-001 · {tz}", { date: fmtDY(b.createdAt.slice(0, 10)), prefix: b.employeePrefix, tz: b.timeZone })}</>}>
         <EditBusinessButton id={b.id} profile={profile} hasPeople={s.employees > 0} />
         <BusinessStatusButton id={b.id} name={b.name} status={b.status} />
@@ -61,7 +63,7 @@ export default function BusinessPage() {
           <div className="card-h"><h3>{t("Sub admins")}</h3><AddOwnerButton id={b.id} /></div>
           {d.owners.map((o) => (
             <div key={o.id} className="kv" style={{ alignItems: "center" }}>
-              <span><b>{o.name}</b> <span className="muted mono" style={{ fontSize: 12 }}>{o.code}</span><br /><small className="muted">{o.email}{o.activated ? "" : ` · ${t("invite sent")}`}</small></span>
+              <span><b>{o.name}</b> <span className="muted mono" style={{ fontSize: 12 }}>{o.code}</span><br /><small className="muted">{o.email}</small></span>
               <OwnerAccessSwitch businessId={b.id} ownerId={o.id} name={o.name} on={o.access} />
             </div>
           ))}
@@ -76,6 +78,22 @@ export default function BusinessPage() {
           <div className="kv"><span className="muted">{t("Address")}</span><b style={{ textAlign: "right" }}>{b.address ?? "—"}</b></div>
         </section>
       </div>
+
+      <section className="card enter" style={{ ["--i" as string]: 3, padding: 18 }}>
+        <div className="card-h">
+          <div>
+            <h3>{t("Roles")}</h3>
+            <small className="muted">{t("What people in this business can be. The business admin can't create roles; they work with these.")}</small>
+          </div>
+          <AddBusinessRoleButton businessId={b.id} templates={catalogue.templates.filter((x) => x.active && !d.roles.some((r) => r.key === x.key))} />
+        </div>
+        {d.roles.map((r) => (
+          <div key={r.id} className="kv" style={{ alignItems: "center" }}>
+            <span><b>{r.name}</b>{r.mandatory && <> <span className="chip neutral">{t("Always included")}</span></>}<br /><small className="muted">{t("{n} people", { n: r.employees })}</small></span>
+            <span style={{ display: "flex", gap: 6 }}><BusinessRoleActions businessId={b.id} role={r} /></span>
+          </div>
+        ))}
+      </section>
 
       <section className="card enter" style={{ ["--i" as string]: 3 }}>
         <div className="card-h" style={{ padding: "16px 18px 0" }}>

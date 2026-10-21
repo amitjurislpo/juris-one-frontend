@@ -2,18 +2,19 @@
 import { useEffect, useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
+import { PhotoField } from "@/components/PhotoField";
 import { Modal } from "@/components/ui/Modal";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import { stepErrors, type EmployeeInput, type StepErrors } from "@/lib/employee-schema";
 import { LOCATIONS } from "@/lib/people-rules";
 import { SHIFT_OPTIONS } from "@/lib/shifts";
 import { useT } from "@/lib/i18n/client";
-import { getFormOptions, saveEmployee, type FormOptions } from "./actions";
+import { getFormOptions, removeEmployeePhoto, saveEmployee, uploadEmployeePhoto, type FormOptions } from "./actions";
 
 const STEPS = ["Personal", "Identity & address", "Job & access"] as const;
 
 /** Add / edit employee — 3 steps (REQUIREMENTS §5.2, prototype tpl-add). */
-export function EmployeeForm({ editId, onClose }: { editId?: string; onClose: () => void }) {
+export function EmployeeForm({ editId, photo, onClose }: { editId?: string; photo?: number | null; onClose: () => void }) {
   const toast = useToast();
   const t = useT();
   const [opt, setOpt] = useState<FormOptions | null>(null);
@@ -23,6 +24,10 @@ export function EmployeeForm({ editId, onClose }: { editId?: string; onClose: ()
   const [tried, setTried] = useState(false);
   const [serverErr, setServerErr] = useState("");
   const [busy, start] = useTransition();
+  // photo: when adding it is picked now and uploaded right after the employee is created; when editing it is saved at once
+  const [pendingPhoto, setPendingPhoto] = useState<Blob | null>(null);
+  const [savedPhoto, setSavedPhoto] = useState<number | null | undefined>(photo);
+  const [photoBusy, setPhotoBusy] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -60,7 +65,14 @@ export function EmployeeForm({ editId, onClose }: { editId?: string; onClose: ()
     if (step < 3) { setStep((step + 1) as 2 | 3); return; }
     start(async () => {
       const r = await saveEmployee(f, editId);
-      if (r.ok) { toast(r.msg!); onClose(); }
+      if (r.ok) {
+        toast(r.msg!);
+        if (!editId && pendingPhoto) {
+          const p = await uploadEmployeePhoto(r.data!.id, pendingPhoto);
+          if (!p.ok) toast(t("The employee was added, but the photo could not be saved: {error} You can add it from Edit details.", { error: p.error }), "bad");
+        }
+        onClose();
+      }
       else setServerErr(r.error);
     });
   };
@@ -90,6 +102,27 @@ export function EmployeeForm({ editId, onClose }: { editId?: string; onClose: ()
 
           {step === 1 && (
             <div className="col" style={{ gap: 14, animation: "enter .4s both" }}>
+              <div className="field">{t("Photo")} <span className="hint">{t("optional")}</span>
+                <PhotoField id={editId} name={f.firstName ? `${f.firstName} ${f.lastName}`.trim() : t("New hire")} photo={editing ? savedPhoto : null} pending={editing ? null : pendingPhoto} busy={photoBusy}
+                  onPick={editing
+                    ? async (blob) => {
+                      setPhotoBusy(true);
+                      const r = await uploadEmployeePhoto(editId!, blob);
+                      setPhotoBusy(false);
+                      if (r.ok) { setSavedPhoto(Date.now()); toast(t("Photo saved")); return null; }
+                      return r.error;
+                    }
+                    : (blob) => { setPendingPhoto(blob); }}
+                  onRemove={editing
+                    ? async () => {
+                      setPhotoBusy(true);
+                      const r = await removeEmployeePhoto(editId!);
+                      setPhotoBusy(false);
+                      if (r.ok) { setSavedPhoto(null); toast(t("Photo removed")); return null; }
+                      return r.error;
+                    }
+                    : () => { setPendingPhoto(null); }} />
+              </div>
               <div className="grid3">
                 <label className="field">{t("First name *")}<input value={f.firstName} onChange={(e) => set("firstName", e.target.value)} placeholder={t("e.g. Meera")} maxLength={60} autoFocus />{err("firstName")}</label>
                 <label className="field">{t("Middle name")}<input value={f.middleName} onChange={(e) => set("middleName", e.target.value)} maxLength={60} />{err("middleName")}</label>
@@ -173,7 +206,7 @@ export function EmployeeForm({ editId, onClose }: { editId?: string; onClose: ()
               {!editing && india && (
                 <div style={{ display: "flex", gap: 14, alignItems: "center", padding: "14px 16px", borderRadius: 14, border: "1px dashed var(--line2)", background: "var(--accentsoft)" }}>
                   <Icon n="lock" s={20} />
-                  <div><b>{t("Salary is set by Finance")}</b><div className="muted" style={{ fontSize: 13 }}>{t("After you save, Finance is notified to set up the salary structure. The new hire gets an email invite to set a password.")}</div></div>
+                  <div><b>{t("Salary is set by Finance")}</b><div className="muted" style={{ fontSize: 13 }}>{t("After you save, Finance is notified to set up the salary structure. The new hire signs in with an emailed code on their work email.")}</div></div>
                 </div>
               )}
             </div>

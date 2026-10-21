@@ -5,9 +5,10 @@ import { PageHeader } from "@/components/PageHeader";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/shell/Toasts";
 import { useT } from "@/lib/i18n/client";
-import { avc, initials } from "@/lib/format";
+import { useReadOnly } from "@/lib/session";
 import { PERMISSION_GROUPS, PERMISSION_LABEL } from "@/lib/permissions";
 import { createRole, deleteRole, setAssignable, setPermission } from "./actions";
+import { Avatar } from "@/components/Avatar";
 
 export interface RoleView {
   id: string;
@@ -17,13 +18,16 @@ export interface RoleView {
   locked: boolean;
   perms: string[];
   assign: string[];
-  members: { id: string; name: string }[];
+  members: { id: string; photo?: number | null; name: string }[];
   totalEver: number;
+  /** false for the business owner: roles are set up by the platform. */
+  canEdit: boolean;
 }
 
 export function RolesClient({ roles, initialSel }: { roles: RoleView[]; initialSel: string }) {
   const toast = useToast();
   const t = useT();
+  const readOnly = useReadOnly();
   const [sel, setSel] = useState(initialSel);
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
@@ -33,7 +37,8 @@ export function RolesClient({ roles, initialSel }: { roles: RoleView[]; initialS
   const [confirmDel, setConfirmDel] = useState(false);
 
   const role = roles.find((r) => r.id === sel) ?? roles[0];
-  const locked = role.locked;
+  const canEdit = role.canEdit && !readOnly;
+  const locked = role.locked || !canEdit;
 
   const act = (p: Promise<{ ok: boolean; msg?: string; error?: string }>, bad = false) =>
     start(async () => {
@@ -45,7 +50,7 @@ export function RolesClient({ roles, initialSel }: { roles: RoleView[]; initialS
   return (
     <div className="col">
       <PageHeader eyebrow={t("Administration")} title={t("Roles &")} em={t("permissions")} sub={t("A person's role decides what they see after signing in. Changes apply on their next click.")}>
-        <button className="btn btn-gold btn-lg" onClick={() => setAdding(true)}><Icon n="plus" s={16} />{t("New role")}</button>
+        {canEdit && <button className="btn btn-gold btn-lg" onClick={() => setAdding(true)}><Icon n="plus" s={16} />{t("New role")}</button>}
       </PageHeader>
       <div className="role-grid">
         <div className="role-list enter" style={{ ["--i" as string]: 1 }}>
@@ -65,9 +70,9 @@ export function RolesClient({ roles, initialSel }: { roles: RoleView[]; initialS
           <div className="card-h">
             <div>
               <h3 className="display" style={{ fontSize: 28, margin: 0 }}>{role.name}</h3>
-              <span className="faint" style={{ fontSize: 12.5 }}>{locked ? t("Full access · cannot be changed") : t("Toggle what this role can do")}</span>
+              <span className="faint" style={{ fontSize: 12.5 }}>{role.locked ? t("Full access · cannot be changed") : readOnly ? t("Subscription ended · view only") : !role.canEdit ? t("Roles are set up for your business by JurisOne.") : t("Toggle what this role can do")}</span>
             </div>
-            {!role.builtin && (
+            {!role.builtin && canEdit && (
               <button className="btn btn-sm btn-danger" disabled={role.totalEver > 0 || busy} title={role.totalEver ? t("Move people (including past employees) to another role first") : ""}
                 onClick={() => setConfirmDel(true)}>
                 <Icon n="trash" s={14} />{t("Delete role")}
@@ -103,7 +108,7 @@ export function RolesClient({ roles, initialSel }: { roles: RoleView[]; initialS
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {role.members.map((m) => (
                 <span key={m.id} className="chip neutral nodot" style={{ height: 30, gap: 8 }}>
-                  <span className={`avatar ${avc(initials(m.name))}`} style={{ width: 20, height: 20, fontSize: 9 }}>{initials(m.name)}</span>{m.name}
+                  <Avatar id={m.id} name={m.name} photo={m.photo} style={{ width: 20, height: 20, fontSize: 9 }} />{m.name}
                 </span>
               ))}
               {!role.members.length && <span className="faint">{t("No one yet — assign this role from People → Add employee.")}</span>}

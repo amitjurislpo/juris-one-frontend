@@ -25,7 +25,7 @@ export const setNavigator = (fn: (to: string) => void) => { navigateTo = fn; };
 /** Client-side navigation from outside React (after sign-in / sign-out). */
 export const navigate = (to: string) => navigateTo(to);
 
-const PUBLIC = ["/login", "/forgot", "/invite/", "/reset/", "/onboard/"];
+const PUBLIC = ["/login", "/onboard/"];
 const onPublicPage = () => PUBLIC.some((p) => location.pathname === p || location.pathname.startsWith(p));
 
 let refreshing: Promise<boolean> | null = null;
@@ -44,12 +44,12 @@ function refreshSession(): Promise<boolean> {
   return refreshing;
 }
 
-async function send<T>(method: string, path: string, body: unknown): Promise<ApiResponse<T>> {
+async function send<T>(method: string, path: string, body: unknown, file?: Blob): Promise<ApiResponse<T>> {
   const write = method !== "GET";
   const res = await fetch(path, {
     method,
-    headers: write ? { accept: "application/json", "content-type": "application/json" } : { accept: "application/json" },
-    body: write ? JSON.stringify(body ?? {}) : undefined,
+    headers: file ? { accept: "application/json", "content-type": file.type } : write ? { accept: "application/json", "content-type": "application/json" } : { accept: "application/json" },
+    body: file ?? (write ? JSON.stringify(body ?? {}) : undefined),
     credentials: "same-origin",
     cache: "no-store",
   });
@@ -72,17 +72,30 @@ async function send<T>(method: string, path: string, body: unknown): Promise<Api
  * One API call. A 401 triggers one silent session refresh and a retry; if that fails the session has ended and the user
  * is sent to the sign-in page (unless `quiet`, used when asking "who am I?" on a public page).
  */
-export async function apiCall<T>(method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", path: string, body?: unknown, opts: { quiet?: boolean } = {}): Promise<ApiResponse<T>> {
-  let r = await send<T>(method, path, body);
+export async function apiCall<T>(method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", path: string, body?: unknown, opts: { quiet?: boolean; file?: Blob } = {}): Promise<ApiResponse<T>> {
+  let r = await send<T>(method, path, body, opts.file);
   if (r.status === 401 && !path.startsWith("/api/auth/")) {
-    if (await refreshSession()) r = await send<T>(method, path, body);
+    if (await refreshSession()) r = await send<T>(method, path, body, opts.file);
     if (r.status === 401 && !opts.quiet && !onPublicPage()) {
       queryClient.clear();
       const next = location.pathname + location.search;
       navigateTo(next && next !== "/" ? `/login?next=${encodeURIComponent(next)}` : "/login");
     }
   }
+  // a policy was published since the page was loaded: reload "who am I?" so the acknowledgement screen takes over
+  if (r.status === 428) void queryClient.invalidateQueries();
   return r;
+}
+
+/** Tells the audit log that this page was opened. Fire and forget: no redirect on 401, no refetch, errors ignored. */
+export function reportPageView(path: string) {
+  fetch("/api/audit/page-views", {
+    method: "POST",
+    headers: { accept: "application/json", "content-type": "application/json" },
+    body: JSON.stringify({ path }),
+    credentials: "same-origin",
+    keepalive: true,
+  }).then((r) => r.text()).catch(() => {});
 }
 
 /** GET returning `data`, or null on 401 (signed out). Other errors throw. */
@@ -107,6 +120,13 @@ export async function apiData<T>(path: string): Promise<T> {
 export async function apiAction<T = undefined>(method: "POST" | "PUT" | "PATCH" | "DELETE", path: string, body?: unknown, _revalidate: string[] = []): Promise<ApiResult<T>> {
   const r = await apiCall<T>(method, path, body);
   // wait for the refetch: the caller shows its toast together with the fresh data (what revalidatePath did)
+  if (r.body.ok) await queryClient.invalidateQueries();
+  return r.body;
+}
+
+/** A write whose body is a file (raw bytes, e.g. a photo) or nothing (a DELETE). Like apiAction, every page's data is refetched on success. */
+export async function apiFile(method: "PUT" | "DELETE", path: string, file?: Blob): Promise<ApiResult<undefined>> {
+  const r = await apiCall<undefined>(method, path, undefined, { file });
   if (r.body.ok) await queryClient.invalidateQueries();
   return r.body;
 }

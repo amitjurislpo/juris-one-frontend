@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { Navigate, Outlet, useLocation } from "react-router";
 import Link from "@/lib/link";
 import { Shell } from "@/components/shell/Shell";
@@ -7,6 +7,7 @@ import { fmtDY } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import { BUSINESS_MANAGE, type NavGroup } from "@/lib/nav";
 import { PageErrorBoundary, PageLoading, useData } from "@/lib/page";
+import { reportPageView } from "@/lib/api";
 import { refreshData } from "@/lib/query";
 import { useCurrentUser } from "@/lib/session";
 import { currentTheme } from "./theme";
@@ -29,6 +30,9 @@ export function AppLayout() {
   const loc = useLocation();
   const t = useT();
   const data = useData<ShellData>(u ? "/api/shell" : null);
+  // every page opened by a signed-in user goes into the audit log (once per navigation)
+  const signedIn = !!u;
+  useEffect(() => { if (signedIn) reportPageView(loc.pathname); }, [signedIn, loc.pathname]);
   if (loading) return <PageLoading />;
   if (!u) return <Navigate to={`/login${loc.pathname !== "/" ? `?next=${encodeURIComponent(loc.pathname + loc.search)}` : ""}`} replace />;
   if (!data) return <PageLoading />;
@@ -47,6 +51,12 @@ export function AppLayout() {
       businessName={data.businessName}
       initialTheme={currentTheme()}
     >
+      {u.readOnly && (
+        <div className="card" role="status" style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", marginBottom: 20, background: "var(--warnbg)", borderColor: "transparent", color: "var(--warn)" }}>
+          <b style={{ flex: 1 }}>{t("Your JurisOne subscription has ended. You can view and export your data, but nothing can be changed until it is renewed. Contact the JurisOne team to renew.")}</b>
+          {(u.perms as ReadonlySet<string>).has(BUSINESS_MANAGE) && <Link className="btn btn-sm" href="/subscription">{t("Subscription")}</Link>}
+        </div>
+      )}
       {ending && (
         <div className="card" role="status" style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", marginBottom: 20, background: "var(--warnbg)", borderColor: "transparent", color: "var(--warn)" }}>
           <b style={{ flex: 1 }}>

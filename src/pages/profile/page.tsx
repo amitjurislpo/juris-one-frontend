@@ -1,6 +1,7 @@
 import { PageHeader } from "@/components/PageHeader";
 import { PageLoading, useData, usePage } from "@/lib/page";
 import { fmtDY } from "@/lib/format";
+import { PhotoCard } from "./PhotoCard";
 import { ProfileForm, type MyProfile } from "./ProfileForm";
 
 
@@ -19,6 +20,7 @@ export default function ProfilePage() {
     <div className="col">
       <PageHeader eyebrow={t("Account")} title={p.firstName} em={[p.middleName, p.lastName].filter(Boolean).join(" ")}
         sub={t("Keep your personal details up to date. Your name, work email, phone, IDs and bank details are changed by HR.")} />
+      <div className="enter" style={{ ["--i" as string]: 1 }}><PhotoCard /></div>
       <div className="grid2 enter" style={{ ["--i" as string]: 1, alignItems: "start" }}>
         <section className="card" style={{ padding: 18 }}>
           <div className="card-h"><h3>{t("Job & records")}</h3><small className="muted">{t("Managed by HR")}</small></div>

@@ -8,6 +8,7 @@ import type { Announcement } from "@/lib/api-types";
 import { AUDIENCES } from "@/lib/assets";
 import { fmtDY } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
+import { useReadOnly } from "@/lib/session";
 import { createAnnouncement, setAnnouncementStatus, updateAnnouncement, type AnnouncementInput } from "./actions";
 
 const EMPTY: AnnouncementInput = { title: "", body: "", audience: "ALL", pinned: false, expiresOn: "" };
@@ -46,8 +47,10 @@ function Editor({ a, onClose }: { a?: Announcement; onClose: () => void }) {
 }
 
 export function NewAnnouncementButton() {
+  const readOnly = useReadOnly();
   const t = useT();
   const [open, setOpen] = useState(false);
+  if (readOnly) return null;
   return (
     <>
       <button className="btn btn-gold btn-lg" onClick={() => setOpen(true)}><Icon n="plus" s={16} />{t("New announcement")}</button>
@@ -64,6 +67,7 @@ function state(a: Announcement): { cls: string; text: string } {
 
 export function ManageTable({ rows }: { rows: Announcement[] }) {
   const t = useT();
+  const readOnly = useReadOnly();
   const toast = useToast();
   const router = useRouter();
   const [edit, setEdit] = useState<Announcement | null>(null);
@@ -90,10 +94,10 @@ export function ManageTable({ rows }: { rows: Announcement[] }) {
                   <td className="muted hide-sm">{fmtDY(a.createdAt.slice(0, 10))}</td>
                   <td className="muted hide-sm">{a.expiresOn ? fmtDY(a.expiresOn) : "—"}</td>
                   <td style={{ whiteSpace: "nowrap", textAlign: "right" }}>
-                    <button className="btn btn-sm btn-ghost" aria-label={t("Edit {title}", { title: a.title })} onClick={() => setEdit(a)}><Icon n="edit" s={14} /></button>
+                    {!readOnly && <><button className="btn btn-sm btn-ghost" aria-label={t("Edit {title}", { title: a.title })} onClick={() => setEdit(a)}><Icon n="edit" s={14} /></button>
                     {a.status === "PUBLISHED"
                       ? <button className="btn btn-sm" onClick={() => setAsk(a)}>{t("Unpublish")}</button>
-                      : <button className="btn btn-sm" disabled={busy} onClick={() => toggle(a, "PUBLISHED")}>{t("Publish again")}</button>}
+                      : <button className="btn btn-sm" disabled={busy} onClick={() => toggle(a, "PUBLISHED")}>{t("Publish again")}</button>}</>}
                   </td>
                 </tr>
               ))}

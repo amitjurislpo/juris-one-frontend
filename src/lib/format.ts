@@ -35,6 +35,12 @@ export function fmtDateTime(at: Date, timeZone: string) {
   return new Intl.DateTimeFormat("en-GB", { timeZone, day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true }).format(at);
 }
 
+/** "21 Oct 2026, 8:15:42 pm" (seconds always shown) and the same with milliseconds for tooltips. */
+export function fmtDateTimeSec(at: Date, timeZone: string, millis = false) {
+  const s = new Intl.DateTimeFormat("en-GB", { timeZone, day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true }).format(at);
+  return millis ? s.replace(/(\d{2}) ?([ap]m)$/i, (_m, sec: string, ap: string) => `${sec}.${String(at.getMilliseconds()).padStart(3, "0")} ${ap}`) : s;
+}
+
 /** Whole-day difference b − a between two ISO dates. */
 export function daysBetween(a: string, b: string) {
   return Math.round((isoToDate(b).getTime() - isoToDate(a).getTime()) / 86400_000);

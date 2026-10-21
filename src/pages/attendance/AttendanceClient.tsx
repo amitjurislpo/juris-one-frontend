@@ -5,6 +5,7 @@ import { Modal } from "@/components/ui/Modal";
 import { dowOf } from "@/lib/attendance/engine";
 import { fmtDL, fmtH } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
+import { useReadOnly } from "@/lib/session";
 import type { T } from "@/lib/i18n/translate";
 import { cancelRegularization, requestRegularization, type RegInput } from "./actions";
 
@@ -31,6 +32,15 @@ export interface RegView { id: string; date: string; kind: string; status: strin
 
 const CLS: Record<string, string> = { PRESENT: "present", HALF_DAY: "present", ABSENT: "absent", HOLIDAY: "holiday", LEAVE: "leave", WEEKLY_OFF: "off" };
 const CHIP: Record<string, string> = { PRESENT: "ok", HALF_DAY: "warn", ABSENT: "bad", HOLIDAY: "gold", LEAVE: "info" };
+/** Short form of a leave day's label for the narrow calendar cell ("Casual leave · half day" → "CL · ½"); other labels are unchanged. */
+const LEAVE_SHORT: Record<string, string> = { "Casual leave": "CL", "Earned leave": "EL", "Comp-off": "CO", "Leave without pay": "LWP" };
+const shortLabel = (status: string, label: string) => {
+  if (status !== "LEAVE") return label;
+  const [name, rest] = label.split(" · ");
+  const code = LEAVE_SHORT[name];
+  return code ? (rest ? `${code} · ½` : code) : label;
+};
+
 const KIND: Record<string, string> = { ABSENT: "Absent", LATE_CHECKIN: "Late check-in", MISSED_CHECKOUT: "Missed check-out", HOLIDAY_WORK: "Holiday work (comp-off)" };
 
 function countsAs(d: CalDay, t: T) {
@@ -59,6 +69,7 @@ function explain(d: CalDay, t: T) {
 export function AttendanceCalendar({ days, regs, initialSel, locked, monthLabel }: { days: CalDay[]; regs: RegView[]; initialSel: string; locked: boolean; monthLabel: string }) {
   const toast = useToast();
   const t = useT();
+  const readOnly = useReadOnly();
   const [sel, setSel] = useState(initialSel);
   const [open, setOpen] = useState(false);
   const [busy, start] = useTransition();
@@ -75,7 +86,7 @@ export function AttendanceCalendar({ days, regs, initialSel, locked, monthLabel 
   if (d.missedCheckout) kinds.push("MISSED_CHECKOUT");
   if (d.late) kinds.push("LATE_CHECKIN");
   if (d.offDayWork) kinds.push("HOLIDAY_WORK");
-  const canRequest = !locked && !d.future && !d.live && kinds.length > 0 && !pending;
+  const canRequest = !readOnly && !locked && !d.future && !d.live && kinds.length > 0 && !pending;
 
   const [f, setF] = useState<RegInput>({ date: d.date, kind: kinds[0] ?? "ABSENT", proposedIn: "", proposedOut: "", reason: "" });
   const openForm = () => { setF({ date: d.date, kind: kinds[0], proposedIn: "", proposedOut: "", reason: "" }); setOpen(true); };
@@ -91,11 +102,11 @@ export function AttendanceCalendar({ days, regs, initialSel, locked, monthLabel 
               c ? (
                 <button key={c.date} type="button" className={`d ${c.future && c.status !== "LEAVE" ? "none" : CLS[c.status] ?? "none"}${sel === c.date ? " sel" : ""}${c.today ? " today" : ""}`} style={{ animationDelay: `${i * 12}ms` }}
                   onClick={() => setSel(c.date)} aria-pressed={sel === c.date} aria-label={`${fmtDL(c.date)}, ${c.label ? t(c.label) : t("no record")}${c.late ? `, ${t("late")}` : ""}`}>
-                  <span style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
+                  <span className="cal-top">
                     <b>{Number(c.date.slice(8))}</b>
-                    {c.late && <span className="chip warn" style={{ height: 20, fontSize: 10, padding: "0 7px" }}>{t("LATE")}</span>}
+                    {c.late && <span className="chip warn late-chip">{t("LATE")}</span>}
                   </span>
-                  <small>{c.future && c.status !== "LEAVE" ? "" : t(c.label)}</small>
+                  <small title={c.status === "LEAVE" ? t(c.label) : undefined}>{c.future && c.status !== "LEAVE" ? "" : c.status === "LEAVE" ? shortLabel(c.status, c.label) : t(c.label)}</small>
                   {c.hours > 0 && <small className="num" style={{ color: "var(--text)" }}>{fmtH(c.hours)}</small>}
                 </button>
               ) : (
@@ -119,7 +130,7 @@ export function AttendanceCalendar({ days, regs, initialSel, locked, monthLabel 
           {pending && (
             <div className="col" style={{ gap: 8 }}>
               <div className="chip warn" style={{ height: "auto", padding: "10px 12px", whiteSpace: "normal" }}>{t("{kind} regularization pending — waiting for HR, Finance or Admin", { kind: t(KIND[pending.kind]) })}</div>
-              <button className="btn btn-sm btn-ghost" style={{ alignSelf: "flex-start" }} disabled={busy} onClick={() => start(async () => { const r = await cancelRegularization(pending.id); toast(r.ok ? r.msg! : r.error, r.ok ? "ok" : "bad"); })}>{t("Withdraw request")}</button>
+              {!readOnly && <button className="btn btn-sm btn-ghost" style={{ alignSelf: "flex-start" }} disabled={busy} onClick={() => start(async () => { const r = await cancelRegularization(pending.id); toast(r.ok ? r.msg! : r.error, r.ok ? "ok" : "bad"); })}>{t("Withdraw request")}</button>}
             </div>
           )}
           {!pending && settled && (

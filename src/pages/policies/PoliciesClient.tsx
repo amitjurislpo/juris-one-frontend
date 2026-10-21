@@ -6,9 +6,11 @@ import { useToast } from "@/components/shell/Toasts";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
 import type { PolicyDetail } from "@/lib/api-types";
 import { useT } from "@/lib/i18n/client";
+import { useReadOnly } from "@/lib/session";
 import { createPolicy, deletePolicy, remindPolicy, removePolicyFile, setPolicyStatus, updatePolicy } from "./actions";
 
 export function NewPolicyButton() {
+  const readOnly = useReadOnly();
   const toast = useToast();
   const t = useT();
   const router = useRouter();
@@ -21,6 +23,7 @@ export function NewPolicyButton() {
     const r = await createPolicy({ title, body: "", requiresAck: true });
     if (r.ok) { toast(r.msg!); close(); router.push(`/policies/${r.data!.id}`); } else setErr(r.error);
   });
+  if (readOnly) return null;
   return (
     <>
       <button className="btn btn-gold btn-lg" onClick={() => setOpen(true)}><Icon n="plus" s={16} />{t("New policy")}</button>
@@ -40,6 +43,7 @@ export function NewPolicyButton() {
 
 /** The draft: title, text, "must be accepted" and the PDF. */
 export function PolicyEditor({ p }: { p: PolicyDetail }) {
+  const readOnly = useReadOnly();
   const toast = useToast();
   const t = useT();
   const router = useRouter();
@@ -65,6 +69,7 @@ export function PolicyEditor({ p }: { p: PolicyDetail }) {
       router.refresh();
     } finally { setUploading(false); }
   };
+  if (readOnly) return null;
   return (
     <section className="card enter" style={{ ["--i" as string]: 2, padding: 18 }}>
       <div className="card-h"><h3>{t("Draft")}</h3>{dirty && <span className="chip warn nodot">{t("Not saved")}</span>}</div>
@@ -101,6 +106,7 @@ export function PolicyEditor({ p }: { p: PolicyDetail }) {
 
 /** Publish / archive / delete, reminders and the evidence export. */
 export function PolicyActions({ p }: { p: PolicyDetail }) {
+  const readOnly = useReadOnly();
   const toast = useToast();
   const t = useT();
   const router = useRouter();
@@ -113,6 +119,7 @@ export function PolicyActions({ p }: { p: PolicyDetail }) {
     if (r.ok) after?.();
   });
   const canPublish = p.status !== "PUBLISHED" || p.hasChanges;
+  if (readOnly) return null;
   return (
     <>
       {p.versions.length > 0 && <a className="btn" href={`/api/policies/${p.id}/acknowledgements/export`} download><Icon n="download" s={14} />{t("Evidence (CSV)")}</a>}

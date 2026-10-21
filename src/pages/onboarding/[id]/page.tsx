@@ -39,11 +39,11 @@ export default function OnboardingReviewPage() {
 
   return (
     <div className="col">
-      <PageHeader eyebrow={<><Link href="/onboarding" className="linkish">{t("Onboarding")}</Link> / {d.personalEmail}</>} title={d.candidateName}
+      <PageHeader back="/onboarding" eyebrow={<><Link href="/onboarding" className="linkish">{t("Onboarding")}</Link> / {d.personalEmail}</>} title={d.candidateName}
         sub={<><span className={`chip ${st.cls}`}>{t(st.text)}</span>{" "}
           {d.designation ?? t("No designation yet")}{d.joiningDate ? ` · ${t("joining {date}", { date: fmtDY(d.joiningDate) })}` : ""}
           {d.linkExpiresAt && !closed ? ` · ${t("link valid until {date}", { date: fmtDY(d.linkExpiresAt.slice(0, 10)) })}` : ""}
-          {d.employeeCode && d.employeeId ? <> · {t("added as")} <Link className="linkish" href={`/employees?q=${d.employeeCode}`}>{d.employeeCode}</Link> — {t("turn on portal access in Employees to send their invite")}</> : null}</>}>
+          {d.employeeCode && d.employeeId ? <> · {t("added as")} <Link className="linkish" href={`/employees?q=${d.employeeCode}`}>{d.employeeCode}</Link> — {t("turn on portal access in Employees so they can sign in")}</> : null}</>}>
         {!closed && <EditPlanButton id={d.id} plan={plan} />}
         <OnboardingActions id={d.id} status={d.status} name={d.candidateName} />
         {d.status === "VERIFIED" && <AddEmployeeButton id={d.id} name={d.candidateName} plan={plan} />}

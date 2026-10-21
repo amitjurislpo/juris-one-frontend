@@ -1,11 +1,29 @@
+import { Icon } from "@/components/Icon";
+import { useT } from "@/lib/i18n/client";
 import type { T } from "@/lib/i18n/translate";
+import Link from "@/lib/link";
+import { usePathname, useRouter } from "@/lib/router";
 
-/** Prototype page header: eyebrow, Balkind display title with gradient <em>, subtitle, actions. */
-export function PageHeader({ eyebrow, title, em, after, sub, children }: { eyebrow: React.ReactNode; title?: React.ReactNode; em?: React.ReactNode; after?: React.ReactNode; sub?: React.ReactNode; children?: React.ReactNode }) {
+/** Where each role lands after sign-in: these pages have nothing to go back to. */
+const LANDING = ["/", "/home", "/overview", "/platform"];
+
+/** Prototype page header: eyebrow, Balkind display title with gradient <em>, subtitle, actions. Every page but a landing page gets a Back button: to `back` (the parent page) when given, else to the previous page. */
+export function PageHeader({ back, eyebrow, title, em, after, sub, children }: { back?: string; eyebrow: React.ReactNode; title?: React.ReactNode; em?: React.ReactNode; after?: React.ReactNode; sub?: React.ReactNode; children?: React.ReactNode }) {
+  const t = useT();
+  const router = useRouter();
+  const path = usePathname();
+  const goBack = () => { if ((window.history.state as { idx?: number } | null)?.idx) router.back(); else router.push("/"); };
   return (
     <div className="page-h enter">
       <div>
-        <span className="eyebrow">{eyebrow}</span>
+        <div className="page-top">
+          {back ? (
+            <Link href={back} className="back-btn"><Icon n="chevL" s={14} />{t("Back")}</Link>
+          ) : !LANDING.includes(path) && (
+            <button type="button" className="back-btn" onClick={goBack}><Icon n="chevL" s={14} />{t("Back")}</button>
+          )}
+          <span className="eyebrow">{eyebrow}</span>
+        </div>
         <h1 className="display">
           {title}
           {title && em ? " " : null}

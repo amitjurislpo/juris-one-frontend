@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { expect, test } from "@playwright/test";
 import { ADMIN_EMAIL, emailOf, expectLanded, login, loginWithCode, OWNER, sql } from "./helpers";
 
@@ -38,7 +37,7 @@ test.describe("authentication", () => {
 
   test("a wrong code is rejected without revealing anything", async ({ page }) => {
     await loginWithCode(page, "JC-049", "111111");
-    await expect(page.locator(".err")).toHaveText("That code is wrong or has expired. Request a new one.");
+    await expect(page.locator(".err")).toHaveText("That code is wrong or has expired. Request a new one. If it keeps failing, your account may be disabled or your organisation suspended: contact your administrator.");
     await expect(page).toHaveURL(/\/login/);
   });
 
@@ -71,7 +70,7 @@ test.describe("authentication", () => {
     await expect.poll(badTries).toBe(6);
     await expect(page.locator(".err")).toContainText("wrong or has expired");
     await page.getByRole("button", { name: "Back" }).first().click();
-    await page.getByRole("button", { name: "Send code" }).click();
+    await page.getByRole("button", { name: "Login", exact: true }).click();
     await page.getByLabel("Digit 1 of 6").fill("000000");
     await expectLanded(page, "/home");
   });
@@ -92,26 +91,5 @@ test.describe("authentication", () => {
     await expect(page).toHaveURL(/\/login\?signedout=1/);
     await page.goto("/home");
     await expect(page).toHaveURL(/\/login/);
-  });
-
-  test("a reset link works exactly once", async ({ page }) => {
-    await page.goto("/forgot");
-    await page.getByLabel("Email").fill(await emailOf("JC-090"));
-    await page.getByRole("button", { name: "Send reset link" }).click();
-    await expect(page.getByRole("status")).toContainText("reset link is on its way");
-    // tokens are stored hashed, so mint a known one for the test
-    const token = "e2e-reset-token-" + Date.now();
-    await sql(
-      `INSERT INTO auth_tokens (id, token_hash, employee_id, purpose, expires_at)
-       SELECT gen_random_uuid(), $1, id, 'RESET', now() + interval '1 hour' FROM employees WHERE code = 'JC-090'`,
-      [createHash("sha256").update(token).digest("hex")],
-    );
-    await page.goto(`/reset/${token}`);
-    await page.getByLabel(/New password/).fill("Fresh@Pass2026");
-    await page.getByLabel("Confirm password").fill("Fresh@Pass2026");
-    await page.getByRole("button", { name: "Update password" }).click();
-    await expect(page).toHaveURL(/\/login\?reset=1/);
-    await page.goto(`/reset/${token}`);
-    await expect(page.getByRole("heading", { name: "Link expired" })).toBeVisible();
   });
 });

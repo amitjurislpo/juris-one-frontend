@@ -31,3 +31,9 @@ export function phoneProblem(code: string, number: string): string | null {
   if (c.first && !c.first.includes(d[0])) return `That isn't a valid ${c.name} mobile number`;
   return null;
 }
+
+/** Splits a stored "+91 8888788888" into the country code and national number ("+91" and an empty number when blank). */
+export function splitPhone(value: string): { code: string; number: string } {
+  const [code, ...rest] = value.trim().split(/\s+/);
+  return phoneCountry(code) ? { code, number: rest.join("") } : { code: "+91", number: value.replace(/\D/g, "") };
+}

@@ -6,6 +6,7 @@ import { ConfirmDialog } from "@/components/ui/Modal";
 import { addDays, dowOf } from "@/lib/attendance/engine";
 import { MONTHS } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
+import { useReadOnly } from "@/lib/session";
 import { addHoliday, deleteHoliday } from "./actions";
 
 type Region = "IN" | "US" | "ALL";
@@ -17,6 +18,7 @@ const RNAME: Record<Region, string> = { IN: "India", US: "US", ALL: "Everyone" }
 export function HolidayPlanner({ holidays, today }: { holidays: H[]; today: string }) {
   const toast = useToast();
   const t = useT();
+  const readOnly = useReadOnly();
   const [ym, setYm] = useState(today.slice(0, 7));
   const [f, setF] = useState<{ date: string; name: string; region: Region }>({ date: "", name: "", region: "IN" });
   const [tried, setTried] = useState(false);
@@ -60,17 +62,17 @@ export function HolidayPlanner({ holidays, today }: { holidays: H[]; today: stri
             const wk = [0, 6].includes(dowOf(k));
             return (
               <button key={k} type="button" className={[wk && "wk", k === today && "today", hs.length && "has", f.date === k && "sel"].filter(Boolean).join(" ")}
-                title={hs.map((h) => `${h.n} (${t(RNAME[h.region])})`).join(", ") || t("Add a holiday on this date")}
-                onClick={() => { setF({ ...f, date: k }); requestAnimationFrame(() => nameRef.current?.focus()); }}>
+                title={hs.map((h) => `${h.n} (${t(RNAME[h.region])})`).join(", ") || (readOnly ? undefined : t("Add a holiday on this date"))}
+                onClick={() => { if (readOnly) return; setF({ ...f, date: k }); requestAnimationFrame(() => nameRef.current?.focus()); }}>
                 <b>{i + 1}</b>
                 {hs.map((h) => <small key={h.n + h.region} className={RCLS[h.region]}>{h.n}</small>)}
               </button>
             );
           })}
         </div>
-        <p className="faint" style={{ margin: "12px 0 0", fontSize: 12.5 }}>{t("Tap a date to add a holiday on it.")}</p>
+        {!readOnly && <p className="faint" style={{ margin: "12px 0 0", fontSize: 12.5 }}>{t("Tap a date to add a holiday on it.")}</p>}
       </section>
-      <section className="card pad enter" style={{ ["--i" as string]: 2, flex: "1 1 320px" }}>
+      {!readOnly && <section className="card pad enter" style={{ ["--i" as string]: 2, flex: "1 1 320px" }}>
         <span className="spot"></span>
         <div className="card-h"><h3>{t("Add holiday")}</h3></div>
         <div className="col" style={{ gap: 14 }}>
@@ -88,7 +90,7 @@ export function HolidayPlanner({ holidays, today }: { holidays: H[]; today: stri
           <button className="btn btn-gold" disabled={busy} onClick={add}><Icon n="plus" s={15} />{t("Add to calendar")}</button>
           <p className="faint" style={{ margin: 0, fontSize: 12.5 }}>{t("Employees see it under “Upcoming holidays”. Holidays aren't counted as leave or loss of pay.")}</p>
         </div>
-      </section>
+      </section>}
     </div>
   );
 }
@@ -96,9 +98,11 @@ export function HolidayPlanner({ holidays, today }: { holidays: H[]; today: stri
 export function DeleteHoliday({ id, name }: { id: string; name: string }) {
   const toast = useToast();
   const t = useT();
+  const readOnly = useReadOnly();
   const [ask, setAsk] = useState(false);
   const [busy, start] = useTransition();
   const rmParts = t("Remove {name} from the calendar?", { name: "\u0000" }).split("\u0000");
+  if (readOnly) return null;
   return (
     <>
       <button className="btn btn-sm btn-ghost" onClick={() => setAsk(true)} aria-label={t("Remove {name}", { name })}><Icon n="trash" s={14} /></button>

@@ -5,6 +5,7 @@ import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
 import { ConfirmDialog, Drawer } from "@/components/ui/Modal";
 import { useT } from "@/lib/i18n/client";
+import { useReadOnly } from "@/lib/session";
 import { inr } from "@/lib/format";
 import { approveAllPending, decideProof, proofDetail, type ProofDetail, type ProofItem } from "./actions";
 
@@ -12,8 +13,10 @@ const CHIP: Record<string, string> = { DRAFT: "neutral", PENDING: "warn", APPROV
 const LABEL: Record<string, string> = { DRAFT: "Draft", PENDING: "Pending", APPROVED: "Approved", REJECTED: "Rejected" };
 
 export function ReviewButton({ employeeId, name, gold }: { employeeId: string; name: string; gold: boolean }) {
+  const readOnly = useReadOnly();
   const [open, setOpen] = useState(false);
   const t = useT();
+  if (readOnly) return null;
   return (
     <>
       <button className={`btn btn-sm${gold ? " btn-gold" : ""}`} onClick={() => setOpen(true)} aria-label={t("Review {name}", { name })}>{t("Review")}</button>

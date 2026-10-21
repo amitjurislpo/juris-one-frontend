@@ -4,11 +4,12 @@ import { ClearFilters, Pending, SearchBox, SegFilter, SortTh } from "@/component
 import { can } from "@/lib/session";
 import { PageLoading, useData, usePage } from "@/lib/page";
 import { qs as toQs } from "@/lib/api";
-import { avc, inr, initials, ymLabel } from "@/lib/format";
+import { inr, ymLabel } from "@/lib/format";
 import { TaxRow } from "./TaxClient";
+import { Avatar } from "@/components/Avatar";
 
 
-type TaxRowView = { id: string; code: string; name: string; title: string; reg: "NEW" | "OLD"; inc: number; ded: number; taxable: number; tax: number; tds: number; pend: number; overridden: boolean };
+type TaxRowView = { id: string; photo?: number | null; code: string; name: string; title: string; reg: "NEW" | "OLD"; inc: number; ded: number; taxable: number; tax: number; tds: number; pend: number; overridden: boolean };
 
 export default function TaxPage() {
   const { u, t, sp } = usePage();
@@ -52,7 +53,7 @@ export default function TaxPage() {
               <tbody>
                 {rows.map((r, i) => (
                   <TaxRow key={r.id} id={r.id} name={r.name} i={i}>
-                    <td><div className="person"><span className={`avatar ${avc(initials(r.name))}`}>{initials(r.name)}</span><div><b>{r.name}</b><small>{r.code}</small></div></div></td>
+                    <td><div className="person"><Avatar id={r.id} name={r.name} photo={r.photo} /><div><b>{r.name}</b><small>{r.code}</small></div></div></td>
                     <td><span className={`chip nodot ${r.reg === "OLD" ? "info" : "gold"}`}>{r.reg === "OLD" ? t("Old") : t("New")}{r.overridden ? ` · ${t("set by Finance")}` : ""}</span></td>
                     <td className="r num muted">{rp(r.inc)}</td>
                     <td className="r num muted">{rp(r.ded)}</td>

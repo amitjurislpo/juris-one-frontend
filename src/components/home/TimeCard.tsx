@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { punch } from "@/pages/home/actions";
 import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
+import { useReadOnly } from "@/lib/session";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -21,6 +22,7 @@ export interface TimeCardProps {
 export function TimeCard(p: TimeCardProps) {
   const router = useRouter();
   const toast = useToast();
+  const readOnly = useReadOnly();
   const [busy, start] = useTransition();
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
@@ -66,12 +68,14 @@ export function TimeCard(p: TimeCardProps) {
         <div className="shift-ticks" style={{ marginTop: 10 }}>{p.ticks.map((t) => <span key={t}>{t}</span>)}</div>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", position: "relative" }}>
-        <div className="punch">
-          {!p.on && <span className="halo"></span>}
-          <button className="btn btn-gold btn-lg" style={{ minWidth: 160 }} disabled={busy} onClick={go}>
-            <Icon n={p.on ? "logout" : "sunrise"} s={16} />{busy ? "Saving…" : p.on ? "Check out" : "Check in"}
-          </button>
-        </div>
+        {!readOnly && (
+          <div className="punch">
+            {!p.on && <span className="halo"></span>}
+            <button className="btn btn-gold btn-lg" style={{ minWidth: 160 }} disabled={busy} onClick={go}>
+              <Icon n={p.on ? "logout" : "sunrise"} s={16} />{busy ? "Saving…" : p.on ? "Check out" : "Check in"}
+            </button>
+          </div>
+        )}
         <span className="muted" style={{ fontSize: 13 }}>
           {p.on ? (pct >= 1 ? "Shift target reached" : `${Math.floor(left / 3600)}h ${pad(Math.floor((left % 3600) / 60))}m left in your shift`) : "Not tracking right now"}
         </span>

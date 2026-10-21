@@ -3,12 +3,13 @@ import { ClearFilters, Pager, Pending, SearchBox, SegFilter, SelectFilter, SortT
 import { PageLoading, useData, usePage } from "@/lib/page";
 import { useT } from "@/lib/i18n/client";
 import { qs } from "@/lib/api";
-import { avc, fmtD, fmtH, initials, ymLabel } from "@/lib/format";
+import { fmtD, fmtH, ymLabel } from "@/lib/format";
 import { DayNav, ZonePicker } from "./RegisterControls";
+import { Avatar } from "@/components/Avatar";
 
 
 interface Clock { text: string; local: string | null }
-interface DailyRow { id: string; code: string; name: string; department: string; region: "IN" | "US"; loc: string; shiftName: string; st: string; late: boolean; inn: Clock | null; out: Clock | null; h: number }
+interface DailyRow { id: string; photo?: number | null; code: string; name: string; department: string; region: "IN" | "US"; loc: string; shiftName: string; st: string; late: boolean; inn: Clock | null; out: Clock | null; h: number }
 interface GridRow { id: string; code: string; name: string; department: string; region: "IN" | "US"; cells: { c: string; cls: string }[]; days: { date: string; label: string; workedMinutes: number }[]; P: number; A: number; L: number }
 interface Reg {
   view: "day" | "month"; day: string; ym: string; tz: string; today: string; page: number; take: number; total: number;
@@ -79,7 +80,7 @@ function Daily({ p, deptOptions, teamOptions }: { p: Reg; deptOptions: Opts; tea
               <tbody>
                 {page.map((r, i) => (
                   <tr key={r.id} style={{ animationDelay: `${i * 30}ms` }}>
-                    <td><div className="person"><span className={`avatar ${avc(initials(r.name))}`}>{initials(r.name)}</span><div><b>{r.name}</b><small>{r.code} · {r.department} · {r.shiftName}</small></div></div></td>
+                    <td><div className="person"><Avatar id={r.id} name={r.name} photo={r.photo} /><div><b>{r.name}</b><small>{r.code} · {r.department} · {r.shiftName}</small></div></div></td>
                     <td><span className={`chip nodot ${r.region === "IN" ? "gold" : "info"}`}>{r.loc}</span></td>
                     <td><span className={`chip ${CHIP[r.st] ?? "neutral"}`}>{t(r.st)}</span>{r.late && <span className="chip warn nodot" style={{ marginLeft: 6 }}>{t("Late")}</span>}</td>
                     <td className="num"><b style={{ fontWeight: 500 }}>{r.inn?.text ?? "—"}</b>{r.inn?.local && <div className="faint" style={{ fontSize: 11.5 }}>{t("{time} local", { time: r.inn.local })}</div>}</td>

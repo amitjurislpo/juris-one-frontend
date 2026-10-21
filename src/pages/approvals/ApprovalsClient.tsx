@@ -4,10 +4,12 @@ import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
 import { ConfirmDialog } from "@/components/ui/Modal";
 import { useT } from "@/lib/i18n/client";
+import { useReadOnly } from "@/lib/session";
 import { decideLeave, decideRegularization } from "./actions";
 
 export function DecideButtons({ id, kind, who }: { id: string; kind: "leave" | "reg"; who: string }) {
   const t = useT();
+  const readOnly = useReadOnly();
   const toast = useToast();
   const [busy, start] = useTransition();
   const [declining, setDeclining] = useState(false);
@@ -20,6 +22,7 @@ export function DecideButtons({ id, kind, who }: { id: string; kind: "leave" | "
     });
   const declineParts = t("Decline {who}’s request? They’ll get an email.", { who: "\u0000" }).split("\u0000");
   const declineBody = <>{declineParts[0]}<b>{who}</b>{declineParts[1]}</>;
+  if (readOnly) return null;
   return (
     <div className="acts">
       <button className="btn btn-danger" disabled={busy} onClick={() => setDeclining(true)}>{t("Decline")}</button>

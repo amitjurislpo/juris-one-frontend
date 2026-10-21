@@ -32,7 +32,7 @@ export default function LeavePage() {
     balances: { code: string; name: string; balance: number; pending: number; paid: boolean; needsBalance: boolean; annual: number }[];
     requests: { id: string; typeName: string; leaveType: string; from: string; to: string; part: string; days: number; lopDays: number; applied: string; reason: string | null; status: string; decidedBy: string | null }[];
     holidays: { id: string; date: string; name: string }[]; holidayMap: Record<string, string>;
-    types: { code: string; name: string; paid: boolean; available: number | null }[]; weeklyOffs: number[];
+    types: { code: string; name: string; paid: boolean; available: number | null; lockedReason: string | null }[]; weeklyOffs: number[];
   }>(`/api/leave${qs(sp)}`);
   if (!d) return <PageLoading />;
   const { tab, st, today, year, balances: bals, requests: reqs, holidays: hols, holidayMap, types, lopYear } = d;

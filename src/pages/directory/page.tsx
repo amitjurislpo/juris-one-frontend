@@ -2,15 +2,15 @@ import { PageHeader } from "@/components/PageHeader";
 import { ClearFilters, Pager, Pending, SearchBox, SegFilter, SelectFilter, SortTh } from "@/components/table/Table";
 import { PageLoading, useData, usePage } from "@/lib/page";
 import { qs } from "@/lib/api";
-import { avc, initials } from "@/lib/format";
 import { CopyEmail } from "./CopyEmail";
+import { Avatar } from "@/components/Avatar";
 
 
 /** Everyone (`dir`): name, official email, designation and Active / Past only (REQUIREMENTS §5.3). */
 export default function DirectoryPage() {
   const { t, sp } = usePage();
   const d = useData<{
-    rows: { id: string; name: string; email: string; title: string; status: string }[]; total: number; page: number; take: number; nActive: number; depts: { id: string; name: string }[];
+    rows: { id: string; photo?: number | null; name: string; email: string; title: string; status: string }[]; total: number; page: number; take: number; nActive: number; depts: { id: string; name: string }[];
   }>(`/api/directory${qs(sp)}`);
   if (!d) return <PageLoading />;
   const { rows, total, page, take, nActive, depts } = d;
@@ -38,7 +38,7 @@ export default function DirectoryPage() {
               <tbody>
                 {rows.map((e, i) => (
                   <tr key={e.id} className={e.status === "EXITED" ? "dim" : undefined} style={{ animationDelay: `${i * 30}ms` }}>
-                    <td><div className="person"><span className={`avatar ${avc(initials(e.name))}`}>{initials(e.name)}</span><div><b>{e.name}</b></div></div></td>
+                    <td><div className="person"><Avatar id={e.id} name={e.name} photo={e.photo} /><div><b>{e.name}</b></div></div></td>
                     <td><CopyEmail email={e.email} /></td>
                     <td className="muted">{e.title}</td>
                     <td><span className={`chip ${e.status === "EXITED" ? "neutral" : "ok"}`}>{e.status === "EXITED" ? t("Past employee") : t("Active")}</span></td>

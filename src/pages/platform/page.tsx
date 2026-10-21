@@ -1,7 +1,7 @@
 import Link from "@/lib/link";
 import { Icon } from "@/components/Icon";
 import { PageHeader } from "@/components/PageHeader";
-import type { PlanRow, SubscriptionCurrent } from "@/lib/api-types";
+import type { PlanRow, RoleTemplates, SubscriptionCurrent } from "@/lib/api-types";
 import { PageLoading, useData, usePage } from "@/lib/page";
 import { fmtDY } from "@/lib/format";
 import { subscriptionChip } from "@/lib/subscription";
@@ -18,7 +18,8 @@ export default function PlatformPage() {
   const { t } = usePage();
   const rows = useData<BusinessRow[]>("/api/platform/businesses");
   const plans = useData<PlanRow[]>("/api/platform/plans");
-  if (!rows || !plans) return <PageLoading />;
+  const catalogue = useData<RoleTemplates>("/api/platform/role-templates");
+  if (!rows || !plans || !catalogue) return <PageLoading />;
   const chipText = (x: SubscriptionCurrent) => !x || x.state === "NONE" ? t("No plan") : x.state === "UPCOMING" ? t("Starts {date}", { date: fmtDY(x.startsOn!) }) : x.state === "EXPIRED" ? t("Ended {date}", { date: fmtDY(x.endsOn!) }) : x.daysLeft !== null && x.daysLeft <= 7 ? (x.daysLeft === 0 ? t("Ends today") : t(x.daysLeft === 1 ? "{n} day left" : "{n} days left", { n: x.daysLeft })) : t("Until {date}", { date: fmtDY(x.endsOn!) });
   const ending = rows.filter((r) => r.subscription.state === "ACTIVE" && (r.subscription.daysLeft ?? 99) <= 7).length;
   const lapsed = rows.filter((r) => !r.subscription.active).length;
@@ -26,7 +27,8 @@ export default function PlatformPage() {
   return (
     <div className="col">
       <PageHeader eyebrow={t("Platform")} title={<>{t("Businesses")}</>} sub={t("Every business on JurisOne. Each one has its own people, policies, payroll and data.")}>
-        <NewBusinessButton plans={plans} />
+        <Link href="/platform/roles" className="btn btn-lg btn-ghost">{t("Role templates")}</Link>
+        <NewBusinessButton plans={plans} templates={catalogue.templates} />
       </PageHeader>
       <div className="kpis enter" style={{ ["--i" as string]: 1 }}>
         <div className="card kpi"><span className="l">{t("Businesses")}</span><span className="v num">{rows.length}</span></div>

@@ -4,6 +4,7 @@ import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
 import { Drawer, Modal } from "@/components/ui/Modal";
 import { useT } from "@/lib/i18n/client";
+import { useReadOnly } from "@/lib/session";
 import { fmtDY, inr } from "@/lib/format";
 import { splitGross } from "@/lib/payroll/engine";
 import { addStructure } from "./actions";
@@ -13,6 +14,7 @@ const REASONS = [["JOINING", "Joining"], ["APPRAISAL", "Appraisal"], ["PROMOTION
 const REASON_LABEL: Record<string, string> = Object.fromEntries(REASONS);
 
 export function StructureButton({ emp, current, minFrom }: { emp: { id: string; code: string; name: string; title: string; doj: string }; current: Rev | null; minFrom: string }) {
+  const readOnly = useReadOnly();
   const toast = useToast();
   const t = useT();
   const [open, setOpen] = useState(false);
@@ -34,6 +36,7 @@ export function StructureButton({ emp, current, minFrom }: { emp: { id: string; 
     const res = await addStructure({ employeeId: emp.id, effectiveFrom: f.from, reason: f.reason as "JOINING" | "APPRAISAL" | "PROMOTION" | "CORRECTION", basic: n(f.basic), hra: n(f.hra), lta: n(f.lta), special: n(f.special) });
     if (res.ok) { toast(res.msg!); setOpen(false); } else setErr(res.error);
   });
+  if (readOnly) return null;
   return (
     <>
       <button className={`btn btn-sm${current ? "" : " btn-gold"}`} onClick={() => { setF(init()); setErr(""); setOpen(true); }}><Icon n={current ? "edit" : "plus"} s={14} />{current ? t("Revise") : t("Set up")}</button>

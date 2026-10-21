@@ -9,7 +9,7 @@ import { useT } from "@/lib/i18n/client";
 import type { Preview } from "@/lib/api-types";
 import { applyLeave, preview } from "./actions";
 
-export interface TypeOpt { code: string; name: string; available: number | null; paid: boolean }
+export interface TypeOpt { code: string; name: string; available: number | null; paid: boolean; lockedReason: string | null }
 type Part = "FULL" | "FIRST_HALF" | "SECOND_HALF";
 
 /** Prototype range picker: tap a start, then an end; weekends, holidays and past dates disabled. */
@@ -58,7 +58,7 @@ function RangePicker({ from, to, onPick, today, holidays, weeklyOffs }: { from: 
 export function ApplyLeave({ types, today, holidays, weeklyOffs, onClose }: { types: TypeOpt[]; today: string; holidays: Record<string, string>; weeklyOffs: number[]; onClose: () => void }) {
   const toast = useToast();
   const t = useT();
-  const [type, setType] = useState(types.find((x) => x.code === "CL")?.code ?? types[0].code);
+  const [type, setType] = useState((types.find((x) => x.code === "CL" && !x.lockedReason) ?? types.find((x) => !x.lockedReason) ?? types[0]).code);
   const [range, setRange] = useState({ from: "", to: "" });
   const [part, setPart] = useState<Part>("FULL");
   const [reason, setReason] = useState("");
@@ -105,8 +105,8 @@ export function ApplyLeave({ types, today, holidays, weeklyOffs, onClose }: { ty
             <div className="field" style={{ marginBottom: 10 }}>{t("1 · Leave type")}</div>
             <div className="ltypes" role="radiogroup" aria-label={t("Leave type")}>
               {types.map((ty) => (
-                <button key={ty.code} type="button" role="radio" aria-checked={type === ty.code} className={`ltype${type === ty.code ? " on" : ""}`} onClick={() => setType(ty.code)}>
-                  <span className="tick"><Icon n="ok" s={12} /></span><b>{t(ty.name)}</b><small>{ty.available === null ? t("Unpaid") : t("{n} available", { n: ty.available })}</small>
+                <button key={ty.code} type="button" role="radio" aria-checked={type === ty.code} className={`ltype${type === ty.code ? " on" : ""}`} onClick={() => setType(ty.code)} disabled={!!ty.lockedReason} title={ty.lockedReason ? t(ty.lockedReason) : undefined}>
+                  <span className="tick"><Icon n="ok" s={12} /></span><b>{t(ty.name)}</b><small>{ty.lockedReason ? t("Not during probation") : ty.available === null ? t("Unpaid") : t("{n} available", { n: ty.available })}</small>
                 </button>
               ))}
             </div>

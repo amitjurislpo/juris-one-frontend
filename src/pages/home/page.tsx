@@ -79,7 +79,7 @@ export default function HomePage() {
         <Greeting first={u.name.split(" ")[0]} timeZone={u.timeZone} initialIso={now.toISOString()} />
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <Link className="btn" href="/attendance"><Icon n="clock" s={15} />{t("My attendance")}</Link>
-          <Link className="btn btn-gold" href="/leave?apply=1"><Icon n="plus" s={15} />{t("Apply leave")}</Link>
+          {!u.readOnly && <Link className="btn btn-gold" href="/leave?apply=1"><Icon n="plus" s={15} />{t("Apply leave")}</Link>}
         </div>
       </div>
 

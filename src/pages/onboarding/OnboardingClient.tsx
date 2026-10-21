@@ -5,6 +5,7 @@ import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
 import { useT } from "@/lib/i18n/client";
+import { useReadOnly } from "@/lib/session";
 import { getFormOptions, type FormOptions } from "../employees/actions";
 import {
   addOnboardedEmployee, decideDocument, getOnboardingDefaults, resendOnboarding, saveOnboardingDefaults, setOnboardingStatus, startOnboarding, updateOnboarding,
@@ -70,6 +71,7 @@ function PlanFields({ p, set, opt }: { p: PlanInput; set: (p: PlanInput) => void
 const blank: PlanInput = { candidateName: "", personalEmail: "", designation: "", departmentId: "", roleId: "", managerId: "", joiningDate: "", location: "IN_IST", requiredDocs: DEFAULT_REQUIRED };
 
 export function StartOnboardingButton() {
+  const readOnly = useReadOnly();
   const toast = useToast();
   const t = useT();
   const router = useRouter();
@@ -83,6 +85,7 @@ export function StartOnboardingButton() {
     const r = await startOnboarding(p);
     if (r.ok) { toast(r.msg!); close(); router.push(`/onboarding/${r.data!.id}`); } else setErr(r.error);
   });
+  if (readOnly) return null;
   return (
     <>
       <button className="btn btn-gold btn-lg" onClick={() => {
@@ -105,6 +108,7 @@ export function StartOnboardingButton() {
 }
 
 export function EditPlanButton({ id, plan }: { id: string; plan: PlanInput }) {
+  const readOnly = useReadOnly();
   const toast = useToast();
   const t = useT();
   const { opt, load } = useOptions();
@@ -116,6 +120,7 @@ export function EditPlanButton({ id, plan }: { id: string; plan: PlanInput }) {
     const r = await updateOnboarding(id, p);
     if (r.ok) { toast(r.msg!); setOpen(false); } else setErr(r.error);
   });
+  if (readOnly) return null;
   return (
     <>
       <button className="btn" onClick={() => { setP(plan); setOpen(true); void load(); }}><Icon n="edit" s={14} />{t("Edit")}</button>
@@ -134,6 +139,7 @@ export function EditPlanButton({ id, plan }: { id: string; plan: PlanInput }) {
 
 /** Verify / reject one document (a rejection asks for a comment the candidate sees). */
 export function DocumentDecision({ id, docId, name, status }: { id: string; docId: string; name: string; status: "PENDING" | "VERIFIED" | "REJECTED" }) {
+  const readOnly = useReadOnly();
   const toast = useToast();
   const t = useT();
   const [reject, setReject] = useState(false);
@@ -144,6 +150,7 @@ export function DocumentDecision({ id, docId, name, status }: { id: string; docI
     toast(r.ok ? r.msg! : r.error, r.ok ? undefined : "bad");
     if (r.ok) { setReject(false); setComment(""); }
   });
+  if (readOnly) return null;
   return (
     <span style={{ display: "inline-flex", gap: 4 }}>
       {status !== "VERIFIED" && <button className="btn btn-sm" disabled={busy} onClick={() => run("VERIFIED")}><Icon n="check" s={13} />{t("Verify")}</button>}
@@ -160,6 +167,7 @@ export function DocumentDecision({ id, docId, name, status }: { id: string; docI
 
 /** Resend the link, send back, verify, cancel. */
 export function OnboardingActions({ id, status, name }: { id: string; status: string; name: string }) {
+  const readOnly = useReadOnly();
   const toast = useToast();
   const t = useT();
   const [ask, setAsk] = useState<null | "back" | "cancel">(null);
@@ -172,6 +180,7 @@ export function OnboardingActions({ id, status, name }: { id: string; status: st
   });
   const open = ["INVITED", "IN_PROGRESS", "CHANGES_REQUESTED"].includes(status);
   const cancelParts = t("Cancel the onboarding of {name}? Their link stops working. Uploaded documents are kept with this record.", { name: "\u0000" }).split("\u0000");
+  if (readOnly) return null;
   return (
     <>
       {open && <button className="btn" disabled={busy} onClick={() => run(() => resendOnboarding(id))}><Icon n="upload" s={14} />{t("Send a new link")}</button>}
@@ -197,6 +206,7 @@ export function OnboardingActions({ id, status, name }: { id: string; status: st
 
 /** Creates the employee from a verified onboarding (portal access off until HR turns it on). */
 export function AddEmployeeButton({ id, name, plan }: { id: string; name: string; plan: PlanInput }) {
+  const readOnly = useReadOnly();
   const toast = useToast();
   const t = useT();
   const router = useRouter();
@@ -212,6 +222,7 @@ export function AddEmployeeButton({ id, name, plan }: { id: string; name: string
     const r = await addOnboardedEmployee(id, { ...f, shift: india ? f.shift : "US_DAY" });
     if (r.ok) { toast(r.msg!); setOpen(false); router.refresh(); } else setErr(r.error);
   });
+  if (readOnly) return null;
   return (
     <>
       <button className="btn btn-gold" onClick={() => { setOpen(true); void load(); }}><Icon n="plus" s={14} />{t("Add employee")}</button>
@@ -219,7 +230,7 @@ export function AddEmployeeButton({ id, name, plan }: { id: string; name: string
         <Modal title={t("Add employee")} eyebrow={t("{name} · from onboarding", { name })} maxWidth={760} onClose={() => setOpen(false)}
           footer={<><button className="btn btn-ghost" onClick={() => setOpen(false)}>{t("Cancel")}</button><button className="btn btn-gold" disabled={busy} onClick={save}>{busy ? t("Adding…") : t("Add employee")}</button></>}>
           <div className="col" style={{ gap: 14 }}>
-            <p className="muted" style={{ margin: 0 }}>{t("Name, identity, contact and bank details come from the candidate's form; verified documents go on their record. Portal access stays off until you turn it on — then they get the invite on their work email.")}</p>
+            <p className="muted" style={{ margin: 0 }}>{t("Name, identity, contact and bank details come from the candidate's form; verified documents go on their record. Portal access stays off until you turn it on — then they can sign in with an emailed code on their work email.")}</p>
             <div className="grid2">
               <label className="field">{t("Work email *")} <span className="hint">{t("they sign in with it")}</span><input type="email" value={f.workEmail} onChange={on("workEmail")} maxLength={200} autoFocus /></label>
               <label className="field">{t("Designation *")}<input value={f.designation} onChange={on("designation")} maxLength={120} /></label>
@@ -257,6 +268,7 @@ export function AddEmployeeButton({ id, name, plan }: { id: string; name: string
 
 /** The business's default list of documents new onboardings ask for. */
 export function DefaultDocumentsButton() {
+  const readOnly = useReadOnly();
   const toast = useToast();
   const t = useT();
   const [open, setOpen] = useState(false);
@@ -272,6 +284,7 @@ export function DefaultDocumentsButton() {
     const r = await saveOnboardingDefaults(docs);
     if (r.ok) { toast(r.msg!); setOpen(false); } else setErr(r.error);
   });
+  if (readOnly) return null;
   return (
     <>
       <button className="btn" onClick={openIt}><Icon n="doc" s={14} />{t("Default documents")}</button>

@@ -2,13 +2,14 @@ import { PageHeader } from "@/components/PageHeader";
 import { ClearFilters, Pending, SearchBox, SortTh } from "@/components/table/Table";
 import { PageLoading, useData, usePage } from "@/lib/page";
 import { qs } from "@/lib/api";
-import { avc, DOW, fmtD, initials, isoToDate } from "@/lib/format";
+import { DOW, fmtD, isoToDate } from "@/lib/format";
+import { Avatar } from "@/components/Avatar";
 
 
 type TodayStatus = { label: string; tone: "ok" | "info" | "warn" | "gold" | "neutral" };
 type Team = {
   size: number; counts: { in: number; leave: number; notIn: number };
-  rows: { id: string; code: string; fullName: string; designation: string; shift: string; st: TodayStatus }[];
+  rows: { id: string; photo?: number | null; code: string; fullName: string; designation: string; shift: string; st: TodayStatus }[];
   days: string[]; away: { id: string; fullName: string; cells: ("" | "lv" | "pend" | "hol")[] }[];
 };
 
@@ -48,7 +49,7 @@ export default function TeamPage() {
               <tbody>
                 {rows.map((m, i) => (
                   <tr key={m.id} style={{ animationDelay: `${i * 50}ms` }}>
-                    <td><div className="person"><span className={`avatar ${avc(initials(m.fullName))}`}>{initials(m.fullName)}</span><div><b>{m.fullName}</b><small>{m.designation}</small></div></div></td>
+                    <td><div className="person"><Avatar id={m.id} name={m.fullName} photo={m.photo} /><div><b>{m.fullName}</b><small>{m.designation}</small></div></div></td>
                     <td className="muted num">{m.code}</td>
                     <td className="muted">{m.designation}</td>
                     <td className="muted">{m.shift}</td>
