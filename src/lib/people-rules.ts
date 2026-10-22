@@ -22,36 +22,36 @@ export interface Target {
   isSuperAdmin: boolean;
 }
 
-const isAdmin = (a: Pick<Actor, "roleKey">) => a.roleKey === "owner" || a.roleKey === "super_admin"; // the business owner (sub admin), or the super admin in the platform company
+const isAdmin = (actor: Pick<Actor, "roleKey">) => actor.roleKey === "owner" || actor.roleKey === "super_admin"; // the business owner (sub admin), or the super admin in the platform company
 
 /** People ops can add employees only if their role can assign at least one role. */
 export const canAddEmployees = (a: Actor) => a.perms.has("people.add") && (isAdmin(a) || a.assignable.size > 0);
 
 /** Edit needs people.add and the target's role in the actor's assignable list. Admin edits anyone. Nobody edits themselves. */
-export function canEditEmployee(a: Actor, t: Target): boolean {
-  if (!a.perms.has("people.add") || a.id === t.id || t.isSuperAdmin) return false;
-  return isAdmin(a) || a.assignable.has(t.roleId);
+export function canEditEmployee(actor: Actor, target: Target): boolean {
+  if (!actor.perms.has("people.add") || actor.id === target.id || target.isSuperAdmin) return false;
+  return isAdmin(actor) || actor.assignable.has(target.roleId);
 }
 
 /** access.toggle; never yourself; never the super admin; only Admin toggles an Admin; exited people stay off. */
-export function canToggleAccess(a: Actor, t: Target): boolean {
-  if (!a.perms.has("access.toggle") || a.id === t.id || t.isSuperAdmin || t.status === "EXITED") return false;
-  return isAdmin(a) || t.roleKey !== "owner";
+export function canToggleAccess(actor: Actor, target: Target): boolean {
+  if (!actor.perms.has("access.toggle") || actor.id === target.id || target.isSuperAdmin || target.status === "EXITED") return false;
+  return isAdmin(actor) || target.roleKey !== "owner";
 }
 
 /** May the actor give `roleId` to someone? Keeping a person's current role is always allowed for an editor. */
-export function canAssignRole(a: Actor, roleId: string, currentRoleId?: string): boolean {
+export function canAssignRole(actor: Actor, roleId: string, currentRoleId?: string): boolean {
   if (currentRoleId && roleId === currentRoleId) return true;
-  return a.assignable.has(roleId);
+  return actor.assignable.has(roleId);
 }
 
 /**
  * Managers who can't hire plain Employees (e.g. Finance Manager → Finance Executive) add people
  * into their own department only. Admin and HR choose freely.
  */
-export function lockedDepartment(a: Actor): string | null {
-  if (isAdmin(a) || a.assignable.has(a.employeeRoleId)) return null;
-  return a.departmentId;
+export function lockedDepartment(actor: Actor): string | null {
+  if (isAdmin(actor) || actor.assignable.has(actor.employeeRoleId)) return null;
+  return actor.departmentId;
 }
 
 /** Status for a new hire: Onboarding until the joining date, then Probation. */
@@ -63,8 +63,8 @@ export function initialStatus(dojIso: string, todayIso: string): "ONBOARDING" | 
 export function derivedStatus(current: Target["status"], dojIso: string, todayIso: string, probationMonths: number): Target["status"] {
   if (current === "EXITED") return current;
   if (dojIso > todayIso) return "ONBOARDING";
-  const [y, m, d] = dojIso.split("-").map(Number);
-  const end = new Date(Date.UTC(y, m - 1 + probationMonths, d)).toISOString().slice(0, 10);
+  const [year, month, day] = dojIso.split("-").map(Number);
+  const end = new Date(Date.UTC(year, month - 1 + probationMonths, day)).toISOString().slice(0, 10);
   if (todayIso >= end) return current === "ONBOARDING" || current === "PROBATION" ? "ACTIVE" : current;
   return current === "ONBOARDING" ? "PROBATION" : current;
 }
@@ -81,10 +81,10 @@ export function createsCycle(employeeId: string, managerId: string, managerOf: R
 
 // ─── locations ───
 export const LOCATIONS = [
-  { v: "IN_IST", l: "India · IST", tz: "Asia/Kolkata", region: "IN" },
-  { v: "US_ET", l: "US East · ET", tz: "America/New_York", region: "US" },
-  { v: "US_CT", l: "US Central · CT", tz: "America/Chicago", region: "US" },
-  { v: "US_PT", l: "US West · PT", tz: "America/Los_Angeles", region: "US" },
+  { value: "IN_IST", label: "India · IST", timeZone: "Asia/Kolkata", region: "IN" },
+  { value: "US_ET", label: "US East · ET", timeZone: "America/New_York", region: "US" },
+  { value: "US_CT", label: "US Central · CT", timeZone: "America/Chicago", region: "US" },
+  { value: "US_PT", label: "US West · PT", timeZone: "America/Los_Angeles", region: "US" },
 ] as const;
 
 // ─── identity validation ───

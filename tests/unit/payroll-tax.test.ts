@@ -19,19 +19,19 @@ describe("golden case — JC-074 Amit Jaspal, September 2026 (REQUIREMENTS §7)"
   it("joined 8 Sep with 1 LOP → 22 of 30 paid days", () => {
     const elig = eligibleDays("2026-09", "2026-09-08", null);
     expect(elig).toBe(23);
-    const p = computePay({ structure: JC074, daysInMonth: 30, eligibleDays: elig, lopDays: 1, bonus: 0, otherDeduction: 0, tds: 0, pfRate: 0.12, pfWageCeiling: 1_500_000, professionalTax: 20_000 });
-    expect(p.paidDays).toBe(22);
-    expect(p.grossEarned).toBe(11_000_000); // ₹1,10,000
-    expect(p.pf).toBe(180_000); // 12% of ₹15,000
+    const pay = computePay({ structure: JC074, daysInMonth: 30, eligibleDays: elig, lopDays: 1, bonus: 0, otherDeduction: 0, tds: 0, pfRate: 0.12, pfWageCeiling: 1_500_000, professionalTax: 20_000 });
+    expect(pay.paidDays).toBe(22);
+    expect(pay.grossEarned).toBe(11_000_000); // ₹1,10,000
+    expect(pay.pf).toBe(180_000); // 12% of ₹15,000
   });
   it("monthly TDS ≈ ₹14,926 on the new regime with ₹7.5L / ₹38,000 from the previous employer", () => {
     const { remainingInclCurrent } = financialYearOf("2026-09");
     expect(remainingInclCurrent).toBe(7);
     const juris = 110000 + 150000 * 6; // Sep actual + Oct–Mar projected
-    const t = computeTax(juris + 750000, 0, NEW);
-    expect(t.taxable).toBe(1685000);
-    expect(t.total).toBe(142480);
-    expect(monthlyTds(t.total, 38000, remainingInclCurrent)).toBe(14926);
+    const tax = computeTax(juris + 750000, 0, NEW);
+    expect(tax.taxable).toBe(1685000);
+    expect(tax.total).toBe(142480);
+    expect(monthlyTds(tax.total, 38000, remainingInclCurrent)).toBe(14926);
   });
 });
 
@@ -47,15 +47,15 @@ describe("tax engine", () => {
     expect(computeTax(1050000, 0, OLD).total).toBe(Math.round((12500 + 100000) * 1.04));
   });
   it("surcharge above ₹50L with marginal relief", () => {
-    const t = computeTax(5_085_000, 0, NEW); // 50.1L taxable
+    const tax = computeTax(5_085_000, 0, NEW); // 50.1L taxable
     const at50 = computeTax(5_075_000, 0, NEW);
-    expect(t.base + t.surcharge).toBeLessThanOrEqual(at50.base + 10000 + 1);
+    expect(tax.base + tax.surcharge).toBeLessThanOrEqual(at50.base + 10000 + 1);
   });
   it("old-regime deductions: HRA least-of, 80C cap incl. PF, 80D parents", () => {
-    const d = oldRegimeDeductions(432000, 172800, 51840, { ...NO_DECLARATIONS, rent: 180000, metro: true, ppf: 80000, lic: 25000, medSelf: 18000 }, CAPS);
-    expect(d.hraExemption).toBe(Math.round(Math.min(172800, 180000 - 43200, 216000)));
-    expect(d.c80C).toBe(150000);
-    expect(d.total).toBe(136800 + 150000 + 18000);
+    const deductions = oldRegimeDeductions(432000, 172800, 51840, { ...NO_DECLARATIONS, rent: 180000, metro: true, publicProvidentFund: 80000, lifeInsurancePremium: 25000, medSelf: 18000 }, CAPS);
+    expect(deductions.hraExemption).toBe(Math.round(Math.min(172800, 180000 - 43200, 216000)));
+    expect(deductions.c80C).toBe(150000);
+    expect(deductions.total).toBe(136800 + 150000 + 18000);
   });
   it("monthly TDS is never negative", () => expect(monthlyTds(10000, 50000, 3)).toBe(0));
 });

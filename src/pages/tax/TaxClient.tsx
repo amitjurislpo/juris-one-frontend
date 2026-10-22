@@ -10,16 +10,16 @@ import { formatRupees, formatMonthLabel } from "@/lib/format";
 import type { TaxProjection } from "@/lib/api-types";
 import { overrideRegime, setPreviousEmployer, taxDetail } from "./actions";
 
-const rp = (rupees: number) => formatRupees(rupees * 100);
+const formatWholeRupees = (rupees: number) => formatRupees(rupees * 100);
 const pct = (r: number) => `${Math.round(r * 100)}%`;
 
 /** A table row that opens the computation drawer. */
-export function TaxRow({ id, name, i, children }: { id: string; name: string; i: number; children: React.ReactNode }) {
+export function TaxRow({ id, name, animationIndex: i, children }: { id: string; name: string; animationIndex: number; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
-  const tr = useT();
+  const translate = useT();
   return (
     <>
-      <tr onClick={() => setOpen(true)} style={{ cursor: "pointer", animationDelay: `${i * 35}ms` }} tabIndex={0} onKeyDown={(e) => e.key === "Enter" && setOpen(true)} aria-label={tr("Tax computation for {name}", { name })}>{children}</tr>
+      <tr onClick={() => setOpen(true)} style={{ cursor: "pointer", animationDelay: `${i * 35}ms` }} tabIndex={0} onKeyDown={(e) => e.key === "Enter" && setOpen(true)} aria-label={translate("Tax computation for {name}", { name })}>{children}</tr>
       {open && <TaxDrawer id={id} onClose={() => setOpen(false)} />}
     </>
   );
@@ -28,77 +28,77 @@ export function TaxRow({ id, name, i, children }: { id: string; name: string; i:
 function TaxDrawer({ id, onClose }: { id: string; onClose: () => void }) {
   const router = useRouter();
   const toast = useToast();
-  const tr = useT();
+  const translate = useT();
   const readOnly = useReadOnly();
-  const [d, setD] = useState<{ month: string; tax: TaxProjection; name: string; code: string; title: string } | null>(null);
+  const [detail, setDetail] = useState<{ month: string; tax: TaxProjection; name: string; code: string; title: string } | null>(null);
   const [prev, setPrev] = useState({ income: "", tds: "" });
   const [busy, start] = useTransition();
-  const load = useCallback(() => taxDetail(id).then((r) => {
-    if (r.ok) { setD(r.data!); setPrev({ income: String(r.data!.tax.prevIncome), tds: String(r.data!.tax.prevTds) }); }
-    else toast(r.error, "bad");
+  const load = useCallback(() => taxDetail(id).then((response) => {
+    if (response.ok) { setDetail(response.data!); setPrev({ income: String(response.data!.tax.prevIncome), tds: String(response.data!.tax.prevTds) }); }
+    else toast(response.error, "bad");
   }), [id, toast]);
   useEffect(() => { void load(); }, [load]);
 
-  const act = (p: Promise<{ ok: boolean; msg?: string; error?: string }>) => start(async () => {
-    const r = await p;
-    toast(r.ok ? r.msg! : r.error!, r.ok ? "ok" : "bad");
+  const act = (pendingAction: Promise<{ ok: boolean; message?: string; error?: string }>) => start(async () => {
+    const actionResult = await pendingAction;
+    toast(actionResult.ok ? actionResult.message! : actionResult.error!, actionResult.ok ? "ok" : "bad");
     await load();
     router.refresh();
   });
 
-  const t = d?.tax;
+  const t = detail?.tax;
   const cur = t?.current;
   const max = t ? Math.max(t.newRegime.total, t.oldRegime.total, 1) : 1;
   return (
-    <Drawer label={tr("Tax computation")} width={560} onClose={onClose}>
+    <Drawer label={translate("Tax computation")} width={560} onClose={onClose}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <div><span className="eyebrow">{d ? `${d.code} · ${d.title}` : tr("Loading…")}</span><h2 className="display" style={{ margin: "4px 0 0", fontSize: 30 }}>{d?.name ?? ""}</h2></div>
-        <button className="icon-btn" onClick={onClose} aria-label={tr("Close")}><Icon n="x" s={16} /></button>
+        <div><span className="eyebrow">{detail ? `${detail.code} · ${detail.title}` : translate("Loading…")}</span><h2 className="display" style={{ margin: "4px 0 0", fontSize: 30 }}>{detail?.name ?? ""}</h2></div>
+        <button className="icon-btn" onClick={onClose} aria-label={translate("Close")}><Icon name="x" size={16} /></button>
       </div>
-      {t && cur && d && (
+      {t && cur && detail && (
         <>
-          <div className="field">{tr("Tax regime")} <span className="hint">{t.regimeOverridden ? tr("Employee's choice — currently set by Finance; Finance can override") : tr("Employee's choice; Finance can override")}</span>
-            <div className="seg" style={{ width: "100%" }} role="group" aria-label={tr("Tax regime")}>
-              {(["NEW", "OLD"] as const).map((v) => <button key={v} type="button" className={t.regime === v ? "on" : undefined} aria-pressed={t.regime === v} disabled={busy || readOnly} onClick={() => t.regime !== v && act(overrideRegime(id, v))}>{v === "NEW" ? tr("New regime") : tr("Old regime")}</button>)}
+          <div className="field">{translate("Tax regime")} <span className="hint">{t.regimeOverridden ? translate("Employee's choice — currently set by Finance; Finance can override") : translate("Employee's choice; Finance can override")}</span>
+            <div className="seg" style={{ width: "100%" }} role="group" aria-label={translate("Tax regime")}>
+              {(["NEW", "OLD"] as const).map((regime) => <button key={regime} type="button" className={t.regime === regime ? "on" : undefined} aria-pressed={t.regime === regime} disabled={busy || readOnly} onClick={() => t.regime !== regime && act(overrideRegime(id, regime))}>{regime === "NEW" ? translate("New regime") : translate("Old regime")}</button>)}
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-            <span className="display" style={{ fontSize: 44, lineHeight: 1 }}>{rp(t.monthly)}</span>
-            <span className="muted">{tr(t.monthsLeft === 1 ? "TDS / month · {n} month left · {month}" : "TDS / month · {n} months left · {month}", { n: t.monthsLeft, month: formatMonthLabel(d.month) })}</span>
+            <span className="display" style={{ fontSize: 44, lineHeight: 1 }}>{formatWholeRupees(t.monthly)}</span>
+            <span className="muted">{translate(t.monthsLeft === 1 ? "TDS / month · {n} month left · {month}" : "TDS / month · {n} months left · {month}", { n: t.monthsLeft, month: formatMonthLabel(detail.month) })}</span>
           </div>
-          {(["NEW", "OLD"] as const).map((v) => {
-            const x = v === "NEW" ? t.newRegime : t.oldRegime;
+          {(["NEW", "OLD"] as const).map((regimeOption) => {
+            const regimeTax = regimeOption === "NEW" ? t.newRegime : t.oldRegime;
             return (
-              <div className="cmp" key={v}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}><span className="muted">{v === "NEW" ? tr("New regime · annual tax") : tr("Old regime · annual tax (verified proofs)")}</span><b className="num">{rp(x.total)}</b></div>
-                <div className="track"><i style={{ width: `${(x.total / max) * 100}%`, background: t.regime === v ? "var(--accentgrad)" : "var(--line3)" }}></i></div>
+              <div className="cmp" key={regimeOption}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}><span className="muted">{regimeOption === "NEW" ? translate("New regime · annual tax") : translate("Old regime · annual tax (verified proofs)")}</span><b className="num">{formatWholeRupees(regimeTax.total)}</b></div>
+                <div className="track"><i style={{ width: `${(regimeTax.total / max) * 100}%`, background: t.regime === regimeOption ? "var(--accentgrad)" : "var(--line3)" }}></i></div>
               </div>
             );
           })}
           <div>
-            <div className="kv"><span className="muted">{tr("Salary from Juris · {label}", { label: t.jurisLabel })}</span><b className="num">{rp(t.jurisIncome)}</b></div>
-            {t.prevIncome > 0 && <div className="kv"><span className="muted">{tr("Previous employer (Form 12B)")}</span><b className="num">{rp(t.prevIncome)}</b></div>}
-            <div className="kv"><span className="muted">{tr("Standard deduction")}</span><b className="num">− {rp(cur.std)}</b></div>
-            {t.regime === "OLD" && t.deductions.lines.map(([k, v]) => <div className="kv" key={k}><span className="muted">{k}</span><b className="num">− {rp(v)}</b></div>)}
-            <div className="kv"><span className="muted">{tr("Taxable income")}</span><b className="num">{rp(cur.taxable)}</b></div>
-            <div className="kv"><span className="muted">{tr("Tax on slabs")}</span><b className="num">{rp(Math.round(cur.slabTax))}</b></div>
-            {cur.rebate > 0 && <div className="kv"><span className="muted">{cur.base === 0 ? tr("Rebate (87A)") : tr("Marginal relief")}</span><b className="num">− {rp(Math.round(cur.rebate))}</b></div>}
-            {cur.surcharge > 0 && <div className="kv"><span className="muted">{tr("Surcharge")}</span><b className="num">{rp(Math.round(cur.surcharge))}</b></div>}
-            <div className="kv"><span className="muted">{tr("Health & education cess 4%")}</span><b className="num">{rp(Math.round(cur.cess))}</b></div>
-            <div className="kv total"><span>{tr("Annual tax")}</span><b className="num">{rp(cur.total)}</b></div>
-            {(t.prevTds > 0 || t.jurisTdsSoFar > 0) && <div className="kv"><span className="muted">{tr("TDS already deducted (previous employer {prev} · Juris {juris})", { prev: rp(t.prevTds), juris: rp(t.jurisTdsSoFar) })}</span><b className="num">− {rp(t.prevTds + t.jurisTdsSoFar)}</b></div>}
+            <div className="kv"><span className="muted">{translate("Salary from Juris · {label}", { label: t.jurisLabel })}</span><b className="num">{formatWholeRupees(t.jurisIncome)}</b></div>
+            {t.prevIncome > 0 && <div className="kv"><span className="muted">{translate("Previous employer (Form 12B)")}</span><b className="num">{formatWholeRupees(t.prevIncome)}</b></div>}
+            <div className="kv"><span className="muted">{translate("Standard deduction")}</span><b className="num">− {formatWholeRupees(cur.standardDeduction)}</b></div>
+            {t.regime === "OLD" && t.deductions.lines.map(([deductionLabel, deductionAmount]) => <div className="kv" key={deductionLabel}><span className="muted">{deductionLabel}</span><b className="num">− {formatWholeRupees(deductionAmount)}</b></div>)}
+            <div className="kv"><span className="muted">{translate("Taxable income")}</span><b className="num">{formatWholeRupees(cur.taxable)}</b></div>
+            <div className="kv"><span className="muted">{translate("Tax on slabs")}</span><b className="num">{formatWholeRupees(Math.round(cur.slabTax))}</b></div>
+            {cur.rebate > 0 && <div className="kv"><span className="muted">{cur.base === 0 ? translate("Rebate (87A)") : translate("Marginal relief")}</span><b className="num">− {formatWholeRupees(Math.round(cur.rebate))}</b></div>}
+            {cur.surcharge > 0 && <div className="kv"><span className="muted">{translate("Surcharge")}</span><b className="num">{formatWholeRupees(Math.round(cur.surcharge))}</b></div>}
+            <div className="kv"><span className="muted">{translate("Health & education cess 4%")}</span><b className="num">{formatWholeRupees(Math.round(cur.cess))}</b></div>
+            <div className="kv total"><span>{translate("Annual tax")}</span><b className="num">{formatWholeRupees(cur.total)}</b></div>
+            {(t.prevTds > 0 || t.jurisTdsSoFar > 0) && <div className="kv"><span className="muted">{translate("TDS already deducted (previous employer {prev} · Juris {juris})", { prev: formatWholeRupees(t.prevTds), juris: formatWholeRupees(t.jurisTdsSoFar) })}</span><b className="num">− {formatWholeRupees(t.prevTds + t.jurisTdsSoFar)}</b></div>}
           </div>
           <div>
-            <div className="eyebrow" style={{ marginBottom: 6 }}>{tr("Slab working")}</div>
-            {cur.lines.map((s) => <div className="kv" key={s.from}><span className="muted">{rp(s.from)} – {s.to === null ? tr("above") : rp(s.to)} · {pct(s.rate)}</span><b className="num">{rp(Math.round(s.amount))}</b></div>)}
+            <div className="eyebrow" style={{ marginBottom: 6 }}>{translate("Slab working")}</div>
+            {cur.lines.map((slab) => <div className="kv" key={slab.from}><span className="muted">{formatWholeRupees(slab.from)} – {slab.to === null ? translate("above") : formatWholeRupees(slab.to)} · {pct(slab.rate)}</span><b className="num">{formatWholeRupees(Math.round(slab.amount))}</b></div>)}
           </div>
           <div className="card pad" style={{ boxShadow: "none" }}>
-            <div className="eyebrow" style={{ marginBottom: 8 }}>{tr("Previous employer this FY (Form 12B)")}</div>
+            <div className="eyebrow" style={{ marginBottom: 8 }}>{translate("Previous employer this FY (Form 12B)")}</div>
             <div className="grid2">
-              <label className="field">{tr("Income (₹)")}<input type="number" min={0} value={prev.income} disabled={readOnly} onChange={(e) => setPrev({ ...prev, income: e.target.value })} /></label>
-              <label className="field">{tr("TDS deducted (₹)")}<input type="number" min={0} value={prev.tds} disabled={readOnly} onChange={(e) => setPrev({ ...prev, tds: e.target.value })} /></label>
+              <label className="field">{translate("Income (₹)")}<input type="number" min={0} value={prev.income} disabled={readOnly} onChange={(e) => setPrev({ ...prev, income: e.target.value })} /></label>
+              <label className="field">{translate("TDS deducted (₹)")}<input type="number" min={0} value={prev.tds} disabled={readOnly} onChange={(e) => setPrev({ ...prev, tds: e.target.value })} /></label>
             </div>
-            {!readOnly && <button className="btn btn-sm" style={{ marginTop: 10 }} disabled={busy} onClick={() => act(setPreviousEmployer({ employeeId: id, income: Math.round(Number(prev.income) || 0), tds: Math.round(Number(prev.tds) || 0) }))}>{tr("Save")}</button>}
+            {!readOnly && <button className="btn btn-sm" style={{ marginTop: 10 }} disabled={busy} onClick={() => act(setPreviousEmployer({ employeeId: id, income: Math.round(Number(prev.income) || 0), tds: Math.round(Number(prev.tds) || 0) }))}>{translate("Save")}</button>}
           </div>
         </>
       )}

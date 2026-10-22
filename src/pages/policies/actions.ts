@@ -6,7 +6,7 @@ import { apiAction } from "@/lib/api";
 const enc = encodeURIComponent;
 const PAGES = ["/policies", "/my-policies", "/acknowledge"];
 
-export interface PolicyInput { title: string; body: string; requiresAck: boolean }
+export interface PolicyInput { title: string; body: string; requiresAcknowledgement: boolean }
 
 export async function createPolicy(i: PolicyInput): Promise<ActionResult<{ id: string }>> {
   return apiAction("POST", "/api/policies", i, PAGES);

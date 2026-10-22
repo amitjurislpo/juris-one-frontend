@@ -9,39 +9,39 @@ import type { FormState } from "./form-state";
 // signing out deletes it.
 
 /** Forget everything fetched for the previous session, then go to `to`. */
-function leave(to: string) {
+function leave(destination: string) {
   queryClient.clear();
-  navigate(to);
+  navigate(destination);
 }
 
 /** After sign-in: load who the user is and the shell (menu, notifications) first, so the page appears complete. */
-async function enter(to: string) {
+async function enter(destination: string) {
   queryClient.clear();
   await Promise.all([
     queryClient.fetchQuery({ queryKey: CURRENT_USER_QUERY_KEY, queryFn: fetchMe }),
     queryClient.prefetchQuery({ queryKey: ["api", "/api/shell"], queryFn: () => apiData("/api/shell") }),
   ]);
-  navigate(to);
+  navigate(destination);
 }
 
 export async function loginAction(_prev: FormState, form: FormData): Promise<FormState> {
   const identifier = String(form.get("identifier") ?? "");
-  const r = await apiCall<{ redirect: string }>("POST", "/api/auth/session", {
+  const response = await apiCall<{ redirect: string }>("POST", "/api/auth/session", {
     identifier,
     otp: String(form.get("otp") ?? ""),
     remember: form.get("remember") === "on",
     next: String(form.get("next") ?? ""),
   });
-  if (!r.body.ok) return { error: r.body.error, identifier: identifier.slice(0, 200) };
-  await enter(r.body.data!.redirect);
-  return { ok: r.body.msg, identifier: identifier.slice(0, 200) };
+  if (!response.body.ok) return { error: response.body.error, identifier: identifier.slice(0, 200) };
+  await enter(response.body.data!.redirect);
+  return { ok: response.body.message, identifier: identifier.slice(0, 200) };
 }
 
 /** Step 1 of the emailed-code sign-in: asks the API to email a 6-digit code. */
 export async function requestOtpAction(_prev: FormState, form: FormData): Promise<FormState> {
   const email = String(form.get("identifier") ?? "");
-  const r = await apiCall("POST", "/api/auth/otp-requests", { email });
-  return r.body.ok ? { ok: r.body.msg, identifier: email.slice(0, 200) } : { error: r.body.error, identifier: email.slice(0, 200) };
+  const response = await apiCall("POST", "/api/auth/otp-requests", { email });
+  return response.body.ok ? { ok: response.body.message, identifier: email.slice(0, 200) } : { error: response.body.error, identifier: email.slice(0, 200) };
 }
 
 export async function logoutAction() {

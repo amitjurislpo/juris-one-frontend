@@ -46,11 +46,11 @@ const ICONS: Record<string, string> = {
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
 };
 
-export function Icon({ n, s = 18 }: { n: string; s?: number }) {
+export function Icon({ name: iconName, size = 18 }: { name: string; size?: number }) {
   return (
     <svg
-      width={s}
-      height={s}
+      width={size}
+      height={size}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -58,7 +58,7 @@ export function Icon({ n, s = 18 }: { n: string; s?: number }) {
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
-      dangerouslySetInnerHTML={{ __html: ICONS[n] ?? "" }}
+      dangerouslySetInnerHTML={{ __html: ICONS[iconName] ?? "" }}
     />
   );
 }

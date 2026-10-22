@@ -22,7 +22,7 @@ export default function SettingsPage() {
 
   return (
     <div className="col">
-      <PageHeader eyebrow={t("Administration")} title={t("Rules &")} em={t("settings")} sub={t("Who can see what, and the rules the portal runs on.")}>
+      <PageHeader eyebrow={t("Administration")} title={t("Rules &")} emphasis={t("settings")} sub={t("Who can see what, and the rules the portal runs on.")}>
         <SegmentedFilter name="tab" dflt="access" label={t("Policy section")} options={[{ value: "access", label: t("Access") }, { value: "leave", label: t("Leave policy") }, { value: "holidays", label: t("Holidays") }, { value: "attendance", label: t("Attendance") }]} />
       </PageHeader>
       {tab === "access" && <AccessMatrix />}
@@ -48,12 +48,12 @@ function AccessMatrix() {
           <table className="t matrix">
             <thead><tr><th>{t("Permission")}</th>{roles.map((r) => <th key={r.id}>{r.name}</th>)}</tr></thead>
             <tbody>
-              {PERMISSIONS.map(([p, l], i) => (
-                <tr key={p} style={{ animationDelay: `${i * 30}ms` }}>
-                  <td><b style={{ fontWeight: 500 }}>{t(l)}</b></td>
-                  {roles.map((r) => {
-                    const yes = r.perms.includes(p);
-                    return <td key={r.id}><span className={yes ? "yes" : "no"} aria-label={yes ? t("Yes") : t("No")}>{yes ? "✓" : "—"}</span></td>;
+              {PERMISSIONS.map(([permission, label], i) => (
+                <tr key={permission} style={{ animationDelay: `${i * 30}ms` }}>
+                  <td><b style={{ fontWeight: 500 }}>{t(label)}</b></td>
+                  {roles.map((role) => {
+                    const yes = role.perms.includes(permission);
+                    return <td key={role.id}><span className={yes ? "yes" : "no"} aria-label={yes ? t("Yes") : t("No")}>{yes ? "✓" : "—"}</span></td>;
                   })}
                 </tr>
               ))}
@@ -70,23 +70,23 @@ function LeavePolicy() {
   const data = useData<{ types: LeaveTypeView[]; attendance: SettingValue<"attendance.policy"> }>("/api/settings/leave");
   if (!data) return <PageLoading />;
   const { types, attendance: att } = data;
-  const card = (lt: (typeof types)[number]): [string, string] => {
-    if (lt.code === "LOP") return [t("Automatic"), t("Absent without leave · {n} late marks = ½ day · Gross ÷ days in month", { n: att.lateMarksPerHalfDayLop })];
-    if (lt.code === "CO") return [t("On approval"), t("For holiday / weekend work of {h}h+ · expires in {d} days", { h: att.halfDayHours, d: lt.expiryDays ?? 60 })];
-    const parts = [t("{n} per month", { n: num(lt.accrualPerMonth) }), num(lt.carryForwardCap) ? t("carry up to {n}", { n: num(lt.carryForwardCap) }) : t("no carry forward")];
-    if (lt.maxStretch) parts.push(t("max {n} at a stretch", { n: num(lt.maxStretch) }));
-    if (num(lt.encashPerYear)) parts.push(t("encash {n} a year after {m} months", { n: num(lt.encashPerYear), m: lt.encashAfterMonths }));
-    return [t("{n} a year", { n: num(lt.annualQuota) }), parts.join(" · ")];
+  const card = (leaveType: (typeof types)[number]): [string, string] => {
+    if (leaveType.code === "LOP") return [t("Automatic"), t("Absent without leave · {n} late marks = ½ day · Gross ÷ days in month", { n: att.lateMarksPerHalfDayLop })];
+    if (leaveType.code === "CO") return [t("On approval"), t("For holiday / weekend work of {h}h+ · expires in {d} days", { h: att.halfDayHours, d: leaveType.expiryDays ?? 60 })];
+    const parts = [t("{n} per month", { n: num(leaveType.accrualPerMonth) }), num(leaveType.carryForwardCap) ? t("carry up to {n}", { n: num(leaveType.carryForwardCap) }) : t("no carry forward")];
+    if (leaveType.maxStretch) parts.push(t("max {n} at a stretch", { n: num(leaveType.maxStretch) }));
+    if (num(leaveType.encashPerYear)) parts.push(t("encash {n} a year after {m} months", { n: num(leaveType.encashPerYear), m: leaveType.encashAfterMonths }));
+    return [t("{n} a year", { n: num(leaveType.annualQuota) }), parts.join(" · ")];
   };
   return (
     <div className="kpis">
-      {types.map((lt, i) => {
-        const [eyebrow, text] = card(lt);
+      {types.map((leaveTypeEntry, i) => {
+        const [eyebrow, text] = card(leaveTypeEntry);
         return (
-          <div key={lt.code} className="card pad lift enter" style={{ ["--i" as string]: i }}>
+          <div key={leaveTypeEntry.code} className="card pad lift enter" style={{ ["--i" as string]: i }}>
             <span className="spot"></span>
             <span className="eyebrow">{eyebrow}</span>
-            <h3 className="display" style={{ fontSize: 26, margin: "6px 0" }}>{lt.name}</h3>
+            <h3 className="display" style={{ fontSize: 26, margin: "6px 0" }}>{leaveTypeEntry.name}</h3>
             <p className="muted" style={{ margin: 0, fontSize: 13.5, lineHeight: 1.6 }}>{text}</p>
           </div>
         );
@@ -103,13 +103,13 @@ function HolidayList() {
   return (
     <section className="card pad enter">
       <div className="list">
-        {hol.map((h) => {
-          const k = h.date;
+        {hol.map((holiday) => {
+          const isoDate = holiday.date;
           return (
-            <div className="it" key={h.id}>
-              <span className="hol-date"><b>{Number(k.slice(8))}</b><small>{MONTH_ABBREVIATIONS[Number(k.slice(5, 7)) - 1].toUpperCase()}</small></span>
-              <div style={{ flex: 1 }}><b style={{ fontWeight: 600 }}>{h.name}</b><div className="faint" style={{ fontSize: 12.5 }}>{formatWeekdayDayMonthYear(k)}</div></div>
-              <span className={`chip nodot ${h.region === "US" ? "info" : h.region === "ALL" ? "ok" : "gold"}`}>{h.region === "ALL" ? t("Everyone") : h.region === "US" ? t("US") : t("India")}</span>
+            <div className="it" key={holiday.id}>
+              <span className="hol-date"><b>{Number(isoDate.slice(8))}</b><small>{MONTH_ABBREVIATIONS[Number(isoDate.slice(5, 7)) - 1].toUpperCase()}</small></span>
+              <div style={{ flex: 1 }}><b style={{ fontWeight: 600 }}>{holiday.name}</b><div className="faint" style={{ fontSize: 12.5 }}>{formatWeekdayDayMonthYear(isoDate)}</div></div>
+              <span className={`chip nodot ${holiday.region === "US" ? "info" : holiday.region === "ALL" ? "ok" : "gold"}`}>{holiday.region === "ALL" ? t("Everyone") : holiday.region === "US" ? t("US") : t("India")}</span>
             </div>
           );
         })}
@@ -120,29 +120,29 @@ function HolidayList() {
 }
 
 function AttendancePolicy() {
-  const tr = useT();
+  const translate = useT();
   const data = useData<{ policy: SettingValue<"attendance.policy">; shifts: ShiftView[]; locked: boolean }>("/api/settings/attendance");
   if (!data) return <PageLoading />;
-  const { policy: p, shifts, locked } = data;
-  const grc = shifts[0]?.graceMinutes ?? p.graceMinutes;
-  const tm = (hm: string) => { const [h, m] = hm.split(":").map(Number); return `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`; };
-  const grace = (hm: string, g: number) => { const [h, m] = hm.split(":").map(Number); const x = h * 60 + m + g; return tm(`${Math.floor(x / 60) % 24}:${x % 60}`); };
-  const days = [tr("Sunday"), tr("Monday"), tr("Tuesday"), tr("Wednesday"), tr("Thursday"), tr("Friday"), tr("Saturday")];
+  const { policy: attendancePolicy, shifts, locked } = data;
+  const grc = shifts[0]?.graceMinutes ?? attendancePolicy.graceMinutes;
+  const formatClockTime = (clockTime: string) => { const [hours, minutes] = clockTime.split(":").map(Number); return `${((hours + 11) % 12) + 1}:${String(minutes).padStart(2, "0")} ${hours < 12 ? "AM" : "PM"}`; };
+  const grace = (startTime: string, graceMinutesToAdd: number) => { const [startHours, startMinutes] = startTime.split(":").map(Number); const totalMinutes = startHours * 60 + startMinutes + graceMinutesToAdd; return formatClockTime(`${Math.floor(totalMinutes / 60) % 24}:${totalMinutes % 60}`); };
+  const days = [translate("Sunday"), translate("Monday"), translate("Tuesday"), translate("Wednesday"), translate("Thursday"), translate("Friday"), translate("Saturday")];
   return (
     <>
-    <AttendancePolicyForm locked={locked} initial={{ fullDayHours: p.fullDayHours, halfDayHours: p.halfDayHours, graceMinutes: grc, lateMarksPerHalfDayLop: p.lateMarksPerHalfDayLop, weeklyOffs: p.weeklyOffs, absenceJobBufferMinutes: p.absenceJobBufferMinutes, lockDayOfNextMonth: p.lockDayOfNextMonth, lockTime: p.lockTime, trackingStartDate: p.trackingStartDate }} />
+    <AttendancePolicyForm locked={locked} initial={{ fullDayHours: attendancePolicy.fullDayHours, halfDayHours: attendancePolicy.halfDayHours, graceMinutes: grc, lateMarksPerHalfDayLop: attendancePolicy.lateMarksPerHalfDayLop, weeklyOffs: attendancePolicy.weeklyOffs, absenceJobBufferMinutes: attendancePolicy.absenceJobBufferMinutes, lockDayOfNextMonth: attendancePolicy.lockDayOfNextMonth, lockTime: attendancePolicy.lockTime, trackingStartDate: attendancePolicy.trackingStartDate }} />
     <section className="card pad enter">
-      {shifts.map((s) => (
-        <div className="kv" key={s.id}><span className="muted">{tr("{name} shift", { name: s.name })}</span><b>{tm(s.startLocal)} – {tm(s.endLocal)}{s.region === "US" ? ` ${tr("local")}` : " IST"} · {tr("grace till {time}", { time: grace(s.startLocal, s.graceMinutes) })}</b></div>
+      {shifts.map((shift) => (
+        <div className="kv" key={shift.id}><span className="muted">{translate("{name} shift", { name: shift.name })}</span><b>{formatClockTime(shift.startLocal)} – {formatClockTime(shift.endLocal)}{shift.region === "US" ? ` ${translate("local")}` : " IST"} · {translate("grace till {time}", { time: grace(shift.startLocal, shift.graceMinutes) })}</b></div>
       ))}
-      <div className="kv"><span className="muted">{tr("Full day / half day")}</span><b>{tr("{full}h+ / {half}h – {full}h worked", { full: p.fullDayHours, half: p.halfDayHours })}</b></div>
-      <div className="kv"><span className="muted">{tr("Late marks")}</span><b>{tr("Every check-in after grace · {n} in a month = ½ day loss of pay", { n: p.lateMarksPerHalfDayLop })}</b></div>
-      <div className="kv"><span className="muted">{tr("Weekly off")}</span><b>{p.weeklyOffs.map((d) => days[d]).join(" & ")}</b></div>
-      <div className="kv"><span className="muted">{tr("Monthly attendance lock")}</span><b>{tr("{day} of next month, {time} IST", { day: p.lockDayOfNextMonth === 1 ? tr("1st") : tr("Day {n}", { n: p.lockDayOfNextMonth }), time: tm(p.lockTime) })}</b></div>
-      <div className="kv"><span className="muted">{tr("US team")}</span><b>{tr("Day shift, local time · holidays from the US calendar")}</b></div>
-      <div className="kv"><span className="muted">{tr("Regularization approvers")}</span><b>{tr("HR, Finance or Admin — the first decision counts")}</b></div>
-      <div className="kv"><span className="muted">{tr("Admin accounts")}</span><b>{tr("No attendance or leave tracking")}</b></div>
-      <div className="kv"><span className="muted">{tr("Salary visibility")}</span><b>{tr("Finance & Admin; employees see their own payslip")}</b></div>
+      <div className="kv"><span className="muted">{translate("Full day / half day")}</span><b>{translate("{full}h+ / {half}h – {full}h worked", { full: attendancePolicy.fullDayHours, half: attendancePolicy.halfDayHours })}</b></div>
+      <div className="kv"><span className="muted">{translate("Late marks")}</span><b>{translate("Every check-in after grace · {n} in a month = ½ day loss of pay", { n: attendancePolicy.lateMarksPerHalfDayLop })}</b></div>
+      <div className="kv"><span className="muted">{translate("Weekly off")}</span><b>{attendancePolicy.weeklyOffs.map((dayIndex) => days[dayIndex]).join(" & ")}</b></div>
+      <div className="kv"><span className="muted">{translate("Monthly attendance lock")}</span><b>{translate("{day} of next month, {time} IST", { day: attendancePolicy.lockDayOfNextMonth === 1 ? translate("1st") : translate("Day {n}", { n: attendancePolicy.lockDayOfNextMonth }), time: formatClockTime(attendancePolicy.lockTime) })}</b></div>
+      <div className="kv"><span className="muted">{translate("US team")}</span><b>{translate("Day shift, local time · holidays from the US calendar")}</b></div>
+      <div className="kv"><span className="muted">{translate("Regularization approvers")}</span><b>{translate("HR, Finance or Admin — the first decision counts")}</b></div>
+      <div className="kv"><span className="muted">{translate("Admin accounts")}</span><b>{translate("No attendance or leave tracking")}</b></div>
+      <div className="kv"><span className="muted">{translate("Salary visibility")}</span><b>{translate("Finance & Admin; employees see their own payslip")}</b></div>
     </section>
     </>
   );

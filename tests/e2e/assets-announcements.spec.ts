@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { expectLanded, login, OWNER, sql } from "./helpers";
 
 const toast = (page: Page) => page.locator(".toast").last();
-const T0 = new Date().toISOString();
+const TEST_START_TIME = new Date().toISOString();
 const TAG = `E2E-LT-${Date.now() % 100000}`;
 const TITLE = `E2E notice ${Date.now() % 100000}`;
 
@@ -10,7 +10,7 @@ async function cleanup() {
   await sql(`DELETE FROM asset_assignments WHERE asset_id IN (SELECT id FROM assets WHERE tag LIKE 'E2E-LT-%')`);
   await sql(`DELETE FROM assets WHERE tag LIKE 'E2E-LT-%'`);
   await sql(`DELETE FROM announcements WHERE title LIKE 'E2E notice %'`);
-  await sql(`DELETE FROM notifications WHERE created_at >= $1`, [T0]);
+  await sql(`DELETE FROM notifications WHERE created_at >= $1`, [TEST_START_TIME]);
 }
 
 test.describe("assets & announcements", () => {
@@ -80,11 +80,11 @@ test.describe("assets & announcements", () => {
     await expectLanded(page, "/overview");
     await page.goto("/manage-announcements");
     await page.getByRole("button", { name: "New announcement" }).click();
-    const ed = page.getByRole("dialog", { name: "New announcement" });
-    await ed.getByLabel(/Title/).fill(TITLE);
-    await ed.getByLabel(/Message/).fill("Office closed early on Friday for the E2E party.");
-    await ed.getByLabel("Pin to the top").check();
-    await ed.getByRole("button", { name: "Publish" }).click();
+    const editor = page.getByRole("dialog", { name: "New announcement" });
+    await editor.getByLabel(/Title/).fill(TITLE);
+    await editor.getByLabel(/Message/).fill("Office closed early on Friday for the E2E party.");
+    await editor.getByLabel("Pin to the top").check();
+    await editor.getByRole("button", { name: "Publish" }).click();
     const row = page.locator("tbody tr", { hasText: TITLE });
     await expect(row.locator(".chip", { hasText: "Showing" })).toBeVisible();
 

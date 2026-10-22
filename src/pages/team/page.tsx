@@ -22,7 +22,7 @@ export default function TeamPage() {
 
   return (
     <div className="col" style={{ gap: 24 }}>
-      <PageHeader eyebrow={t("My team")} title={t("Your")} em={t("team")} after={` ${t("today")}`} sub={t("People who report to you. Approvals are handled by HR.")} />
+      <PageHeader eyebrow={t("My team")} title={t("Your")} emphasis={t("team")} after={` ${t("today")}`} sub={t("People who report to you. Approvals are handled by HR.")} />
       <div className="kpis">
         <div className="card kpi enter" style={{ ["--i" as string]: 1 }}><span className="spot"></span><span className="l">{t("Team size")}</span><span className="v num">{size}</span></div>
         <div className="card kpi enter" style={{ ["--i" as string]: 2 }}><span className="spot"></span><span className="l"><i className="dot" style={{ color: "var(--ok)" }}></i> {t("Checked in")}</span><span className="v num">{counts.in}</span></div>
@@ -39,21 +39,21 @@ export default function TeamPage() {
             <table className="t">
               <thead>
                 <tr>
-                  <SortableHeader k="name" dflt="name">{t("Member")}</SortableHeader>
-                  <SortableHeader k="id" dflt="name">{t("ID")}</SortableHeader>
-                  <SortableHeader k="title" dflt="name">{t("Designation")}</SortableHeader>
+                  <SortableHeader sortKey="name" dflt="name">{t("Member")}</SortableHeader>
+                  <SortableHeader sortKey="id" dflt="name">{t("ID")}</SortableHeader>
+                  <SortableHeader sortKey="title" dflt="name">{t("Designation")}</SortableHeader>
                   <th>{t("Shift")}</th>
-                  <SortableHeader k="status" dflt="name">{t("Today")}</SortableHeader>
+                  <SortableHeader sortKey="status" dflt="name">{t("Today")}</SortableHeader>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((m, i) => (
-                  <tr key={m.id} style={{ animationDelay: `${i * 50}ms` }}>
-                    <td><div className="person"><Avatar id={m.id} name={m.fullName} photo={m.photo} /><div><b>{m.fullName}</b><small>{m.designation}</small></div></div></td>
-                    <td className="muted num">{m.code}</td>
-                    <td className="muted">{m.designation}</td>
-                    <td className="muted">{m.shift}</td>
-                    <td><span className={`chip ${m.status.tone}`}>{t(m.status.label)}</span></td>
+                {rows.map((member, i) => (
+                  <tr key={member.id} style={{ animationDelay: `${i * 50}ms` }}>
+                    <td><div className="person"><Avatar id={member.id} name={member.fullName} photo={member.photo} /><div><b>{member.fullName}</b><small>{member.designation}</small></div></div></td>
+                    <td className="muted num">{member.code}</td>
+                    <td className="muted">{member.designation}</td>
+                    <td className="muted">{member.shift}</td>
+                    <td><span className={`chip ${member.status.tone}`}>{t(member.status.label)}</span></td>
                   </tr>
                 ))}
               </tbody>
@@ -70,14 +70,14 @@ export default function TeamPage() {
         </div>
         <div className="table-wrap">
           <table className="t" style={{ minWidth: 640 }}>
-            <thead><tr><th>{t("Member")}</th>{days.map((d) => <th key={d} style={{ textAlign: "center" }}>{t(WEEKDAY_ABBREVIATIONS[isoToDate(d).getUTCDay()])} {Number(d.slice(8))}</th>)}</tr></thead>
+            <thead><tr><th>{t("Member")}</th>{days.map((day) => <th key={day} style={{ textAlign: "center" }}>{t(WEEKDAY_ABBREVIATIONS[isoToDate(day).getUTCDay()])} {Number(day.slice(8))}</th>)}</tr></thead>
             <tbody>
-              {away.map((r) => (
-                <tr key={r.id}>
-                  <td><b>{r.fullName}</b></td>
-                  {r.cells.map((c, j) => (
+              {away.map((awayMember) => (
+                <tr key={awayMember.id}>
+                  <td><b>{awayMember.fullName}</b></td>
+                  {awayMember.cells.map((cell, j) => (
                     <td key={j} style={{ textAlign: "center" }}>
-                      {c ? <span className={`chip ${{ lv: "info", pend: "warn", hol: "gold" }[c]}`}>{{ lv: t("Leave"), pend: t("Pending"), hol: t("Holiday") }[c]}</span> : <span className="faint">·</span>}
+                      {cell ? <span className={`chip ${{ lv: "info", pend: "warn", hol: "gold" }[cell]}`}>{{ lv: t("Leave"), pend: t("Pending"), hol: t("Holiday") }[cell]}</span> : <span className="faint">·</span>}
                     </td>
                   ))}
                 </tr>

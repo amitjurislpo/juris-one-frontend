@@ -19,108 +19,108 @@ const TIME_ZONES = ["Asia/Kolkata", "America/New_York", "America/Chicago", "Amer
 
 const blankProfile: BusinessInput = { name: "", legalName: "", code: "", employeePrefix: "", timeZone: "Asia/Kolkata", contactEmail: "", contactPhone: "", address: "", gstin: "" };
 
-function ProfileFields({ f, set, lockPrefix }: { f: BusinessInput; set: (f: BusinessInput) => void; lockPrefix?: boolean }) {
+function ProfileFields({ form, set, lockPrefix }: { form: BusinessInput; set: (updatedProfile: BusinessInput) => void; lockPrefix?: boolean }) {
   const t = useT();
-  const v = (k: keyof BusinessInput) => f[k] ?? "";
-  const on = (k: keyof BusinessInput) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => set({ ...f, [k]: e.target.value });
+  const fieldValue = (fieldName: keyof BusinessInput) => form[fieldName] ?? "";
+  const onFieldChange = (fieldName: keyof BusinessInput) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => set({ ...form, [fieldName]: e.target.value });
   return (
     <>
       <div className="grid2">
-        <label className="field">{t("Business name *")}<input value={v("name")} onChange={on("name")} maxLength={120} placeholder={t("e.g. Acme Advisors")} autoFocus /></label>
-        <label className="field">{t("Legal name")} <span className="hint">{t("optional")}</span><input value={v("legalName")} onChange={on("legalName")} maxLength={160} placeholder="Acme Advisors LLP" /></label>
+        <label className="field">{t("Business name *")}<input value={fieldValue("name")} onChange={onFieldChange("name")} maxLength={120} placeholder={t("e.g. Acme Advisors")} autoFocus /></label>
+        <label className="field">{t("Legal name")} <span className="hint">{t("optional")}</span><input value={fieldValue("legalName")} onChange={onFieldChange("legalName")} maxLength={160} placeholder="Acme Advisors LLP" /></label>
       </div>
       <div className="grid3">
-        <label className="field">{t("Short name")} <span className="hint">{t("auto if empty")}</span><input value={v("code")} onChange={on("code")} maxLength={40} placeholder="acme-advisors" /></label>
+        <label className="field">{t("Short name")} <span className="hint">{t("auto if empty")}</span><input value={fieldValue("code")} onChange={onFieldChange("code")} maxLength={40} placeholder="acme-advisors" /></label>
         <label className="field">{t("Employee ID prefix")} <span className="hint">{t("2–5 letters")}</span>
-          <input value={v("employeePrefix")} onChange={on("employeePrefix")} maxLength={5} placeholder="AA" disabled={lockPrefix} title={lockPrefix ? t("Fixed once the business has people") : undefined} />
+          <input value={fieldValue("employeePrefix")} onChange={onFieldChange("employeePrefix")} maxLength={5} placeholder="AA" disabled={lockPrefix} title={lockPrefix ? t("Fixed once the business has people") : undefined} />
         </label>
         <label className="field">{t("Time zone")}
-          <select value={v("timeZone")} onChange={on("timeZone")}>{TIME_ZONES.map((z) => <option key={z}>{z}</option>)}</select>
+          <select value={fieldValue("timeZone")} onChange={onFieldChange("timeZone")}>{TIME_ZONES.map((timeZone) => <option key={timeZone}>{timeZone}</option>)}</select>
         </label>
       </div>
       <div className="grid3">
-        <label className="field">{t("Contact email")}<input type="email" value={v("contactEmail")} onChange={on("contactEmail")} maxLength={200} /></label>
-        <div className="field">{t("Phone")}<PhoneInput {...splitPhone(v("contactPhone"))} onChange={(c, n) => set({ ...f, contactPhone: n ? `${c} ${n}` : "" })} /></div>
-        <label className="field">{t("GSTIN")}<input value={v("gstin")} onChange={on("gstin")} maxLength={15} placeholder="22AAAAA0000A1Z5" /></label>
+        <label className="field">{t("Contact email")}<input type="email" value={fieldValue("contactEmail")} onChange={onFieldChange("contactEmail")} maxLength={200} /></label>
+        <div className="field">{t("Phone")}<PhoneInput {...splitPhone(fieldValue("contactPhone"))} onChange={(countryCode, phoneNumber) => set({ ...form, contactPhone: phoneNumber ? `${countryCode} ${phoneNumber}` : "" })} /></div>
+        <label className="field">{t("GSTIN")}<input value={fieldValue("gstin")} onChange={onFieldChange("gstin")} maxLength={15} placeholder="22AAAAA0000A1Z5" /></label>
       </div>
-      <label className="field">{t("Address")}<input value={v("address")} onChange={on("address")} maxLength={400} /></label>
+      <label className="field">{t("Address")}<input value={fieldValue("address")} onChange={onFieldChange("address")} maxLength={400} /></label>
     </>
   );
 }
 
-function OwnerFields({ o, set }: { o: OwnerInput; set: (o: OwnerInput) => void }) {
+function OwnerFields({ owner, set }: { owner: OwnerInput; set: (updatedOwner: OwnerInput) => void }) {
   const t = useT();
   return (
     <div className="grid3">
-      <label className="field">{t("Name *")}<input value={o.name} onChange={(e) => set({ ...o, name: e.target.value })} maxLength={120} /></label>
-      <label className="field">{t("Email (signs in with it) *")}<input type="email" value={o.email} onChange={(e) => set({ ...o, email: e.target.value })} maxLength={200} /></label>
+      <label className="field">{t("Name *")}<input value={owner.name} onChange={(e) => set({ ...owner, name: e.target.value })} maxLength={120} /></label>
+      <label className="field">{t("Email (signs in with it) *")}<input type="email" value={owner.email} onChange={(e) => set({ ...owner, email: e.target.value })} maxLength={200} /></label>
     </div>
   );
 }
 
-function SubscriptionFields({ s, set, plans }: { s: SubscriptionInput; set: (s: SubscriptionInput) => void; plans: PlanRow[] }) {
+function SubscriptionFields({ subscription, set, plans }: { subscription: SubscriptionInput; set: (updatedSubscription: SubscriptionInput) => void; plans: PlanRow[] }) {
   const t = useT();
-  const plan = plans.find((p) => p.id === s.planId);
+  const plan = plans.find((p) => p.id === subscription.planId);
   return (
     <>
       <div className="grid2">
         <label className="field">{t("Plan")}
-          <select value={s.planId} onChange={(e) => set({ ...s, planId: e.target.value })}>
+          <select value={subscription.planId} onChange={(e) => set({ ...subscription, planId: e.target.value })}>
             <option value="">{t("— choose a plan —")}</option>
-            {plans.filter((p) => p.active).map((p) => <option key={p.id} value={p.id}>{p.name} · {formatRupees(p.pricePaise)} / {t("{n} mo", { n: p.periodMonths })}</option>)}
+            {plans.filter((plan) => plan.active).map((plan) => <option key={plan.id} value={plan.id}>{plan.name} · {formatRupees(plan.pricePaise)} / {t("{n} mo", { n: plan.periodMonths })}</option>)}
           </select>
         </label>
         <label className="field">{t("Price charged (₹)")} <span className="hint">{plan ? t("plan price {price}", { price: formatRupees(plan.pricePaise) }) : t("defaults to the plan")}</span>
-          <input type="number" min={0} step="0.01" value={s.price ?? ""} onChange={(e) => set({ ...s, price: e.target.value === "" ? null : Number(e.target.value) })} />
+          <input type="number" min={0} step="0.01" value={subscription.price ?? ""} onChange={(e) => set({ ...subscription, price: e.target.value === "" ? null : Number(e.target.value) })} />
         </label>
       </div>
       <div className="grid3">
-        <label className="field">{t("Starts on")} <span className="hint">{t("default today")}</span><input type="date" value={s.startsOn ?? ""} onChange={(e) => set({ ...s, startsOn: e.target.value })} /></label>
-        <label className="field">{t("Ends on")} <span className="hint">{t("default: plan period")}</span><input type="date" value={s.endsOn ?? ""} onChange={(e) => set({ ...s, endsOn: e.target.value })} /></label>
-        <label className="field">{t("Notes")}<input value={s.notes ?? ""} onChange={(e) => set({ ...s, notes: e.target.value })} maxLength={300} placeholder={t("Invoice no., payment ref.")} /></label>
+        <label className="field">{t("Starts on")} <span className="hint">{t("default today")}</span><input type="date" value={subscription.startsOn ?? ""} onChange={(e) => set({ ...subscription, startsOn: e.target.value })} /></label>
+        <label className="field">{t("Ends on")} <span className="hint">{t("default: plan period")}</span><input type="date" value={subscription.endsOn ?? ""} onChange={(e) => set({ ...subscription, endsOn: e.target.value })} /></label>
+        <label className="field">{t("Notes")}<input value={subscription.notes ?? ""} onChange={(e) => set({ ...subscription, notes: e.target.value })} maxLength={300} placeholder={t("Invoice no., payment ref.")} /></label>
       </div>
     </>
   );
 }
 
 /** Problem with the business phone ("+91 8888788888"), or null when it is blank or valid. */
-const businessPhoneProblem = (b: BusinessInput) => {
-  const { code, number } = splitPhone(b.contactPhone ?? "");
+const businessPhoneProblem = (business: BusinessInput) => {
+  const { code, number } = splitPhone(business.contactPhone ?? "");
   return number ? phoneProblem(code, number) : null;
 };
 
-const clean = <T extends object>(o: T): T => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== "" && v !== null && v !== undefined)) as T;
+const clean = <T extends object>(source: T): T => Object.fromEntries(Object.entries(source).filter(([, entryValue]) => entryValue !== "" && entryValue !== null && entryValue !== undefined)) as T;
 
 export function NewBusinessButton({ plans, templates }: { plans: PlanRow[]; templates: RoleTemplate[] }) {
   const toast = useToast();
   const t = useT();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [b, setB] = useState<BusinessInput>(blankProfile);
-  const [s, setS] = useState<SubscriptionInput>({ planId: "" });
-  const [o, setO] = useState<OwnerInput>({ name: "", email: "" });
+  const [businessInput, setBusinessInput] = useState<BusinessInput>(blankProfile);
+  const [subscriptionInput, setSubscriptionInput] = useState<SubscriptionInput>({ planId: "" });
+  const [ownerInput, setOwnerInput] = useState<OwnerInput>({ name: "", email: "" });
   const [roles, setRoles] = useState<string[]>([]);
   const [err, setErr] = useState("");
   const [busy, start] = useTransition();
-  const close = () => { setOpen(false); setErr(""); setB(blankProfile); setS({ planId: "" }); setO({ name: "", email: "" }); setRoles([]); };
+  const close = () => { setOpen(false); setErr(""); setBusinessInput(blankProfile); setSubscriptionInput({ planId: "" }); setOwnerInput({ name: "", email: "" }); setRoles([]); };
   const save = () => start(async () => {
-    const bad = businessPhoneProblem(b);
+    const bad = businessPhoneProblem(businessInput);
     if (bad) { setErr(bad); return; }
-    const r = await createBusiness({ business: clean(b), subscription: s.planId ? clean(s) : undefined, owner: o.name || o.email ? clean(o) : undefined, roles });
-    if (r.ok) { toast(r.msg!); close(); router.push(`/platform/${r.data!.id}`); } else setErr(r.error);
+    const createResult = await createBusiness({ business: clean(businessInput), subscription: subscriptionInput.planId ? clean(subscriptionInput) : undefined, owner: ownerInput.name || ownerInput.email ? clean(ownerInput) : undefined, roles });
+    if (createResult.ok) { toast(createResult.message!); close(); router.push(`/platform/${createResult.data!.id}`); } else setErr(createResult.error);
   });
   return (
     <>
-      <button className="btn btn-gold btn-lg" onClick={() => setOpen(true)}><Icon n="plus" s={16} />{t("New business")}</button>
+      <button className="btn btn-gold btn-lg" onClick={() => setOpen(true)}><Icon name="plus" size={16} />{t("New business")}</button>
       {open && (
         <Modal title={t("New business")} eyebrow={t("Platform")} maxWidth={760} onClose={close}
           footer={<><button className="btn btn-ghost" onClick={close}>{t("Cancel")}</button><button className="btn btn-gold" disabled={busy} onClick={save}>{busy ? t("Creating…") : t("Create business")}</button></>}>
           <div className="col" style={{ gap: 14 }}>
-            <ProfileFields f={b} set={(x) => { setB(x); setErr(""); }} />
+            <ProfileFields form={businessInput} set={(x) => { setBusinessInput(x); setErr(""); }} />
             <h4 style={{ margin: "6px 0 0" }}>{t("Subscription")}</h4>
-            <SubscriptionFields s={s} set={(x) => { setS(x); setErr(""); }} plans={plans} />
+            <SubscriptionFields subscription={subscriptionInput} set={(updatedInput) => { setSubscriptionInput(updatedInput); setErr(""); }} plans={plans} />
             <h4 style={{ margin: "6px 0 0" }}>{t("Sub admin")} <span className="hint muted">{t("— runs the business; optional, can be added later")}</span></h4>
-            <OwnerFields o={o} set={(x) => { setO(x); setErr(""); }} />
+            <OwnerFields owner={ownerInput} set={(x) => { setOwnerInput(x); setErr(""); }} />
             <h4 style={{ margin: "6px 0 0" }}>{t("Roles for this business")} <span className="hint muted">{t("— the business admin can't create roles, so pick what it needs")}</span></h4>
             <RolePicker templates={templates} chosen={roles} set={(x) => { setRoles(x); setErr(""); }} />
             {err && <div className="err" role="alert">{err}</div>}
@@ -136,11 +136,11 @@ function RolePicker({ templates, chosen, set }: { templates: RoleTemplate[]; cho
   const t = useT();
   return (
     <div className="grid3">
-      {templates.filter((x) => x.active).map((x) => (
-        <label key={x.key} style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 400 }}>
-          <input type="checkbox" checked={x.mandatory || chosen.includes(x.key)} disabled={x.mandatory}
-            onChange={(e) => set(e.target.checked ? [...chosen, x.key] : chosen.filter((k) => k !== x.key))} />
-          {x.name}{x.mandatory && <span className="hint muted">{t("always included")}</span>}
+      {templates.filter((template) => template.active).map((template) => (
+        <label key={template.key} style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 400 }}>
+          <input type="checkbox" checked={template.mandatory || chosen.includes(template.key)} disabled={template.mandatory}
+            onChange={(e) => set(e.target.checked ? [...chosen, template.key] : chosen.filter((chosenKey) => chosenKey !== template.key))} />
+          {template.name}{template.mandatory && <span className="hint muted">{t("always included")}</span>}
         </label>
       ))}
     </div>
@@ -158,13 +158,13 @@ export function AddBusinessRoleButton({ businessId, templates }: { businessId: s
   const close = () => { setOpen(false); setErr(""); };
   return (
     <>
-      <button className="btn btn-sm" onClick={() => { setKey(templates[0]?.key ?? ""); setOpen(true); }}><Icon n="plus" s={14} />{t("Add role")}</button>
+      <button className="btn btn-sm" onClick={() => { setKey(templates[0]?.key ?? ""); setOpen(true); }}><Icon name="plus" size={14} />{t("Add role")}</button>
       {open && (
         <Modal title={t("Add role")} eyebrow={t("Gives this business a role from the catalogue")} size="sm" onClose={close}
           footer={none ? <button className="btn btn-gold" onClick={close}>{t("OK")}</button> : <><button className="btn btn-ghost" onClick={close}>{t("Cancel")}</button>
             <button className="btn btn-gold" disabled={busy} onClick={() => start(async () => {
-              const r = await addBusinessRole(businessId, key);
-              if (r.ok) { toast(t("Role added")); close(); } else setErr(r.error);
+              const addRoleResult = await addBusinessRole(businessId, key);
+              if (addRoleResult.ok) { toast(t("Role added")); close(); } else setErr(addRoleResult.error);
             })}>{busy ? t("Adding…") : t("Add role")}</button></>}>
           {none ? (
             <p className="muted" style={{ margin: 0 }}>
@@ -172,7 +172,7 @@ export function AddBusinessRoleButton({ businessId, templates }: { businessId: s
             </p>
           ) : <div className="col" style={{ gap: 14 }}>
             <label className="field">{t("Role")}
-              <select value={key} onChange={(e) => { setKey(e.target.value); setErr(""); }}>{templates.map((x) => <option key={x.key} value={x.key}>{x.name}</option>)}</select>
+              <select value={key} onChange={(e) => { setKey(e.target.value); setErr(""); }}>{templates.map((roleTemplate) => <option key={roleTemplate.key} value={roleTemplate.key}>{roleTemplate.name}</option>)}</select>
             </label>
             {err && <div className="err" role="alert">{err}</div>}
           </div>}
@@ -189,15 +189,15 @@ export function BusinessRoleActions({ businessId, role }: { businessId: string; 
   const [ask, setAsk] = useState<"sync" | "remove" | null>(null);
   const [busy, start] = useTransition();
   const why = role.mandatory ? t("Every business has this role") : role.employees > 0 ? t("Move people to another role first") : undefined;
-  const run = (act: () => Promise<{ ok: boolean; msg?: string; error?: string }>) => start(async () => {
-    const r = await act();
-    toast(r.ok ? (r.msg ?? t("Done")) : (r.error ?? t("Failed")), r.ok ? undefined : "bad");
+  const run = (act: () => Promise<{ ok: boolean; message?: string; error?: string }>) => start(async () => {
+    const actionResult = await act();
+    toast(actionResult.ok ? (actionResult.message ?? t("Done")) : (actionResult.error ?? t("Failed")), actionResult.ok ? undefined : "bad");
     setAsk(null);
   });
   return (
     <>
       <button className="btn btn-sm btn-ghost" onClick={() => setAsk("sync")}>{t("Update from template")}</button>
-      <button className="btn btn-sm btn-ghost" disabled={!!why} title={why} onClick={() => setAsk("remove")} aria-label={t("Remove {name}", { name: role.name })}><Icon n="trash" s={14} /></button>
+      <button className="btn btn-sm btn-ghost" disabled={!!why} title={why} onClick={() => setAsk("remove")} aria-label={t("Remove {name}", { name: role.name })}><Icon name="trash" size={14} /></button>
       {ask === "sync" && (
         <ConfirmDialog title={t("Update from template")} confirm={t("Update role")} busy={busy} onClose={() => setAsk(null)}
           body={<>{t("Copy the current permissions of the {name} template over this business's role? People holding it get the new permissions straight away.", { name: role.name })}</>}
@@ -216,24 +216,24 @@ export function EditBusinessButton({ id, profile, hasPeople }: { id: string; pro
   const toast = useToast();
   const t = useT();
   const [open, setOpen] = useState(false);
-  const init: BusinessInput = Object.fromEntries(Object.entries(profile).map(([k, v]) => [k, v ?? ""])) as unknown as BusinessInput;
-  const [b, setB] = useState<BusinessInput>(init);
+  const init: BusinessInput = Object.fromEntries(Object.entries(profile).map(([fieldName, profileValue]) => [fieldName, profileValue ?? ""])) as unknown as BusinessInput;
+  const [editedBusiness, setEditedBusiness] = useState<BusinessInput>(init);
   const [err, setErr] = useState("");
   const [busy, start] = useTransition();
   const save = () => start(async () => {
-    const bad = businessPhoneProblem(b);
+    const bad = businessPhoneProblem(editedBusiness);
     if (bad) { setErr(bad); return; }
-    const r = await updateBusiness(id, b);
-    if (r.ok) { toast(r.msg!); setOpen(false); } else setErr(r.error);
+    const updateResult = await updateBusiness(id, editedBusiness);
+    if (updateResult.ok) { toast(updateResult.message!); setOpen(false); } else setErr(updateResult.error);
   });
   return (
     <>
-      <button className="btn" onClick={() => { setB(init); setOpen(true); }}><Icon n="edit" s={14} />{t("Edit details")}</button>
+      <button className="btn" onClick={() => { setEditedBusiness(init); setOpen(true); }}><Icon name="edit" size={14} />{t("Edit details")}</button>
       {open && (
         <Modal title={t("Business details")} eyebrow={profile.name} maxWidth={760} onClose={() => setOpen(false)}
           footer={<><button className="btn btn-ghost" onClick={() => setOpen(false)}>{t("Cancel")}</button><button className="btn btn-gold" disabled={busy} onClick={save}>{busy ? t("Saving…") : t("Save")}</button></>}>
           <div className="col" style={{ gap: 14 }}>
-            <ProfileFields f={b} set={(x) => { setB(x); setErr(""); }} lockPrefix={hasPeople} />
+            <ProfileFields form={editedBusiness} set={(updatedBusiness) => { setEditedBusiness(updatedBusiness); setErr(""); }} lockPrefix={hasPeople} />
             {err && <div className="err" role="alert">{err}</div>}
           </div>
         </Modal>
@@ -250,11 +250,11 @@ export function BusinessStatusButton({ id, name, status }: { id: string; name: s
   const suspend = status === "ACTIVE";
   return (
     <>
-      <button className={`btn ${suspend ? "btn-ghost" : "btn-gold"}`} onClick={() => setAsk(true)}><Icon n={suspend ? "lock" : "ok"} s={14} />{suspend ? t("Suspend") : t("Reactivate")}</button>
+      <button className={`btn ${suspend ? "btn-ghost" : "btn-gold"}`} onClick={() => setAsk(true)}><Icon name={suspend ? "lock" : "ok"} size={14} />{suspend ? t("Suspend") : t("Reactivate")}</button>
       {ask && (
         <ConfirmDialog title={suspend ? t("Suspend business") : t("Reactivate business")} danger={suspend} confirm={suspend ? t("Suspend") : t("Reactivate")} busy={busy} onClose={() => setAsk(false)}
           body={suspend ? <>{t("Suspend {name}? Everyone in it is signed out at once and can't sign in until you reactivate it. Its data is kept.", { name })}</> : <>{t("Let people in {name} sign in again?", { name })}</>}
-          onConfirm={() => start(async () => { const r = await setBusinessStatus(id, suspend ? "SUSPENDED" : "ACTIVE"); toast(r.ok ? r.msg! : r.error, r.ok ? undefined : "bad"); setAsk(false); })} />
+          onConfirm={() => start(async () => { const statusResult = await setBusinessStatus(id, suspend ? "SUSPENDED" : "ACTIVE"); toast(statusResult.ok ? statusResult.message! : statusResult.error, statusResult.ok ? undefined : "bad"); setAsk(false); })} />
       )}
     </>
   );
@@ -264,22 +264,22 @@ export function AddOwnerButton({ id }: { id: string }) {
   const toast = useToast();
   const t = useT();
   const [open, setOpen] = useState(false);
-  const [o, setO] = useState<OwnerInput>({ name: "", email: "" });
+  const [additionalOwner, setAdditionalOwner] = useState<OwnerInput>({ name: "", email: "" });
   const [err, setErr] = useState("");
   const [busy, start] = useTransition();
-  const close = () => { setOpen(false); setErr(""); setO({ name: "", email: "" }); };
+  const close = () => { setOpen(false); setErr(""); setAdditionalOwner({ name: "", email: "" }); };
   const save = () => start(async () => {
-    const r = await addOwner(id, clean(o));
-    if (r.ok) { toast(r.msg!); close(); } else setErr(r.error);
+    const addOwnerResult = await addOwner(id, clean(additionalOwner));
+    if (addOwnerResult.ok) { toast(addOwnerResult.message!); close(); } else setErr(addOwnerResult.error);
   });
   return (
     <>
-      <button className="btn btn-sm" onClick={() => setOpen(true)}><Icon n="plus" s={14} />{t("Add sub admin")}</button>
+      <button className="btn btn-sm" onClick={() => setOpen(true)}><Icon name="plus" size={14} />{t("Add sub admin")}</button>
       {open && (
         <Modal title={t("Add sub admin")} eyebrow={t("Runs this business")} maxWidth={720} onClose={close}
           footer={<><button className="btn btn-ghost" onClick={close}>{t("Cancel")}</button><button className="btn btn-gold" disabled={busy} onClick={save}>{busy ? t("Adding…") : t("Add sub admin")}</button></>}>
           <div className="col" style={{ gap: 14 }}>
-            <OwnerFields o={o} set={(x) => { setO(x); setErr(""); }} />
+            <OwnerFields owner={additionalOwner} set={(x) => { setAdditionalOwner(x); setErr(""); }} />
             {err && <div className="err" role="alert">{err}</div>}
           </div>
         </Modal>
@@ -288,13 +288,13 @@ export function AddOwnerButton({ id }: { id: string }) {
   );
 }
 
-export function OwnerAccessSwitch({ businessId, ownerId, name, on }: { businessId: string; ownerId: string; name: string; on: boolean }) {
+export function OwnerAccessSwitch({ businessId, ownerId, name, isEnabled }: { businessId: string; ownerId: string; name: string; isEnabled: boolean }) {
   const toast = useToast();
   const t = useT();
   const [busy, start] = useTransition();
   return (
-    <button className="switch" role="switch" aria-checked={on} disabled={busy} aria-label={on ? t("Turn off access for {name}", { name }) : t("Turn on access for {name}", { name })}
-      onClick={() => start(async () => { const r = await setOwnerAccess(businessId, ownerId, !on); toast(r.ok ? r.msg! : r.error, r.ok ? undefined : "bad"); })}><i></i></button>
+    <button className="switch" role="switch" aria-checked={isEnabled} disabled={busy} aria-label={isEnabled ? t("Turn off access for {name}", { name }) : t("Turn on access for {name}", { name })}
+      onClick={() => start(async () => { const accessResult = await setOwnerAccess(businessId, ownerId, !isEnabled); toast(accessResult.ok ? accessResult.message! : accessResult.error, accessResult.ok ? undefined : "bad"); })}><i></i></button>
   );
 }
 
@@ -302,23 +302,23 @@ export function AddSubscriptionButton({ id, plans, label }: { id: string; plans:
   const toast = useToast();
   const t = useT();
   const [open, setOpen] = useState(false);
-  const [s, setS] = useState<SubscriptionInput>({ planId: "" });
+  const [newSubscription, setNewSubscription] = useState<SubscriptionInput>({ planId: "" });
   const [err, setErr] = useState("");
   const [busy, start] = useTransition();
-  const close = () => { setOpen(false); setErr(""); setS({ planId: "" }); };
+  const close = () => { setOpen(false); setErr(""); setNewSubscription({ planId: "" }); };
   const save = () => start(async () => {
-    if (!s.planId) { setErr(t("Choose a plan.")); return; }
-    const r = await addSubscription(id, clean(s));
-    if (r.ok) { toast(r.msg!); close(); } else setErr(r.error);
+    if (!newSubscription.planId) { setErr(t("Choose a plan.")); return; }
+    const subscriptionResult = await addSubscription(id, clean(newSubscription));
+    if (subscriptionResult.ok) { toast(subscriptionResult.message!); close(); } else setErr(subscriptionResult.error);
   });
   return (
     <>
-      <button className="btn btn-sm btn-gold" onClick={() => setOpen(true)}><Icon n="plus" s={14} />{label}</button>
+      <button className="btn btn-sm btn-gold" onClick={() => setOpen(true)}><Icon name="plus" size={14} />{label}</button>
       {open && (
         <Modal title={label} eyebrow={t("Subscription")} maxWidth={720} onClose={close}
           footer={<><button className="btn btn-ghost" onClick={close}>{t("Cancel")}</button><button className="btn btn-gold" disabled={busy} onClick={save}>{busy ? t("Saving…") : t("Save")}</button></>}>
           <div className="col" style={{ gap: 14 }}>
-            <SubscriptionFields s={s} set={(x) => { setS(x); setErr(""); }} plans={plans} />
+            <SubscriptionFields subscription={newSubscription} set={(updatedSubscription) => { setNewSubscription(updatedSubscription); setErr(""); }} plans={plans} />
             {err && <div className="err" role="alert">{err}</div>}
           </div>
         </Modal>
@@ -334,11 +334,11 @@ export function CancelSubscriptionButton({ businessId, subscriptionId, label }: 
   const [busy, start] = useTransition();
   return (
     <>
-      <button className="btn btn-sm btn-ghost" onClick={() => setAsk(true)} aria-label={t("Cancel {label}", { label })}><Icon n="x" s={14} /></button>
+      <button className="btn btn-sm btn-ghost" onClick={() => setAsk(true)} aria-label={t("Cancel {label}", { label })}><Icon name="x" size={14} /></button>
       {ask && (
         <ConfirmDialog title={t("Cancel subscription")} danger confirm={t("Cancel subscription")} busy={busy} onClose={() => setAsk(false)}
           body={<>{t("Cancel {label}? If it covers today, the business loses access straight away (the owner can still sign in and export employees).", { label })}</>}
-          onConfirm={() => start(async () => { const r = await cancelSubscription(businessId, subscriptionId); toast(r.ok ? r.msg! : r.error, r.ok ? undefined : "bad"); setAsk(false); })} />
+          onConfirm={() => start(async () => { const cancelResult = await cancelSubscription(businessId, subscriptionId); toast(cancelResult.ok ? cancelResult.message! : cancelResult.error, cancelResult.ok ? undefined : "bad"); setAsk(false); })} />
       )}
     </>
   );
@@ -348,40 +348,40 @@ export function GrantJurisTrackButton({ id }: { id: string }) {
   const toast = useToast();
   const t = useT();
   const [open, setOpen] = useState(false);
-  const [g, setG] = useState<GrantInput>({ source: "COMPLIMENTARY" });
+  const [grantInput, setGrantInput] = useState<GrantInput>({ source: "COMPLIMENTARY" });
   const [err, setErr] = useState("");
   const [busy, start] = useTransition();
-  const set = (x: Partial<GrantInput>) => { setG({ ...g, ...x }); setErr(""); };
-  const close = () => { setOpen(false); setErr(""); setG({ source: "COMPLIMENTARY" }); };
-  const paid = g.source === "PAID";
+  const set = (x: Partial<GrantInput>) => { setGrantInput({ ...grantInput, ...x }); setErr(""); };
+  const close = () => { setOpen(false); setErr(""); setGrantInput({ source: "COMPLIMENTARY" }); };
+  const paid = grantInput.source === "PAID";
   const save = () => start(async () => {
-    const r = await grantModule(id, clean(paid ? g : { ...g, price: undefined }));
-    if (r.ok) { toast(r.msg!); close(); } else setErr(r.error);
+    const grantResult = await grantModule(id, clean(paid ? grantInput : { ...grantInput, price: undefined }));
+    if (grantResult.ok) { toast(grantResult.message!); close(); } else setErr(grantResult.error);
   });
   return (
     <>
-      <button className="btn btn-sm" onClick={() => setOpen(true)}><Icon n="sparkle" s={14} />{t("Grant Juris Track")}</button>
+      <button className="btn btn-sm" onClick={() => setOpen(true)}><Icon name="sparkle" size={14} />{t("Grant Juris Track")}</button>
       {open && (
         <Modal title={t("Grant Juris Track")} eyebrow={t("On its own, whatever the plan")} size="sm" onClose={close}
           footer={<><button className="btn btn-ghost" onClick={close}>{t("Cancel")}</button><button className="btn btn-gold" disabled={busy} onClick={save}>{busy ? t("Granting…") : t("Grant")}</button></>}>
           <div className="col" style={{ gap: 14 }}>
             <div className="field">{t("Type")}
               <div style={{ display: "flex", gap: 16 }}>
-                {(["COMPLIMENTARY", "PAID"] as const).map((x) => (
-                  <label key={x} style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 400 }}>
-                    <input type="radio" name="source" checked={g.source === x} onChange={() => set({ source: x })} />{x === "PAID" ? t("Paid") : t("Complimentary (free)")}
+                {(["COMPLIMENTARY", "PAID"] as const).map((grantSource) => (
+                  <label key={grantSource} style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 400 }}>
+                    <input type="radio" name="source" checked={grantInput.source === grantSource} onChange={() => set({ source: grantSource })} />{grantSource === "PAID" ? t("Paid") : t("Complimentary (free)")}
                   </label>
                 ))}
               </div>
             </div>
             {paid && (
-              <label className="field">{t("Price paid (₹) *")}<input type="number" min={1} step="0.01" value={g.price ?? ""} onChange={(e) => set({ price: e.target.value === "" ? null : Number(e.target.value) })} /></label>
+              <label className="field">{t("Price paid (₹) *")}<input type="number" min={1} step="0.01" value={grantInput.price ?? ""} onChange={(e) => set({ price: e.target.value === "" ? null : Number(e.target.value) })} /></label>
             )}
             <div className="grid2">
-              <label className="field">{t("Starts on")} <span className="hint">{t("default today")}</span><input type="date" value={g.startsOn ?? ""} onChange={(e) => set({ startsOn: e.target.value })} /></label>
-              <label className="field">{t("Ends on")} {paid ? "*" : <span className="hint">{t("empty = no end")}</span>}<input type="date" value={g.endsOn ?? ""} onChange={(e) => set({ endsOn: e.target.value })} /></label>
+              <label className="field">{t("Starts on")} <span className="hint">{t("default today")}</span><input type="date" value={grantInput.startsOn ?? ""} onChange={(e) => set({ startsOn: e.target.value })} /></label>
+              <label className="field">{t("Ends on")} {paid ? "*" : <span className="hint">{t("empty = no end")}</span>}<input type="date" value={grantInput.endsOn ?? ""} onChange={(e) => set({ endsOn: e.target.value })} /></label>
             </div>
-            <label className="field">{t("Notes")}<input value={g.notes ?? ""} onChange={(e) => set({ notes: e.target.value })} maxLength={300} placeholder={t("Invoice no., reason")} /></label>
+            <label className="field">{t("Notes")}<input value={grantInput.notes ?? ""} onChange={(e) => set({ notes: e.target.value })} maxLength={300} placeholder={t("Invoice no., reason")} /></label>
             {err && <div className="err" role="alert">{err}</div>}
           </div>
         </Modal>
@@ -397,11 +397,11 @@ export function RevokeGrantButton({ businessId, grantId, label }: { businessId: 
   const [busy, start] = useTransition();
   return (
     <>
-      <button className="btn btn-sm btn-ghost" onClick={() => setAsk(true)} aria-label={t("Revoke {label}", { label })}><Icon n="x" s={14} /></button>
+      <button className="btn btn-sm btn-ghost" onClick={() => setAsk(true)} aria-label={t("Revoke {label}", { label })}><Icon name="x" size={14} /></button>
       {ask && (
         <ConfirmDialog title={t("Revoke Juris Track")} danger confirm={t("Revoke")} busy={busy} onClose={() => setAsk(false)}
           body={<>{t("Revoke {label}? Unless the business's plan includes Juris Track, it disappears from their menu straight away. The grant stays on record.", { label })}</>}
-          onConfirm={() => start(async () => { const r = await revokeModule(businessId, grantId); toast(r.ok ? r.msg! : r.error, r.ok ? undefined : "bad"); setAsk(false); })} />
+          onConfirm={() => start(async () => { const revokeResult = await revokeModule(businessId, grantId); toast(revokeResult.ok ? revokeResult.message! : revokeResult.error, revokeResult.ok ? undefined : "bad"); setAsk(false); })} />
       )}
     </>
   );

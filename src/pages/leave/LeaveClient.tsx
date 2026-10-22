@@ -18,10 +18,10 @@ export function ApplyButton({ types, today, holidays, weeklyOffs, autoOpen }: { 
   const close = () => { setOpen(false); if (autoOpen) router.replace(path, { scroll: false }); };
   if (readOnly) return null;
   // nothing to apply against: no leave types at all, or every type is a balance-based one with less than half a day left
-  const none = types.length === 0 || types.every((x) => x.lockedReason || (x.available !== null && x.available < 0.5));
+  const none = types.length === 0 || types.every((leaveType) => leaveType.lockedReason || (leaveType.available !== null && leaveType.available < 0.5));
   return (
     <>
-      <button className="btn btn-gold btn-lg" onClick={() => setOpen(true)}><Icon n="plus" s={18} />{t("Apply leave")}</button>
+      <button className="btn btn-gold btn-lg" onClick={() => setOpen(true)}><Icon name="plus" size={18} />{t("Apply leave")}</button>
       {open && none && (
         <Modal title={t("You can't apply for leave right now")} onClose={close} footer={<button className="btn btn-gold" onClick={close}>{t("OK")}</button>}>
           <p className="muted" style={{ margin: 0 }}>{t("You have no leave available at the moment. Leave is added to your balance as you earn it, so you can apply once you have some. Talk to HR if you think this is wrong.")}</p>
@@ -44,7 +44,7 @@ export function CancelLeave({ id }: { id: string }) {
       <button className="btn btn-sm btn-danger" onClick={() => setAsk(true)}>{t("Cancel")}</button>
       {ask && (
         <ConfirmDialog title={t("Cancel leave request")} danger confirm={t("Cancel request")} busy={busy} onClose={() => setAsk(false)} body={t("This withdraws the request before HR decides on it.")}
-          onConfirm={() => start(async () => { const r = await cancelLeave(id); toast(r.ok ? r.msg! : r.error, r.ok ? "ok" : "bad"); setAsk(false); })} />
+          onConfirm={() => start(async () => { const result = await cancelLeave(id); toast(result.ok ? result.message! : result.error, result.ok ? "ok" : "bad"); setAsk(false); })} />
       )}
     </>
   );

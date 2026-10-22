@@ -18,12 +18,12 @@ export function AuditTable({ platform }: { platform?: boolean }) {
   const data = useData<{ page: number; take: number; total: number; rows: Row[]; actors: { value: string; label: string }[]; businesses?: { value: string; label: string }[] }>(`${base}${toQueryString(searchParams)}`);
   if (!data) return <PageLoading />;
   const { page, take, total, rows, actors, businesses = [] } = data;
-  const filtered = Object.keys(searchParams).some((k) => !["page", "sort", "sortDirection"].includes(k));
-  const exportQs = toQueryString(Object.fromEntries(Object.entries(searchParams).filter(([k]) => !["page", "sort", "sortDirection"].includes(k))));
+  const filtered = Object.keys(searchParams).some((parameterName) => !["page", "sort", "sortDirection"].includes(parameterName));
+  const exportQs = toQueryString(Object.fromEntries(Object.entries(searchParams).filter(([parameterName]) => !["page", "sort", "sortDirection"].includes(parameterName))));
 
   return (
     <div className="col">
-      <PageHeader eyebrow={platform ? t("Platform") : t("Administration")} title={t("Audit")} em={t("log")}
+      <PageHeader eyebrow={platform ? t("Platform") : t("Administration")} title={t("Audit")} emphasis={t("log")}
         sub={platform
           ? t("Every step in every business and in the platform, recorded to the second — sign-ins, page views, requests and changes. Click an entry to see the details.")
           : t("Every step in your business, recorded to the second — sign-ins, page views, requests and changes. Click an entry to see before → after.")}>
@@ -32,7 +32,7 @@ export function AuditTable({ platform }: { platform?: boolean }) {
       <div className="toolbar enter" style={{ ["--i" as string]: 1 }}>
         <SearchBox placeholder={t("Search person, action or record ID")} label={t("Search the audit log")} />
         {platform && <SelectFilter name="businessId" label={t("Business")} dflt="" options={[{ value: "", label: t("All businesses") }, ...businesses]} />}
-        <SelectFilter name="eventGroup" label={t("Event")} dflt="All" options={[{ value: "All", label: t("All events") }, ...(Object.keys(AUDIT_GROUPS) as AuditGroup[]).map((k) => ({ value: k, label: t(AUDIT_GROUPS[k].label) }))]} />
+        <SelectFilter name="eventGroup" label={t("Event")} dflt="All" options={[{ value: "All", label: t("All events") }, ...(Object.keys(AUDIT_GROUPS) as AuditGroup[]).map((groupName) => ({ value: groupName, label: t(AUDIT_GROUPS[groupName].label) }))]} />
         <SelectFilter name="actorId" label={t("By")} dflt="" options={[{ value: "", label: t("Anyone") }, ...actors]} />
         <SelectFilter name="periodDays" label={t("Period")} dflt="30" options={[{ value: "7", label: t("Last 7 days") }, { value: "30", label: t("Last 30 days") }, { value: "90", label: t("Last 90 days") }, { value: "365", label: t("Last 12 months") }, { value: "All", label: t("All time") }]} />
         <span className="tcount">{t(total === 1 ? "{n} entry" : "{n} entries", { n: total })}</span>
@@ -43,31 +43,31 @@ export function AuditTable({ platform }: { platform?: boolean }) {
             <table className="t">
               <thead>
                 <tr>
-                  <SortableHeader k="at" dflt="at" dfltDir="desc">{t("When")}</SortableHeader>
-                  <SortableHeader k="actor" dflt="at" dfltDir="desc">{t("Who")}</SortableHeader>
+                  <SortableHeader sortKey="occurredAt" dflt="occurredAt" dfltDir="desc">{t("When")}</SortableHeader>
+                  <SortableHeader sortKey="actor" dflt="occurredAt" dfltDir="desc">{t("Who")}</SortableHeader>
                   {platform && <th>{t("Business")}</th>}
-                  <SortableHeader k="action" dflt="at" dfltDir="desc">{t("What")}</SortableHeader>
+                  <SortableHeader sortKey="action" dflt="occurredAt" dfltDir="desc">{t("What")}</SortableHeader>
                   <th>{t("Record")}</th>
                   <th className="hide-sm">{t("IP")}</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r, i) => {
-                  const at = new Date(r.at);
-                  const when = formatDateTimeSeconds(at, user.timeZone);
-                  const whenExact = formatDateTimeSeconds(at, user.timeZone, true);
-                  const label = actionLabel(r.action);
+                {rows.map((row, i) => {
+                  const occurredAt = new Date(row.occurredAt);
+                  const when = formatDateTimeSeconds(occurredAt, user.timeZone);
+                  const whenExact = formatDateTimeSeconds(occurredAt, user.timeZone, true);
+                  const label = actionLabel(row.action);
                   return (
-                    <AuditRow key={r.id} row={r} i={i} when={when} whenExact={whenExact} label={label}>
+                    <AuditRow key={row.id} row={row} animationIndex={i} when={when} whenExact={whenExact} label={label}>
                       <td className="num" style={{ whiteSpace: "nowrap" }} title={whenExact}>{when}</td>
-                      <td><b style={{ fontWeight: 500 }}>{r.actor}</b>{r.actorCode && <small className="faint" style={{ display: "block" }}>{r.actorCode}</small>}</td>
-                      {platform && <td className="muted">{r.business ?? "—"}</td>}
+                      <td><b style={{ fontWeight: 500 }}>{row.actor}</b>{row.actorCode && <small className="faint" style={{ display: "block" }}>{row.actorCode}</small>}</td>
+                      {platform && <td className="muted">{row.business ?? "—"}</td>}
                       <td>
-                        <span className={`chip nodot ${TONE[r.action.split(".")[0]] ?? "neutral"}`}>{label}</span>
-                        {r.method && <small className="faint mono" style={{ display: "block", marginTop: 4, fontSize: 11.5 }}>{r.method} {r.path}{r.status != null ? ` · ${r.status}` : ""}{r.durationMs != null ? ` · ${r.durationMs} ms` : ""}</small>}
+                        <span className={`chip nodot ${TONE[row.action.split(".")[0]] ?? "neutral"}`}>{label}</span>
+                        {row.method && <small className="faint mono" style={{ display: "block", marginTop: 4, fontSize: 11.5 }}>{row.method} {row.path}{row.status != null ? ` · ${row.status}` : ""}{row.durationMs != null ? ` · ${row.durationMs} ms` : ""}</small>}
                       </td>
-                      <td className="muted">{r.subject ?? r.entity.replace(/_/g, " ")}</td>
-                      <td className="mono faint hide-sm" style={{ fontSize: 12 }}>{r.ip ?? "—"}</td>
+                      <td className="muted">{row.subject ?? row.entity.replace(/_/g, " ")}</td>
+                      <td className="mono faint hide-sm" style={{ fontSize: 12 }}>{row.ipAddress ?? "—"}</td>
                     </AuditRow>
                   );
                 })}

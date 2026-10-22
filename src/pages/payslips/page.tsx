@@ -15,17 +15,17 @@ export default function PayslipsPage() {
 
   return (
     <div className="col">
-      <PageHeader eyebrow={t("Payslips")} title={t("My")} em={t("payslips")} sub={t("A month's payslip appears here once Finance closes that month's payroll.")} />
+      <PageHeader eyebrow={t("Payslips")} title={t("My")} emphasis={t("payslips")} sub={t("A month's payslip appears here once Finance closes that month's payroll.")} />
       <div className="slip-grid">
-        {months.map((m, i) => (
-          <div key={m.month} className={`card slip-card enter${m.closed ? "" : " locked"}`} style={{ ["--i" as string]: i }}>
+        {months.map((month, i) => (
+          <div key={month.month} className={`card slip-card enter${month.closed ? "" : " locked"}`} style={{ ["--i" as string]: i }}>
             <span className="spot"></span>
-            <span className="slip-ico"><Icon n={m.closed ? "doc" : "clock"} s={20} /></span>
+            <span className="slip-ico"><Icon name={month.closed ? "doc" : "clock"} size={20} /></span>
             <span style={{ display: "flex", flexDirection: "column", gap: 3, textAlign: "left", flex: 1, minWidth: 0 }}>
-              <b className="display" style={{ fontSize: 24 }}>{formatMonthLabel(m.month)}</b>
-              <span className="faint" style={{ fontSize: 12.5 }}>{m.closed ? t("Paid on {date} · {n} paid days", { date: m.paidOn ? formatDayMonthYear(m.paidOn) : "—", n: m.snapshot.attendance.paidDays }) : t("Payroll in progress — available once Finance closes it")}</span>
+              <b className="display" style={{ fontSize: 24 }}>{formatMonthLabel(month.month)}</b>
+              <span className="faint" style={{ fontSize: 12.5 }}>{month.closed ? t("Paid on {date} · {n} paid days", { date: month.paidOn ? formatDayMonthYear(month.paidOn) : "—", n: month.snapshot.attendance.paidDays }) : t("Payroll in progress — available once Finance closes it")}</span>
             </span>
-            {m.closed ? <SlipActions snap={m.snapshot} code={user.code} /> : <span className="chip warn">{t("Processing")}</span>}
+            {month.closed ? <SlipActions snap={month.snapshot} code={user.code} /> : <span className="chip warn">{t("Processing")}</span>}
           </div>
         ))}
       </div>

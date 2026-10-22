@@ -25,13 +25,13 @@ export default function RegisterPage() {
   const register = useData<RegisterData>(`/api/attendance/register${toQueryString(searchParams)}`);
   if (!register) return <PageLoading />;
   const departments = register.departments;
-  const exportQs = new URLSearchParams(Object.entries(searchParams).flatMap(([k, v]) => (typeof v === "string" && k !== "page" ? [[k, v]] : []))).toString();
-  const departmentOptions = [{ value: "All", label: t("All") }, ...departments.map((d) => ({ value: d.id, label: d.name }))];
+  const exportQs = new URLSearchParams(Object.entries(searchParams).flatMap(([parameterName, paramValue]) => (typeof paramValue === "string" && parameterName !== "page" ? [[parameterName, paramValue]] : []))).toString();
+  const departmentOptions = [{ value: "All", label: t("All") }, ...departments.map((department) => ({ value: department.id, label: department.name }))];
   const teamOptions = [{ value: "All", label: t("All") }, { value: "IN", label: t("India") }, { value: "US", label: t("US") }];
 
   return (
     <div className="col">
-      <PageHeader eyebrow={t("People operations · Attendance")} title={t("Attendance")} em={t("register")} sub={t("Everyone's check-ins across India and US teams — shown in the time zone you pick.")}>
+      <PageHeader eyebrow={t("People operations · Attendance")} title={t("Attendance")} emphasis={t("register")} sub={t("Everyone's check-ins across India and US teams — shown in the time zone you pick.")}>
         <a className="btn" href={`/api/attendance/register/export${exportQs ? `?${exportQs}` : ""}`} download>{t("Export CSV")}</a>
         <SegmentedFilter name="view" dflt="day" label={t("Register view")} options={[{ value: "day", label: t("Daily log") }, { value: "month", label: t("Monthly grid") }]} />
       </PageHeader>
@@ -61,7 +61,7 @@ function Daily({ register, departmentOptions, teamOptions }: { register: Registe
         <SearchBox placeholder={t("Search employee")} label={t("Search employee")} />
         <SelectFilter name="region" label={t("Team")} dflt="All" options={teamOptions} />
         <SelectFilter name="departmentId" label={t("Department")} dflt="All" options={departmentOptions} />
-        <SelectFilter name="status" label={t("Status")} dflt="All" options={register.statuses.map((s) => ({ value: s, label: t(s) }))} />
+        <SelectFilter name="status" label={t("Status")} dflt="All" options={register.statuses.map((status) => ({ value: status, label: t(status) }))} />
       </div>
       <section className="card enter" style={{ ["--i" as string]: 6 }}>
         <Pending>
@@ -69,23 +69,23 @@ function Daily({ register, departmentOptions, teamOptions }: { register: Registe
             <table className="t">
               <thead>
                 <tr>
-                  <SortableHeader k="name" dflt="name">{t("Employee")}</SortableHeader>
-                  <SortableHeader k="location" dflt="name">{t("Team")}</SortableHeader>
-                  <SortableHeader k="status" dflt="name">{t("Status")}</SortableHeader>
-                  <SortableHeader k="checkIn" dflt="name">{t("Check-in")}</SortableHeader>
-                  <SortableHeader k="checkOut" dflt="name">{t("Check-out")}</SortableHeader>
-                  <SortableHeader k="hours" dflt="name" right>{t("Worked")}</SortableHeader>
+                  <SortableHeader sortKey="name" dflt="name">{t("Employee")}</SortableHeader>
+                  <SortableHeader sortKey="location" dflt="name">{t("Team")}</SortableHeader>
+                  <SortableHeader sortKey="status" dflt="name">{t("Status")}</SortableHeader>
+                  <SortableHeader sortKey="checkIn" dflt="name">{t("Check-in")}</SortableHeader>
+                  <SortableHeader sortKey="checkOut" dflt="name">{t("Check-out")}</SortableHeader>
+                  <SortableHeader sortKey="hours" dflt="name" right>{t("Worked")}</SortableHeader>
                 </tr>
               </thead>
               <tbody>
-                {page.map((r, i) => (
-                  <tr key={r.id} style={{ animationDelay: `${i * 30}ms` }}>
-                    <td><div className="person"><Avatar id={r.id} name={r.name} photo={r.photo} /><div><b>{r.name}</b><small>{r.code} · {r.department} · {r.shiftName}</small></div></div></td>
-                    <td><span className={`chip nodot ${r.region === "IN" ? "gold" : "info"}`}>{r.location}</span></td>
-                    <td><span className={`chip ${CHIP[r.status] ?? "neutral"}`}>{t(r.status)}</span>{r.late && <span className="chip warn nodot" style={{ marginLeft: 6 }}>{t("Late")}</span>}</td>
-                    <td className="num"><b style={{ fontWeight: 500 }}>{r.checkIn?.text ?? "—"}</b>{r.checkIn?.local && <div className="faint" style={{ fontSize: 11.5 }}>{t("{time} local", { time: r.checkIn.local })}</div>}</td>
-                    <td className="num"><b style={{ fontWeight: 500 }}>{r.checkOut?.text ?? (r.status === "Working" ? t("Working now") : "—")}</b>{r.checkOut?.local && <div className="faint" style={{ fontSize: 11.5 }}>{t("{time} local", { time: r.checkOut.local })}</div>}</td>
-                    <td className="r num">{r.hours ? formatHours(r.hours) : "—"}</td>
+                {page.map((summaryRow, i) => (
+                  <tr key={summaryRow.id} style={{ animationDelay: `${i * 30}ms` }}>
+                    <td><div className="person"><Avatar id={summaryRow.id} name={summaryRow.name} photo={summaryRow.photo} /><div><b>{summaryRow.name}</b><small>{summaryRow.code} · {summaryRow.department} · {summaryRow.shiftName}</small></div></div></td>
+                    <td><span className={`chip nodot ${summaryRow.region === "IN" ? "gold" : "info"}`}>{summaryRow.location}</span></td>
+                    <td><span className={`chip ${CHIP[summaryRow.status] ?? "neutral"}`}>{t(summaryRow.status)}</span>{summaryRow.late && <span className="chip warn nodot" style={{ marginLeft: 6 }}>{t("Late")}</span>}</td>
+                    <td className="num"><b style={{ fontWeight: 500 }}>{summaryRow.checkIn?.text ?? "—"}</b>{summaryRow.checkIn?.local && <div className="faint" style={{ fontSize: 11.5 }}>{t("{time} local", { time: summaryRow.checkIn.local })}</div>}</td>
+                    <td className="num"><b style={{ fontWeight: 500 }}>{summaryRow.checkOut?.text ?? (summaryRow.status === "Working" ? t("Working now") : "—")}</b>{summaryRow.checkOut?.local && <div className="faint" style={{ fontSize: 11.5 }}>{t("{time} local", { time: summaryRow.checkOut.local })}</div>}</td>
+                    <td className="r num">{summaryRow.hours ? formatHours(summaryRow.hours) : "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -107,7 +107,7 @@ function Monthly({ register, departmentOptions, teamOptions, months }: { registe
   return (
     <>
       <div className="toolbar enter" style={{ ["--i" as string]: 1 }}>
-        <SelectFilter name="month" label={t("Month")} dflt={register.today.slice(0, 7)} options={months.map((m) => ({ value: m, label: formatMonthLabel(m) }))} />
+        <SelectFilter name="month" label={t("Month")} dflt={register.today.slice(0, 7)} options={months.map((month) => ({ value: month, label: formatMonthLabel(month) }))} />
         <SearchBox placeholder={t("Search employee")} label={t("Search employee")} />
         <SelectFilter name="region" label={t("Team")} dflt="All" options={teamOptions} />
         <SelectFilter name="departmentId" label={t("Department")} dflt="All" options={departmentOptions} />
@@ -119,21 +119,21 @@ function Monthly({ register, departmentOptions, teamOptions, months }: { registe
             <table className="t reg">
               <thead>
                 <tr>
-                  <SortableHeader k="name" dflt="name" className="stick">{t("Employee")}</SortableHeader>
-                  {days.map((x) => <th key={x.date} className={`dcol${x.weeklyOff ? " wk" : ""}`}><span>{t(x.weekday)}</span><b>{x.day}</b></th>)}
-                  <SortableHeader k="present" dflt="name" right>P</SortableHeader>
-                  <SortableHeader k="absent" dflt="name" right>A</SortableHeader>
-                  <SortableHeader k="leave" dflt="name" right>L</SortableHeader>
+                  <SortableHeader sortKey="name" dflt="name" className="stick">{t("Employee")}</SortableHeader>
+                  {days.map((day) => <th key={day.date} className={`dcol${day.weeklyOff ? " wk" : ""}`}><span>{t(day.weekday)}</span><b>{day.day}</b></th>)}
+                  <SortableHeader sortKey="present" dflt="name" right>P</SortableHeader>
+                  <SortableHeader sortKey="absent" dflt="name" right>A</SortableHeader>
+                  <SortableHeader sortKey="leave" dflt="name" right>L</SortableHeader>
                 </tr>
               </thead>
               <tbody>
-                {page.map((r) => (
-                  <tr key={r.id}>
-                    <td className="stick"><b style={{ fontWeight: 600 }}>{r.name}</b><small className="faint" style={{ display: "block", fontSize: 11.5 }}>{r.department} · {r.region === "IN" ? t("India") : t("US")}</small></td>
-                    {r.cells.map((c, j) => <td key={j} className="dcell"><span className={`ac ${c.tone}`} title={`${formatDayMonth(r.days[j].date)} · ${r.days[j].label ? t(r.days[j].label) : "—"}${r.days[j].workedMinutes ? " · " + formatHours(r.days[j].workedMinutes / 60) : ""}`}>{c.code}</span></td>)}
-                    <td className="r num" style={{ color: "var(--ok)", fontWeight: 600 }}>{r.present}</td>
-                    <td className="r num" style={{ color: r.absent ? "var(--bad)" : "var(--faint)" }}>{r.absent}</td>
-                    <td className="r num" style={{ color: "var(--info)" }}>{r.leave}</td>
+                {page.map((row) => (
+                  <tr key={row.id}>
+                    <td className="stick"><b style={{ fontWeight: 600 }}>{row.name}</b><small className="faint" style={{ display: "block", fontSize: 11.5 }}>{row.department} · {row.region === "IN" ? t("India") : t("US")}</small></td>
+                    {row.cells.map((cell, j) => <td key={j} className="dcell"><span className={`ac ${cell.tone}`} title={`${formatDayMonth(row.days[j].date)} · ${row.days[j].label ? t(row.days[j].label) : "—"}${row.days[j].workedMinutes ? " · " + formatHours(row.days[j].workedMinutes / 60) : ""}`}>{cell.code}</span></td>)}
+                    <td className="r num" style={{ color: "var(--ok)", fontWeight: 600 }}>{row.present}</td>
+                    <td className="r num" style={{ color: row.absent ? "var(--bad)" : "var(--faint)" }}>{row.absent}</td>
+                    <td className="r num" style={{ color: "var(--info)" }}>{row.leave}</td>
                   </tr>
                 ))}
               </tbody>

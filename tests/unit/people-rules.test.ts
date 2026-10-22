@@ -2,15 +2,15 @@ import { describe, expect, it } from "vitest";
 import { stepErrors, type EmployeeInput } from "@/lib/employee-schema";
 import { canAddEmployees, canAssignRole, canEditEmployee, canToggleAccess, createsCycle, derivedStatus, initialStatus, lockedDepartment, validAadhaar, type Actor, type Target } from "@/lib/people-rules";
 
-const R = { owner: "r-owner", hrm: "r-hrm", hre: "r-hre", fm: "r-fm", fe: "r-fe", emp: "r-emp" };
-const actor = (key: keyof typeof R, perms: string[], assign: (keyof typeof R)[], dept: string | null = null, id = "me"): Actor => ({
-  id, roleKey: key === "emp" ? "employee" : key, perms: new Set(perms), assignable: new Set(assign.map((a) => R[a])), departmentId: dept, employeeRoleId: R.emp,
+const ROLE_IDS = { owner: "r-owner", hrm: "r-hrm", hre: "r-hre", fm: "r-fm", fe: "r-fe", emp: "r-emp" };
+const actor = (key: keyof typeof ROLE_IDS, perms: string[], assign: (keyof typeof ROLE_IDS)[], dept: string | null = null, id = "me"): Actor => ({
+  id, roleKey: key === "emp" ? "employee" : key, perms: new Set(perms), assignable: new Set(assign.map((roleKey) => ROLE_IDS[roleKey])), departmentId: dept, employeeRoleId: ROLE_IDS.emp,
 });
-const target = (key: keyof typeof R, over: Partial<Target> = {}): Target => ({ id: "t", roleId: R[key], roleKey: key === "emp" ? "employee" : key, status: "ACTIVE", isSuperAdmin: false, ...over });
+const target = (key: keyof typeof ROLE_IDS, over: Partial<Target> = {}): Target => ({ id: "t", roleId: ROLE_IDS[key], roleKey: key === "emp" ? "employee" : key, status: "ACTIVE", isSuperAdmin: false, ...over });
 
 const ADMIN = actor("owner", ["people.add", "access.toggle", "people.view"], ["hrm", "fm", "hre", "fe", "emp"]);
 const HRM = actor("hrm", ["people.add", "access.toggle", "people.view"], ["hre", "emp"], "d-hr");
-const FM = actor("fm", ["people.add", "access.toggle", "people.view"], ["fe"], "d-fin");
+const FINANCE_MANAGER = actor("fm", ["people.add", "access.toggle", "people.view"], ["fe"], "d-fin");
 const HRE = actor("hre", ["people.view"], []);
 
 describe("editing employees", () => {
@@ -28,7 +28,7 @@ describe("editing employees", () => {
   it("needs people.add", () => {
     expect(canEditEmployee(HRE, target("emp"))).toBe(false);
     expect(canAddEmployees(HRE)).toBe(false);
-    expect(canAddEmployees(FM)).toBe(true);
+    expect(canAddEmployees(FINANCE_MANAGER)).toBe(true);
   });
 });
 
@@ -48,12 +48,12 @@ describe("access toggle", () => {
 
 describe("roles and departments", () => {
   it("assigns only allowed roles, but keeping the current role is fine", () => {
-    expect(canAssignRole(FM, R.fe)).toBe(true);
-    expect(canAssignRole(FM, R.emp)).toBe(false);
-    expect(canAssignRole(FM, R.emp, R.emp)).toBe(true);
+    expect(canAssignRole(FINANCE_MANAGER, ROLE_IDS.fe)).toBe(true);
+    expect(canAssignRole(FINANCE_MANAGER, ROLE_IDS.emp)).toBe(false);
+    expect(canAssignRole(FINANCE_MANAGER, ROLE_IDS.emp, ROLE_IDS.emp)).toBe(true);
   });
   it("locks the Finance Manager to Finance; HR and Admin choose freely", () => {
-    expect(lockedDepartment(FM)).toBe("d-fin");
+    expect(lockedDepartment(FINANCE_MANAGER)).toBe("d-fin");
     expect(lockedDepartment(HRM)).toBeNull();
     expect(lockedDepartment(ADMIN)).toBeNull();
   });
@@ -71,9 +71,9 @@ describe("status and reporting lines", () => {
     expect(derivedStatus("EXITED", "2020-01-01", "2026-10-06", 6)).toBe("EXITED");
   });
   it("detects reporting loops", () => {
-    const m = new Map<string, string | null>([["a", null], ["b", "a"], ["c", "b"]]);
-    expect(createsCycle("a", "c", m)).toBe(true); // a → c → b → a
-    expect(createsCycle("c", "a", m)).toBe(false);
+    const managerOf = new Map<string, string | null>([["a", null], ["b", "a"], ["c", "b"]]);
+    expect(createsCycle("a", "c", managerOf)).toBe(true); // a → c → b → a
+    expect(createsCycle("c", "a", managerOf)).toBe(false);
   });
 });
 

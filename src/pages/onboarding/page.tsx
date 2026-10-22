@@ -30,19 +30,19 @@ export default function OnboardingPage() {
           <table className="t">
             <thead><tr><th>{t("Candidate")}</th><th className="hide-sm">{t("Job")}</th><th>{t("Joining")}</th><th>{t("Documents")}</th><th>{t("Status")}</th><th className="hide-sm">{t("Last change")}</th></tr></thead>
             <tbody>
-              {rows.map((r) => (
-                <tr key={r.id}>
+              {rows.map((onboarding) => (
+                <tr key={onboarding.id}>
                   <td>
-                    <Link href={`/onboarding/${r.id}`} className="person" style={{ textDecoration: "none", color: "inherit" }}>
-                      <span className="kpi-ico" style={{ width: 34, height: 34, background: "var(--accentsoft)", color: "var(--accent)" }}><Icon n="user" s={16} /></span>
-                      <div><b>{r.candidateName}</b><small>{r.personalEmail}</small></div>
+                    <Link href={`/onboarding/${onboarding.id}`} className="person" style={{ textDecoration: "none", color: "inherit" }}>
+                      <span className="kpi-ico" style={{ width: 34, height: 34, background: "var(--accentsoft)", color: "var(--accent)" }}><Icon name="user" size={16} /></span>
+                      <div><b>{onboarding.candidateName}</b><small>{onboarding.personalEmail}</small></div>
                     </Link>
                   </td>
-                  <td className="hide-sm">{r.designation ?? "—"}<br /><small className="muted">{r.department ?? ""}</small></td>
-                  <td>{r.joiningDate ? formatDayMonthYear(r.joiningDate) : <span className="muted">—</span>}</td>
-                  <td className="num">{t("{verified}/{total} verified", { verified: r.verified, total: r.documents })}</td>
-                  <td><span className={`chip ${ONBOARDING_STATUS[r.status].cls}`}>{t(ONBOARDING_STATUS[r.status].text)}</span>{r.employeeCode && <small className="muted mono"> {r.employeeCode}</small>}</td>
-                  <td className="muted hide-sm">{formatDayMonthYear(r.updatedAt.slice(0, 10))}</td>
+                  <td className="hide-sm">{onboarding.designation ?? "—"}<br /><small className="muted">{onboarding.department ?? ""}</small></td>
+                  <td>{onboarding.joiningDate ? formatDayMonthYear(onboarding.joiningDate) : <span className="muted">—</span>}</td>
+                  <td className="num">{t("{verified}/{total} verified", { verified: onboarding.verified, total: onboarding.documents })}</td>
+                  <td><span className={`chip ${ONBOARDING_STATUS[onboarding.status].className}`}>{t(ONBOARDING_STATUS[onboarding.status].text)}</span>{onboarding.employeeCode && <small className="muted mono"> {onboarding.employeeCode}</small>}</td>
+                  <td className="muted hide-sm">{formatDayMonthYear(onboarding.updatedAt.slice(0, 10))}</td>
                 </tr>
               ))}
             </tbody>

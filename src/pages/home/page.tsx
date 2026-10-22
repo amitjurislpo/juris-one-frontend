@@ -31,8 +31,8 @@ export default function HomePage() {
   if (!home.tracked) return (
     <div className="col">
       <div className="page-h enter"><Greeting first={user.name.split(" ")[0]} timeZone={user.timeZone} initialIso={now.toISOString()} /></div>
-      <AnnouncementsCard items={news} i={1} />
-      <NotificationsCard items={box.items} unread={box.unread} timeZone={user.timeZone} i={2} />
+      <AnnouncementsCard items={news} animationIndex={1} />
+      <NotificationsCard items={box.items} unread={box.unread} timeZone={user.timeZone} animationIndex={2} />
     </div>
   );
 
@@ -46,40 +46,40 @@ export default function HomePage() {
 
   // KPIs
   const month = days.filter((d) => d.date >= monthStart && d.date <= workDate);
-  const working = month.filter((d) => !["HOLIDAY", "WEEKLY_OFF", "BEFORE_JOINING", "AFTER_EXIT", "NOT_TRACKED"].includes(d.status));
-  const present = month.filter((d) => d.status === "PRESENT" || d.status === "HALF_DAY" || (d.date === workDate && d.punches > 0)).length;
-  const lastShifts = days.filter((d) => d.date <= workDate && (d.workedMinutes > 0 || d.date === workDate) && !["HOLIDAY", "WEEKLY_OFF"].includes(d.status)).slice(-7);
+  const working = month.filter((day) => !["HOLIDAY", "WEEKLY_OFF", "BEFORE_JOINING", "AFTER_EXIT", "NOT_TRACKED"].includes(day.status));
+  const present = month.filter((day) => day.status === "PRESENT" || day.status === "HALF_DAY" || (day.date === workDate && day.punches > 0)).length;
+  const lastShifts = days.filter((day) => day.date <= workDate && (day.workedMinutes > 0 || day.date === workDate) && !["HOLIDAY", "WEEKLY_OFF"].includes(day.status)).slice(-7);
   const finished = lastShifts.filter((d) => d.date !== workDate && d.workedMinutes > 0);
   const avgH = finished.length ? finished.reduce((a, d) => a + d.workedMinutes, 0) / finished.length / 60 : 0;
   const sparkVals = finished.map((d) => d.workedMinutes / 60);
   const spark = sparkVals.length > 1 ? (() => {
-    const mn = Math.min(...sparkVals) - 0.1, mx = Math.max(...sparkVals) + 0.1;
-    return sparkVals.map((h, i) => `${i ? "L" : "M"}${((i / (sparkVals.length - 1)) * 120).toFixed(1)} ${(28 - ((h - mn) / (mx - mn)) * 24).toFixed(1)}`).join(" ");
+    const minimumHours = Math.min(...sparkVals) - 0.1, maximumHours = Math.max(...sparkVals) + 0.1;
+    return sparkVals.map((hours, i) => `${i ? "L" : "M"}${((i / (sparkVals.length - 1)) * 120).toFixed(1)} ${(28 - ((hours - minimumHours) / (maximumHours - minimumHours)) * 24).toFixed(1)}`).join(" ");
   })() : "";
   const nextIn = holidays[0] ? daysBetween(workDate, holidays[0].date) : null;
 
   // heatmap: 16 weeks, Monday-first columns
   const heat = Array.from({ length: 112 }, (_, i) => {
     const date = addDays(heatStart, i);
-    const d = byDate.get(date);
-    if (!d || d.future || date > workDate) return { date, cls: "na", title: formatWeekdayDayMonthYear(date) };
-    let cls = "";
-    if (d.status === "PRESENT" || d.status === "HALF_DAY" || (d.status === "PENDING" && d.punches)) {
-      const h = d.workedMinutes / 60;
-      cls = h < 8.8 ? "l1" : h < 9.0 ? "l2" : h < 9.2 ? "l3" : "l4";
-      if (date === workDate) cls += " now";
-    } else cls = { HOLIDAY: "hol", ABSENT: "abs", LEAVE: "lv", BEFORE_JOINING: "na", AFTER_EXIT: "na", NOT_TRACKED: "na", WEEKLY_OFF: "", PENDING: "" }[d.status] ?? "";
-    return { date, cls, title: `${formatWeekdayDayMonthYear(date)} · ${d.workedMinutes ? formatHours(d.workedMinutes / 60) : d.label}` };
+    const dayRecord = byDate.get(date);
+    if (!dayRecord || dayRecord.future || date > workDate) return { date, className: "na", title: formatWeekdayDayMonthYear(date) };
+    let cellClass = "";
+    if (dayRecord.status === "PRESENT" || dayRecord.status === "HALF_DAY" || (dayRecord.status === "PENDING" && dayRecord.punches)) {
+      const workedHours = dayRecord.workedMinutes / 60;
+      cellClass = workedHours < 8.8 ? "l1" : workedHours < 9.0 ? "l2" : workedHours < 9.2 ? "l3" : "l4";
+      if (date === workDate) cellClass += " now";
+    } else cellClass = { HOLIDAY: "hol", ABSENT: "abs", LEAVE: "lv", BEFORE_JOINING: "na", AFTER_EXIT: "na", NOT_TRACKED: "na", WEEKLY_OFF: "", PENDING: "" }[dayRecord.status] ?? "";
+    return { date, className: cellClass, title: `${formatWeekdayDayMonthYear(date)} · ${dayRecord.workedMinutes ? formatHours(dayRecord.workedMinutes / 60) : dayRecord.label}` };
   });
-  const heatPresent = heat.filter((c) => /l\d/.test(c.cls)).length;
+  const heatPresent = heat.filter((c) => /l\d/.test(c.className)).length;
 
   return (
     <div className="col" style={{ gap: 20 }}>
       <div className="page-h enter">
         <Greeting first={user.name.split(" ")[0]} timeZone={user.timeZone} initialIso={now.toISOString()} />
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Link className="btn" href="/attendance"><Icon n="clock" s={15} />{t("My attendance")}</Link>
-          {!user.readOnly && <Link className="btn btn-gold" href="/leave?apply=1"><Icon n="plus" s={15} />{t("Apply leave")}</Link>}
+          <Link className="btn" href="/attendance"><Icon name="clock" size={15} />{t("My attendance")}</Link>
+          {!user.readOnly && <Link className="btn btn-gold" href="/leave?apply=1"><Icon name="plus" size={15} />{t("Apply leave")}</Link>}
         </div>
       </div>
 
@@ -87,10 +87,10 @@ export default function HomePage() {
         <TimeCard checkedIn={checkedIn} openSince={home.openSince} closedMinutes={closed} shiftText={shiftText} ticks={ticks} targetHours={policy.shiftTargetHours} log={log} />
 
         <div className="span-5" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 16 }}>
-          <div className="card kpi lift enter" style={{ ["--i" as string]: 2 }}><span className="spot"></span><span className="ico" style={{ background: "var(--okbg)", color: "var(--ok)" }}><Icon n="check" s={16} /></span><span className="l">{t("Present in")} {MONTH_NAMES[Number(workDate.slice(5, 7)) - 1]}</span><span className="v"><span className="num">{present}</span><span className="faint" style={{ fontSize: 16, fontWeight: 500 }}> / {working.length}</span></span><span className="s">{t("working days so far")}</span></div>
-          <div className="card kpi lift enter" style={{ ["--i" as string]: 3 }}><span className="spot"></span><span className="ico" style={{ background: "var(--accentsoft)", color: "var(--accent)" }}><Icon n="clock" s={16} /></span><span className="l">{t("Average day")}</span><span className="v"><span className="num">{avgH.toFixed(1)}</span>h</span>{spark && <svg className="spark" width="100%" height="30" viewBox="0 0 120 30" preserveAspectRatio="none" aria-hidden="true"><path d={spark} fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke"></path></svg>}</div>
-          <div className="card kpi lift enter" style={{ ["--i" as string]: 4 }}><span className="spot"></span><span className="ico" style={{ background: "var(--infobg)", color: "var(--info)" }}><Icon n="cal" s={16} /></span><span className="l">{t("Leave available")}</span><span className="v num">{leaveAvailable.toFixed(leaveAvailable % 1 ? 2 : 0)}</span><span className="s">{t("casual + earned days")}</span></div>
-          <div className="card kpi lift enter" style={{ ["--i" as string]: 5 }}><span className="spot"></span><span className="ico" style={{ background: "var(--warnbg)", color: "var(--warn)" }}><Icon n="sparkle" s={16} /></span><span className="l">{t("Next holiday")}</span><span className="v">{nextIn === null ? "—" : <><span className="num">{nextIn}</span><span className="faint" style={{ fontSize: 16, fontWeight: 500 }}> {t("days")}</span></>}</span><span className="s">{holidays[0]?.name ?? t("No upcoming holidays")}</span></div>
+          <div className="card kpi lift enter" style={{ ["--i" as string]: 2 }}><span className="spot"></span><span className="ico" style={{ background: "var(--okbg)", color: "var(--ok)" }}><Icon name="check" size={16} /></span><span className="l">{t("Present in")} {MONTH_NAMES[Number(workDate.slice(5, 7)) - 1]}</span><span className="v"><span className="num">{present}</span><span className="faint" style={{ fontSize: 16, fontWeight: 500 }}> / {working.length}</span></span><span className="s">{t("working days so far")}</span></div>
+          <div className="card kpi lift enter" style={{ ["--i" as string]: 3 }}><span className="spot"></span><span className="ico" style={{ background: "var(--accentsoft)", color: "var(--accent)" }}><Icon name="clock" size={16} /></span><span className="l">{t("Average day")}</span><span className="v"><span className="num">{avgH.toFixed(1)}</span>h</span>{spark && <svg className="spark" width="100%" height="30" viewBox="0 0 120 30" preserveAspectRatio="none" aria-hidden="true"><path d={spark} fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke"></path></svg>}</div>
+          <div className="card kpi lift enter" style={{ ["--i" as string]: 4 }}><span className="spot"></span><span className="ico" style={{ background: "var(--infobg)", color: "var(--info)" }}><Icon name="cal" size={16} /></span><span className="l">{t("Leave available")}</span><span className="v num">{leaveAvailable.toFixed(leaveAvailable % 1 ? 2 : 0)}</span><span className="s">{t("casual + earned days")}</span></div>
+          <div className="card kpi lift enter" style={{ ["--i" as string]: 5 }}><span className="spot"></span><span className="ico" style={{ background: "var(--warnbg)", color: "var(--warn)" }}><Icon name="sparkle" size={16} /></span><span className="l">{t("Next holiday")}</span><span className="v">{nextIn === null ? "—" : <><span className="num">{nextIn}</span><span className="faint" style={{ fontSize: 16, fontWeight: 500 }}> {t("days")}</span></>}</span><span className="s">{holidays[0]?.name ?? t("No upcoming holidays")}</span></div>
         </div>
 
         <section className="card pad span-8 enter" style={{ ["--i" as string]: 6 }}>
@@ -102,7 +102,7 @@ export default function HomePage() {
           <div className="heat-wrap">
             <div className="heat-days"><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span><span></span></div>
             <div className="heat" role="img" aria-label={`Attendance heatmap, ${heatPresent} days present in the last 16 weeks`}>
-              {heat.map((c, i) => <i key={c.date} className={c.cls} title={c.title} style={{ animationDelay: `${i * 4}ms` }}></i>)}
+              {heat.map((cell, i) => <i key={cell.date} className={cell.className} title={cell.title} style={{ animationDelay: `${i * 4}ms` }}></i>)}
             </div>
           </div>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginTop: 14 }} className="legend">
@@ -114,9 +114,9 @@ export default function HomePage() {
         </section>
 
         <div className="span-4" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <AnnouncementsCard items={news} i={7} />
-          <NotificationsCard items={box.items} unread={box.unread} timeZone={user.timeZone} i={7} />
-          <HomeCards c={cards} i0={7} />
+          <AnnouncementsCard items={news} animationIndex={7} />
+          <NotificationsCard items={box.items} unread={box.unread} timeZone={user.timeZone} animationIndex={7} />
+          <HomeCards cards={cards} firstCardIndex={7} />
         </div>
 
         <section className="card pad span-8 enter" style={{ ["--i" as string]: 8 }}>
@@ -124,28 +124,28 @@ export default function HomePage() {
           <div className="card-h"><h3>Last seven shifts</h3><span className="faint" style={{ fontSize: 12.5 }}>dashed line = {policy.shiftTargetHours}h target</span></div>
           <div className="bars">
             <div className="target" style={{ bottom: 140 }}></div>
-            {lastShifts.map((d, i) => {
-              const h = d.workedMinutes / 60;
+            {lastShifts.map((shift, i) => {
+              const workedHours = shift.workedMinutes / 60;
               return (
-                <div className="b" key={d.date} title={`${h.toFixed(1)} hours`}>
-                  <span className="num" style={{ fontSize: 11.5, color: "var(--muted)" }}>{h.toFixed(1)}</span>
-                  <i className={d.date === workDate ? "today" : undefined} style={{ height: Math.max(6, (h / policy.shiftTargetHours) * 140), animationDelay: `${0.25 + i * 0.06}s` }}></i>
+                <div className="b" key={shift.date} title={`${workedHours.toFixed(1)} hours`}>
+                  <span className="num" style={{ fontSize: 11.5, color: "var(--muted)" }}>{workedHours.toFixed(1)}</span>
+                  <i className={shift.date === workDate ? "today" : undefined} style={{ height: Math.max(6, (workedHours / policy.shiftTargetHours) * 140), animationDelay: `${0.25 + i * 0.06}s` }}></i>
                 </div>
               );
             })}
           </div>
           <div className="bars-x">
-            {lastShifts.map((d) => <span key={d.date}><b style={{ color: "var(--text)", fontWeight: 500 }}>{d.date === workDate ? "Today" : WEEKDAY_ABBREVIATIONS[weekdayOf(d.date)]}</b><br />{formatDayMonth(d.date)}</span>)}
+            {lastShifts.map((shift) => <span key={shift.date}><b style={{ color: "var(--text)", fontWeight: 500 }}>{shift.date === workDate ? "Today" : WEEKDAY_ABBREVIATIONS[weekdayOf(shift.date)]}</b><br />{formatDayMonth(shift.date)}</span>)}
           </div>
         </section>
         <section className="card pad span-4 enter" style={{ ["--i" as string]: 9 }}>
           <span className="spot"></span>
           <div className="card-h"><h3>Upcoming holidays</h3><Link className="btn btn-sm btn-ghost" href="/leave">All</Link></div>
           <div className="list">
-            {holidays.map((h) => (
-              <div className="it" key={h.id}>
-                <span className="hol-date"><b>{Number(h.date.slice(8))}</b><small>{MONTH_ABBREVIATIONS[Number(h.date.slice(5, 7)) - 1].toUpperCase()}</small></span>
-                <div><b style={{ fontSize: 13.5, fontWeight: 600 }}>{h.name}</b><div className="faint" style={{ fontSize: 12.5 }}>{formatWeekdayDayMonthYear(h.date)}</div></div>
+            {holidays.map((holiday) => (
+              <div className="it" key={holiday.id}>
+                <span className="hol-date"><b>{Number(holiday.date.slice(8))}</b><small>{MONTH_ABBREVIATIONS[Number(holiday.date.slice(5, 7)) - 1].toUpperCase()}</small></span>
+                <div><b style={{ fontSize: 13.5, fontWeight: 600 }}>{holiday.name}</b><div className="faint" style={{ fontSize: 12.5 }}>{formatWeekdayDayMonthYear(holiday.date)}</div></div>
               </div>
             ))}
             {!holidays.length && <div className="faint" style={{ fontSize: 13 }}>No more holidays this year.</div>}

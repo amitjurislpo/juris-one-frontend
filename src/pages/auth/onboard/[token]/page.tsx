@@ -10,20 +10,20 @@ import { CandidateClient, type CandidateView } from "./CandidateClient";
 export default function OnboardPage() {
   const { token = "" } = useParams();
   const t = useT();
-  const q = useQuery({
+  const onboardingQuery = useQuery({
     queryKey: ["api", "onboard", token],
     queryFn: () => apiCall<CandidateView & { form: CandidateForm }>("GET", `/api/public/onboardings/${encodeURIComponent(token)}`),
   });
-  if (!q.data) return <main style={{ minHeight: "100vh", background: "var(--bg)" }} aria-busy="true" />;
-  const r = q.data;
+  if (!onboardingQuery.data) return <main style={{ minHeight: "100vh", background: "var(--bg)" }} aria-busy="true" />;
+  const response = onboardingQuery.data;
   return (
     <main style={{ minHeight: "100vh", background: "var(--bg)", padding: "28px 16px 64px" }}>
       <div style={{ maxWidth: 880, margin: "0 auto" }}>
         <div className="brandmark" style={{ marginBottom: 22 }}><span className="monogram">J</span>JurisOne</div>
-        {r.body.ok ? <CandidateClient token={token} v={r.body.data!} /> : (
+        {response.body.ok ? <CandidateClient token={token} view={response.body.data!} /> : (
           <section className="card" style={{ padding: 28, textAlign: "center" }}>
             <h1 className="display" style={{ fontSize: 30, margin: "0 0 8px" }}>{t("This link can't be used")}</h1>
-            <p className="muted">{r.body.error}</p>
+            <p className="muted">{response.body.error}</p>
           </section>
         )}
       </div>

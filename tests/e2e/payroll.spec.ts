@@ -2,15 +2,15 @@ import { expect, test, type Page } from "@playwright/test";
 import { expectLanded, login, sql } from "./helpers";
 
 const toast = (page: Page) => page.locator(".toast").last();
-const T0 = new Date().toISOString();
+const TEST_START_TIME = new Date().toISOString();
 const SEP = "2026-09";
 
 async function cleanup() {
   await sql(`DELETE FROM payslips WHERE run_id IN (SELECT id FROM payroll_runs WHERE month = $1)`, [SEP]);
   await sql(`DELETE FROM payroll_adjustments WHERE run_id IN (SELECT id FROM payroll_runs WHERE month = $1)`, [SEP]);
   await sql(`DELETE FROM payroll_runs WHERE month = $1`, [SEP]);
-  await sql(`DELETE FROM salary_structures WHERE created_at >= $1`, [T0]);
-  await sql(`DELETE FROM notifications WHERE created_at >= $1`, [T0]);
+  await sql(`DELETE FROM salary_structures WHERE created_at >= $1`, [TEST_START_TIME]);
+  await sql(`DELETE FROM notifications WHERE created_at >= $1`, [TEST_START_TIME]);
 }
 
 test.describe("payroll", () => {
@@ -36,15 +36,15 @@ test.describe("payroll", () => {
     await dialog.getByRole("button", { name: "Save structure" }).click();
     await expect(toast(page)).toContainText("Salary structure saved for Pooja Nair");
     await expect(row.getByRole("button", { name: "2 revisions" })).toBeVisible();
-    const logged = await sql(`SELECT 1 FROM audit_log WHERE action = 'salary.structure_change' AND at >= $1`, [T0]);
+    const logged = await sql(`SELECT 1 FROM audit_log WHERE action = 'salary.structure_change' AND at >= $1`, [TEST_START_TIME]);
     expect(logged.length).toBe(1);
   });
 
   test("HR never sees salary pages or exports", async ({ page }) => {
     await login(page, "JC-012");
     await expectLanded(page, "/home");
-    for (const p of ["/payroll", "/structures"]) {
-      await page.goto(p);
+    for (const path of ["/payroll", "/structures"]) {
+      await page.goto(path);
       await expectLanded(page, "/home");
     }
     expect((await page.request.get(`/api/payroll/export?month=${SEP}&type=bank`)).status()).toBe(403);
@@ -72,7 +72,7 @@ test.describe("payroll", () => {
     await expect(toast(page)).toContainText("Saved payroll changes for Naman Tyagi");
     await expect(naman).toContainText("edited");
     await expect(naman.locator("td").nth(4)).toHaveText("₹5,000");
-    const logged = await sql(`SELECT 1 FROM audit_log WHERE action = 'payroll.edit' AND at >= $1`, [T0]);
+    const logged = await sql(`SELECT 1 FROM audit_log WHERE action = 'payroll.edit' AND at >= $1`, [TEST_START_TIME]);
     expect(logged.length).toBe(1);
     // hide amounts
     await page.getByRole("button", { name: "Hide amounts" }).click();
@@ -90,8 +90,8 @@ test.describe("payroll", () => {
     await expect(toast(page)).toContainText("September 2026 payroll closed — 11 payslips published", { timeout: 30_000 });
     await expect(page.getByRole("button", { name: "Closed ✓" })).toBeVisible();
     await expect(page.locator("tbody tr").first()).toContainText("Locked");
-    const [{ n }] = await sql<{ n: string }>(`SELECT count(*)::text n FROM payslips p JOIN payroll_runs r ON r.id = p.run_id WHERE r.month = $1`, [SEP]);
-    expect(n).toBe("11");
+    const [{ payslipCount }] = await sql<{ payslipCount: string }>(`SELECT count(*)::text AS "payslipCount" FROM payslips p JOIN payroll_runs r ON r.id = p.run_id WHERE r.month = $1`, [SEP]);
+    expect(payslipCount).toBe("11");
     const [snap] = await sql<{ net: number; tds: number }>(`SELECT (snapshot->>'net')::int net, (snapshot->>'tds')::int tds FROM payslips p JOIN employees e ON e.id = p.employee_id JOIN payroll_runs r ON r.id = p.run_id WHERE r.month = $1 AND e.code = 'JC-074'`, [SEP]);
     expect(snap).toEqual({ net: 9_307_400, tds: 1_492_600 });
 

@@ -40,28 +40,28 @@ export function RolesClient({ roles, initialSel }: { roles: RoleView[]; initialS
   const canEdit = role.canEdit && !readOnly;
   const locked = role.locked || !canEdit;
 
-  const act = (p: Promise<{ ok: boolean; msg?: string; error?: string }>, bad = false) =>
+  const act = (pendingAction: Promise<{ ok: boolean; message?: string; error?: string }>, bad = false) =>
     start(async () => {
-      const r = await p;
-      if (r.ok) toast(r.msg ?? t("Saved"), bad ? "bad" : "ok");
-      else toast(r.error ?? t("Failed"), "bad");
+      const actionResult = await pendingAction;
+      if (actionResult.ok) toast(actionResult.message ?? t("Saved"), bad ? "bad" : "ok");
+      else toast(actionResult.error ?? t("Failed"), "bad");
     });
 
   return (
     <div className="col">
-      <PageHeader eyebrow={t("Administration")} title={t("Roles &")} em={t("permissions")} sub={t("A person's role decides what they see after signing in. Changes apply on their next click.")}>
-        {canEdit && <button className="btn btn-gold btn-lg" onClick={() => setAdding(true)}><Icon n="plus" s={16} />{t("New role")}</button>}
+      <PageHeader eyebrow={t("Administration")} title={t("Roles &")} emphasis={t("permissions")} sub={t("A person's role decides what they see after signing in. Changes apply on their next click.")}>
+        {canEdit && <button className="btn btn-gold btn-lg" onClick={() => setAdding(true)}><Icon name="plus" size={16} />{t("New role")}</button>}
       </PageHeader>
       <div className="role-grid">
         <div className="role-list enter" style={{ ["--i" as string]: 1 }}>
-          {roles.map((r) => (
-            <button key={r.id} type="button" className={`role-pick${sel === r.id ? " on" : ""}`} onClick={() => setSel(r.id)} aria-pressed={sel === r.id}>
-              <span className="kpi-ico" style={{ background: sel === r.id ? "var(--accent)" : "var(--accentsoft)", color: sel === r.id ? "#fff" : "var(--accent)" }}><Icon n="key" s={15} /></span>
+          {roles.map((listedRole) => (
+            <button key={listedRole.id} type="button" className={`role-pick${sel === listedRole.id ? " on" : ""}`} onClick={() => setSel(listedRole.id)} aria-pressed={sel === listedRole.id}>
+              <span className="kpi-ico" style={{ background: sel === listedRole.id ? "var(--accent)" : "var(--accentsoft)", color: sel === listedRole.id ? "#fff" : "var(--accent)" }}><Icon name="key" size={15} /></span>
               <span style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
-                <b>{r.name}</b>
-                <small>{t(r.members.length === 1 ? "{n} person · {p} permissions" : "{n} people · {p} permissions", { n: r.members.length, p: r.perms.length })}</small>
+                <b>{listedRole.name}</b>
+                <small>{t(listedRole.members.length === 1 ? "{n} person · {p} permissions" : "{n} people · {p} permissions", { n: listedRole.members.length, p: listedRole.perms.length })}</small>
               </span>
-              {!r.builtin && <span className="chip info nodot">{t("Custom")}</span>}
+              {!listedRole.builtin && <span className="chip info nodot">{t("Custom")}</span>}
             </button>
           ))}
         </div>
@@ -75,19 +75,19 @@ export function RolesClient({ roles, initialSel }: { roles: RoleView[]; initialS
             {!role.builtin && canEdit && (
               <button className="btn btn-sm btn-danger" disabled={role.totalEver > 0 || busy} title={role.totalEver ? t("Move people (including past employees) to another role first") : ""}
                 onClick={() => setConfirmDel(true)}>
-                <Icon n="trash" s={14} />{t("Delete role")}
+                <Icon name="trash" size={14} />{t("Delete role")}
               </button>
             )}
           </div>
-          {PERMISSION_GROUPS.map(([g, ps]) => (
-            <div key={g} className="perm-g">
-              <div className="eyebrow">{t(g)}</div>
-              {ps.map((p) => {
-                const has = role.perms.includes(p);
+          {PERMISSION_GROUPS.map(([groupLabel, groupPermissions]) => (
+            <div key={groupLabel} className="perm-g">
+              <div className="eyebrow">{t(groupLabel)}</div>
+              {groupPermissions.map((permission) => {
+                const has = role.perms.includes(permission);
                 return (
-                  <div key={p} className={`perm${has ? "" : " off"}`}>
-                    <span id={`perm-${p}`}>{t(PERMISSION_LABEL[p])}</span>
-                    <button type="button" className="switch" role="switch" aria-checked={has} aria-labelledby={`perm-${p}`} disabled={locked || busy} onClick={() => act(setPermission(role.id, p, !has), has)}><i></i></button>
+                  <div key={permission} className={`perm${has ? "" : " off"}`}>
+                    <span id={`perm-${permission}`}>{t(PERMISSION_LABEL[permission])}</span>
+                    <button type="button" className="switch" role="switch" aria-checked={has} aria-labelledby={`perm-${permission}`} disabled={locked || busy} onClick={() => act(setPermission(role.id, permission, !has), has)}><i></i></button>
                   </div>
                 );
               })}
@@ -96,9 +96,9 @@ export function RolesClient({ roles, initialSel }: { roles: RoleView[]; initialS
           <div className="perm-g">
             <div className="eyebrow">{t("Can add employees with these roles")}</div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {roles.map((r) => {
-                const on = role.assign.includes(r.id);
-                return <button key={r.id} type="button" className={`pill${on ? " on" : ""}`} aria-pressed={on} disabled={locked || busy} onClick={() => act(setAssignable(role.id, r.id, !on))}>{r.name}</button>;
+              {roles.map((otherRole) => {
+                const isAssigned = role.assign.includes(otherRole.id);
+                return <button key={otherRole.id} type="button" className={`pill${isAssigned ? " on" : ""}`} aria-pressed={isAssigned} disabled={locked || busy} onClick={() => act(setAssignable(role.id, otherRole.id, !isAssigned))}>{otherRole.name}</button>;
               })}
             </div>
             <p className="faint" style={{ margin: 0, fontSize: 12.5 }}>{t("e.g. HR Manager adds HR Executives; Finance Manager adds Finance Executives into Finance only.")}</p>
@@ -106,9 +106,9 @@ export function RolesClient({ roles, initialSel }: { roles: RoleView[]; initialS
           <div className="perm-g">
             <div className="eyebrow">{t("People with this role")}</div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {role.members.map((m) => (
-                <span key={m.id} className="chip neutral nodot" style={{ height: 30, gap: 8 }}>
-                  <Avatar id={m.id} name={m.name} photo={m.photo} style={{ width: 20, height: 20, fontSize: 9 }} />{m.name}
+              {role.members.map((member) => (
+                <span key={member.id} className="chip neutral nodot" style={{ height: 30, gap: 8 }}>
+                  <Avatar id={member.id} name={member.name} photo={member.photo} style={{ width: 20, height: 20, fontSize: 9 }} />{member.name}
                 </span>
               ))}
               {!role.members.length && <span className="faint">{t("No one yet — assign this role from People → Add employee.")}</span>}
@@ -120,7 +120,7 @@ export function RolesClient({ roles, initialSel }: { roles: RoleView[]; initialS
       {confirmDel && (
         <ConfirmDialog title={t("Delete role")} danger confirm={t("Delete role")} busy={busy} onClose={() => setConfirmDel(false)}
           body={<>{t("Delete {name}? This can't be undone.", { name: role.name })}</>}
-          onConfirm={() => { act(deleteRole(role.id), true); setConfirmDel(false); setSel(roles.find((r) => r.key === "employee")!.id); }} />
+          onConfirm={() => { act(deleteRole(role.id), true); setConfirmDel(false); setSel(roles.find((employeeRole) => employeeRole.key === "employee")!.id); }} />
       )}
 
       {adding && (
@@ -131,15 +131,15 @@ export function RolesClient({ roles, initialSel }: { roles: RoleView[]; initialS
               setTried(true);
               if (!name.trim()) return;
               start(async () => {
-                const r = await createRole({ name, fromRoleId: from });
-                if (r.ok) { toast(r.msg!); setAdding(false); setName(""); setTried(false); if (r.data) setSel(r.data.id); }
-                else toast(r.error, "bad");
+                const createResult = await createRole({ name, fromRoleId: from });
+                if (createResult.ok) { toast(createResult.message!); setAdding(false); setName(""); setTried(false); if (createResult.data) setSel(createResult.data.id); }
+                else toast(createResult.error, "bad");
               });
             }}>{t("Create role")}</button>
           </>}>
           <div className="col" style={{ gap: 14 }}>
             <label className="field">{t("Role name *")}<input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("e.g. Payroll Auditor")} maxLength={60} autoFocus />{tried && !name.trim() && <span className="err">{t("Name is required")}</span>}</label>
-            <label className="field">{t("Start from")}<select value={from} onChange={(e) => setFrom(e.target.value)}>{roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}</select><span className="hint">{t("Copies its permissions, except Administration.")}</span></label>
+            <label className="field">{t("Start from")}<select value={from} onChange={(e) => setFrom(e.target.value)}>{roles.map((templateRole) => <option key={templateRole.id} value={templateRole.id}>{templateRole.name}</option>)}</select><span className="hint">{t("Copies its permissions, except Administration.")}</span></label>
           </div>
         </Modal>
       )}

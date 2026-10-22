@@ -24,11 +24,11 @@ export const phoneDigits = (code: string) => phoneCountry(code)?.digits ?? 15;
 
 /** Problem with the number for this country, or null when valid. */
 export function phoneProblem(code: string, number: string): string | null {
-  const c = phoneCountry(code);
-  if (!c) return "Choose the country code";
-  const d = number.replace(/\D/g, "");
-  if (d.length !== c.digits) return `${c.name} numbers have ${c.digits} digits`;
-  if (c.first && !c.first.includes(d[0])) return `That isn't a valid ${c.name} mobile number`;
+  const country = phoneCountry(code);
+  if (!country) return "Choose the country code";
+  const digits = number.replace(/\D/g, "");
+  if (digits.length !== country.digits) return `${country.name} numbers have ${country.digits} digits`;
+  if (country.first && !country.first.includes(digits[0])) return `That isn't a valid ${country.name} mobile number`;
   return null;
 }
 

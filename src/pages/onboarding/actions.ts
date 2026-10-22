@@ -13,12 +13,12 @@ export interface AddInput { workEmail: string; designation: string; departmentId
 
 const pages = (id?: string) => ["/onboarding", ...(id ? [`/onboarding/${id}`] : [])];
 
-export async function startOnboarding(i: PlanInput): Promise<ActionResult<{ id: string }>> {
-  return apiAction("POST", "/api/onboardings", i, pages());
+export async function startOnboarding(input: PlanInput): Promise<ActionResult<{ id: string }>> {
+  return apiAction("POST", "/api/onboardings", input, pages());
 }
 
-export async function updateOnboarding(id: string, i: PlanInput): Promise<ActionResult> {
-  return apiAction("PUT", `/api/onboardings/${enc(id)}`, i, pages(id));
+export async function updateOnboarding(id: string, input: PlanInput): Promise<ActionResult> {
+  return apiAction("PUT", `/api/onboardings/${enc(id)}`, input, pages(id));
 }
 
 export async function resendOnboarding(id: string): Promise<ActionResult> {
@@ -33,8 +33,8 @@ export async function setOnboardingStatus(id: string, status: "CHANGES_REQUESTED
   return apiAction("PUT", `/api/onboardings/${enc(id)}/status`, { status, comment }, pages(id));
 }
 
-export async function addOnboardedEmployee(id: string, i: AddInput): Promise<ActionResult<{ id: string; code: string }>> {
-  return apiAction("POST", `/api/onboardings/${enc(id)}/employee`, i, [...pages(id), "/employees"]);
+export async function addOnboardedEmployee(id: string, input: AddInput): Promise<ActionResult<{ id: string; code: string }>> {
+  return apiAction("POST", `/api/onboardings/${enc(id)}/employee`, input, [...pages(id), "/employees"]);
 }
 
 /** The business's default required documents (and every kind HR can pick). */

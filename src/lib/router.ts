@@ -23,13 +23,13 @@ export function useRouter() {
 export const usePathname = () => useLocation().pathname;
 
 function useSearchParams() {
-  const [sp] = useRouterSearchParams();
-  return sp;
+  const [searchParams] = useRouterSearchParams();
+  return searchParams;
 }
 
 /** Search params as a plain object (first value of each), like the old `searchParams` prop of a page. */
 export function useSearchRecord(): Record<string, string> {
-  const sp = useSearchParams();
-  const s = sp.toString();
-  return useMemo(() => Object.fromEntries(new URLSearchParams(s).entries()), [s]);
+  const searchParams = useSearchParams();
+  const searchString = searchParams.toString();
+  return useMemo(() => Object.fromEntries(new URLSearchParams(searchString).entries()), [searchString]);
 }

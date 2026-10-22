@@ -5,28 +5,28 @@ import { useT } from "@/lib/i18n/client";
 import { useQuery } from "./useQuery";
 
 /** Prototype `.tsearch` — debounced, writes ?search= */
-export function SearchBox({ placeholder, label, big }: { placeholder: string; label: string; big?: boolean }) {
+export function SearchBox({ placeholder, label, isLarge: big }: { placeholder: string; label: string; isLarge?: boolean }) {
   const { get, set } = useQuery();
   const urlQ = get("search");
-  const [v, setV] = useState(urlQ);
-  const t = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const [searchText, setSearchText] = useState(urlQ);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   // keep the box in sync when the URL changes elsewhere (e.g. "Clear filters")
   const [lastUrlQ, setLastUrlQ] = useState(urlQ);
   if (lastUrlQ !== urlQ) {
     setLastUrlQ(urlQ);
-    setV(urlQ);
+    setSearchText(urlQ);
   }
-  useEffect(() => () => clearTimeout(t.current), []);
+  useEffect(() => () => clearTimeout(debounceTimer.current), []);
   return (
     <label className={`tsearch${big ? " big" : ""}`}>
-      <Icon n="search" s={big ? 16 : 15} />
+      <Icon name="search" size={big ? 16 : 15} />
       <input
-        value={v}
+        value={searchText}
         onChange={(e) => {
           const val = e.target.value;
-          setV(val);
-          clearTimeout(t.current);
-          t.current = setTimeout(() => set({ search: val.trim() || null }), 250);
+          setSearchText(val);
+          clearTimeout(debounceTimer.current);
+          debounceTimer.current = setTimeout(() => set({ search: val.trim() || null }), 250);
         }}
         placeholder={placeholder}
         aria-label={label}
@@ -55,9 +55,9 @@ export function SegmentedFilter({ name, options, dflt, label }: { name: string; 
   const cur = get(name, dflt);
   return (
     <div className="seg" role="group" aria-label={label}>
-      {options.map((o) => (
-        <button key={o.value} type="button" className={cur === o.value ? "on" : undefined} aria-pressed={cur === o.value} onClick={() => set({ [name]: o.value === dflt ? null : o.value })}>
-          {o.label}
+      {options.map((option) => (
+        <button key={option.value} type="button" className={cur === option.value ? "on" : undefined} aria-pressed={cur === option.value} onClick={() => set({ [name]: option.value === dflt ? null : option.value })}>
+          {option.label}
         </button>
       ))}
     </div>
@@ -65,17 +65,17 @@ export function SegmentedFilter({ name, options, dflt, label }: { name: string; 
 }
 
 /** Click-to-sort column header (↑ / ↓ / ↕). */
-export function SortableHeader({ k, children, right, dflt, dfltDir = "asc", className }: { k: string; children: React.ReactNode; right?: boolean; dflt: string; dfltDir?: "asc" | "desc"; className?: string }) {
+export function SortableHeader({ sortKey, children, right, dflt, dfltDir = "asc", className }: { sortKey: string; children: React.ReactNode; right?: boolean; dflt: string; dfltDir?: "asc" | "desc"; className?: string }) {
   const { get, set } = useQuery();
   const sort = get("sort", dflt);
   const direction = get("sortDirection", dfltDir);
-  const on = sort === k;
-  const next = on ? (direction === "asc" ? "desc" : "asc") : "asc";
+  const isSorted = sort === sortKey;
+  const next = isSorted ? (direction === "asc" ? "desc" : "asc") : "asc";
   return (
-    <th className={[right && "r", className].filter(Boolean).join(" ") || undefined} aria-sort={on ? (direction === "asc" ? "ascending" : "descending") : "none"}>
-      <button className="sh" type="button" onClick={() => set({ sort: k, sortDirection: next })}>
+    <th className={[right && "r", className].filter(Boolean).join(" ") || undefined} aria-sort={isSorted ? (direction === "asc" ? "ascending" : "descending") : "none"}>
+      <button className="sh" type="button" onClick={() => set({ sort: sortKey, sortDirection: next })}>
         {children}
-        <i>{on ? (direction === "asc" ? "↑" : "↓") : "↕"}</i>
+        <i>{isSorted ? (direction === "asc" ? "↑" : "↓") : "↕"}</i>
       </button>
     </th>
   );
@@ -91,8 +91,8 @@ export function Pager({ page, take, total }: { page: number; take: number; total
     <div className="pager">
       <span className="mono">{t("{from}–{to} of {total}", { from, to: Math.min(total, page * take), total })}</span>
       <span style={{ display: "flex", gap: 6 }}>
-        <button className="btn btn-sm" type="button" disabled={page <= 1} onClick={() => set({ page: String(page - 1) })}><Icon n="chevL" s={14} />{t("Previous")}</button>
-        <button className="btn btn-sm" type="button" disabled={page >= last} onClick={() => set({ page: String(page + 1) })}>{t("Next")}<Icon n="chevR" s={14} /></button>
+        <button className="btn btn-sm" type="button" disabled={page <= 1} onClick={() => set({ page: String(page - 1) })}><Icon name="chevL" size={14} />{t("Previous")}</button>
+        <button className="btn btn-sm" type="button" disabled={page >= last} onClick={() => set({ page: String(page + 1) })}>{t("Next")}<Icon name="chevR" size={14} /></button>
       </span>
     </div>
   );
@@ -108,7 +108,7 @@ export function ClearFilters({ label }: { label?: string }) {
   const t = useT();
   const { params, set } = useQuery();
   return (
-    <button className="btn btn-sm" type="button" onClick={() => set(Object.fromEntries([...params.keys()].map((k) => [k, null])))}>
+    <button className="btn btn-sm" type="button" onClick={() => set(Object.fromEntries([...params.keys()].map((paramKey) => [paramKey, null])))}>
       {label ?? t("Clear filters")}
     </button>
   );

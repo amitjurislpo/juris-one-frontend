@@ -20,7 +20,7 @@ export default function PlatformPage() {
   const plans = useData<PlanRow[]>("/api/platform/plans");
   const catalogue = useData<RoleTemplates>("/api/platform/role-templates");
   if (!rows || !plans || !catalogue) return <PageLoading />;
-  const chipText = (x: SubscriptionCurrent) => !x || x.state === "NONE" ? t("No plan") : x.state === "UPCOMING" ? t("Starts {date}", { date: formatDayMonthYear(x.startsOn!) }) : x.state === "EXPIRED" ? t("Ended {date}", { date: formatDayMonthYear(x.endsOn!) }) : x.daysLeft !== null && x.daysLeft <= 7 ? (x.daysLeft === 0 ? t("Ends today") : t(x.daysLeft === 1 ? "{n} day left" : "{n} days left", { n: x.daysLeft })) : t("Until {date}", { date: formatDayMonthYear(x.endsOn!) });
+  const chipText = (subscriptionState: SubscriptionCurrent) => !subscriptionState || subscriptionState.state === "NONE" ? t("No plan") : subscriptionState.state === "UPCOMING" ? t("Starts {date}", { date: formatDayMonthYear(subscriptionState.startsOn!) }) : subscriptionState.state === "EXPIRED" ? t("Ended {date}", { date: formatDayMonthYear(subscriptionState.endsOn!) }) : subscriptionState.daysLeft !== null && subscriptionState.daysLeft <= 7 ? (subscriptionState.daysLeft === 0 ? t("Ends today") : t(subscriptionState.daysLeft === 1 ? "{n} day left" : "{n} days left", { n: subscriptionState.daysLeft })) : t("Until {date}", { date: formatDayMonthYear(subscriptionState.endsOn!) });
   const ending = rows.filter((r) => r.subscription.state === "ACTIVE" && (r.subscription.daysLeft ?? 99) <= 7).length;
   const lapsed = rows.filter((r) => !r.subscription.active).length;
 
@@ -32,7 +32,7 @@ export default function PlatformPage() {
       </PageHeader>
       <div className="kpis enter" style={{ ["--i" as string]: 1 }}>
         <div className="card kpi"><span className="l">{t("Businesses")}</span><span className="v num">{rows.length}</span></div>
-        <div className="card kpi"><span className="l">{t("People on the platform")}</span><span className="v num">{rows.reduce((n, r) => n + r.employees, 0)}</span></div>
+        <div className="card kpi"><span className="l">{t("People on the platform")}</span><span className="v num">{rows.reduce((total, row) => total + row.employees, 0)}</span></div>
         <div className="card kpi"><span className="l">{t("Ending within 7 days")}</span><span className="v num">{ending}</span></div>
         <div className="card kpi"><span className="l">{t("Without an active plan")}</span><span className="v num">{lapsed}</span></div>
       </div>
@@ -51,22 +51,22 @@ export default function PlatformPage() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((r, i) => {
-                const chip = subscriptionChip(r.subscription);
+              {rows.map((row, i) => {
+                const chip = subscriptionChip(row.subscription);
                 return (
-                  <tr key={r.id} style={{ animationDelay: `${i * 30}ms` }}>
+                  <tr key={row.id} style={{ animationDelay: `${i * 30}ms` }}>
                     <td>
-                      <Link href={`/platform/${r.id}`} className="person" style={{ textDecoration: "none", color: "inherit" }}>
-                        <span className="kpi-ico" style={{ width: 34, height: 34, background: "var(--accentsoft)", color: "var(--accent)" }}><Icon n="building" s={16} /></span>
-                        <div><b>{r.name}</b><small>{t("{code} · IDs {prefix}-001", { code: r.code, prefix: r.employeePrefix })}</small></div>
+                      <Link href={`/platform/${row.id}`} className="person" style={{ textDecoration: "none", color: "inherit" }}>
+                        <span className="kpi-ico" style={{ width: 34, height: 34, background: "var(--accentsoft)", color: "var(--accent)" }}><Icon name="building" size={16} /></span>
+                        <div><b>{row.name}</b><small>{t("{code} · IDs {prefix}-001", { code: row.code, prefix: row.employeePrefix })}</small></div>
                       </Link>
                     </td>
-                    <td>{r.subscription.planName ?? <span className="muted">—</span>}</td>
-                    <td><span className={`chip ${chip.cls}`}>{chipText(r.subscription)}</span></td>
-                    <td className="r num">{r.employees}{r.subscription.maxEmployees ? <span className="muted"> / {r.subscription.maxEmployees}</span> : null}</td>
-                    <td className="r num hide-sm">{r.owners}</td>
-                    <td><span className={`chip ${r.status === "ACTIVE" ? "ok" : "bad"}`}>{r.status === "ACTIVE" ? t("Active") : t("Suspended")}</span></td>
-                    <td className="muted hide-sm">{formatDayMonthYear(r.createdAt.slice(0, 10))}</td>
+                    <td>{row.subscription.planName ?? <span className="muted">—</span>}</td>
+                    <td><span className={`chip ${chip.className}`}>{chipText(row.subscription)}</span></td>
+                    <td className="r num">{row.employees}{row.subscription.maxEmployees ? <span className="muted"> / {row.subscription.maxEmployees}</span> : null}</td>
+                    <td className="r num hide-sm">{row.owners}</td>
+                    <td><span className={`chip ${row.status === "ACTIVE" ? "ok" : "bad"}`}>{row.status === "ACTIVE" ? t("Active") : t("Suspended")}</span></td>
+                    <td className="muted hide-sm">{formatDayMonthYear(row.createdAt.slice(0, 10))}</td>
                   </tr>
                 );
               })}

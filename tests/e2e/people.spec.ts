@@ -85,8 +85,8 @@ test.describe("people operations", () => {
     await drawer.getByRole("button", { name: "Mark as past employee" }).click();
     await page.getByRole("button", { name: "Mark as exited" }).click();
     await expect(toast(page)).toContainText("marked as a past employee");
-    const [x] = await sql<{ status: string; portal_access: boolean }>(`SELECT status, portal_access FROM employees WHERE email = $1`, [NEW_EMAIL]);
-    expect(x).toEqual({ status: "EXITED", portal_access: false });
+    const [employee] = await sql<{ status: string; portal_access: boolean }>(`SELECT status, portal_access FROM employees WHERE email = $1`, [NEW_EMAIL]);
+    expect(employee).toEqual({ status: "EXITED", portal_access: false });
   });
 
   test("a manager with direct reports can't be exited until they're reassigned", async ({ page }) => {
@@ -167,9 +167,9 @@ test.describe("people operations", () => {
   test("export is permission-checked on the server", async ({ page, request }) => {
     await login(page, "JC-012");
     await expectLanded(page, "/home");
-    const ok = await page.request.get("/api/people/export?status=All");
-    expect(ok.status()).toBe(200);
-    const csv = await ok.text();
+    const exportResponse = await page.request.get("/api/people/export?status=All");
+    expect(exportResponse.status()).toBe(200);
+    const csv = await exportResponse.text();
     expect(csv).toContain("Employee ID,Name,Email");
     expect(csv).toContain("Vikas Rao");
     expect(csv).not.toMatch(/Aadhaar|PAN|gross/i);

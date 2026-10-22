@@ -3,9 +3,9 @@ import { createContext, useCallback, useContext, useState } from "react";
 import { Icon } from "@/components/Icon";
 
 type Kind = "ok" | "bad";
-interface Toast { id: number; msg: string; kind: Kind }
+interface Toast { id: number; message: string; kind: Kind }
 
-const Ctx = createContext<(msg: string, kind?: Kind) => void>(() => {});
+const Ctx = createContext<(message: string, kind?: Kind) => void>(() => {});
 
 export const useToast = () => useContext(Ctx);
 
@@ -13,21 +13,21 @@ let seq = 0;
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const push = useCallback((msg: string, kind: Kind = "ok") => {
+  const push = useCallback((message: string, kind: Kind = "ok") => {
     const id = ++seq;
-    setToasts((t) => [...t, { id, msg, kind }]);
-    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3800);
+    setToasts((previousToasts) => [...previousToasts, { id, message, kind }]);
+    setTimeout(() => setToasts((currentToasts) => currentToasts.filter((x) => x.id !== id)), 3800);
   }, []);
   return (
     <Ctx.Provider value={push}>
       {children}
       <div className="toasts" aria-live="polite">
-        {toasts.map((t) => (
-          <div key={t.id} className="toast">
-            <span className="ti" style={t.kind === "bad" ? { background: "var(--badbg)", color: "var(--bad)" } : undefined}>
-              <Icon n={t.kind === "bad" ? "x" : "ok"} s={14} />
+        {toasts.map((toast) => (
+          <div key={toast.id} className="toast">
+            <span className="ti" style={toast.kind === "bad" ? { background: "var(--badbg)", color: "var(--bad)" } : undefined}>
+              <Icon name={toast.kind === "bad" ? "x" : "ok"} size={14} />
             </span>
-            {t.msg}
+            {toast.message}
           </div>
         ))}
       </div>

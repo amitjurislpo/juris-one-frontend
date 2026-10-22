@@ -19,7 +19,7 @@ export function EmployeeForm({ editId, photo, onClose }: { editId?: string; phot
   const t = useT();
   const [opt, setOpt] = useState<FormOptions | null>(null);
   const [loadErr, setLoadErr] = useState("");
-  const [f, setF] = useState<EmployeeInput | null>(null);
+  const [form, setForm] = useState<EmployeeInput | null>(null);
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [tried, setTried] = useState(false);
   const [serverErr, setServerErr] = useState("");
@@ -31,49 +31,49 @@ export function EmployeeForm({ editId, photo, onClose }: { editId?: string; phot
 
   useEffect(() => {
     let alive = true;
-    getFormOptions(editId).then((r) => {
+    getFormOptions(editId).then((optionsResult) => {
       if (!alive) return;
-      if (r.ok) { setOpt(r.data!); setF(r.data!.defaults); }
-      else setLoadErr(r.error);
+      if (optionsResult.ok) { setOpt(optionsResult.data!); setForm(optionsResult.data!.defaults); }
+      else setLoadErr(optionsResult.error);
     });
     return () => { alive = false; };
   }, [editId]);
 
   const editing = !!opt?.editing;
-  const errs: StepErrors = f ? stepErrors(step, f, editing, opt?.editing?.hadManager) : {};
-  const india = !f?.location || f.location === "IN_IST";
-  const set = <K extends keyof EmployeeInput>(k: K, v: EmployeeInput[K]) => {
+  const errs: StepErrors = form ? stepErrors(step, form, editing, opt?.editing?.hadManager) : {};
+  const india = !form?.location || form.location === "IN_IST";
+  const set = <FieldName extends keyof EmployeeInput>(fieldName: FieldName, fieldValue: EmployeeInput[FieldName]) => {
     setServerErr("");
-    setF((cur) => {
+    setForm((cur) => {
       if (!cur) return cur;
-      const next = { ...cur, [k]: v };
-      if (k === "location") next.shift = !v || v === "IN_IST" ? (cur.shift === "US_DAY" ? "IN_NIGHT" : cur.shift) : "US_DAY";
-      if (k === "departmentId" && !editing && !opt?.lockedDepartmentId) {
-        const head = opt?.departments.find((d) => d.id === v)?.headId;
-        if (head && (!cur.managerId || opt?.departments.some((d) => d.headId === cur.managerId))) next.managerId = head;
+      const next = { ...cur, [fieldName]: fieldValue };
+      if (fieldName === "location") next.shift = !fieldValue || fieldValue === "IN_IST" ? (cur.shift === "US_DAY" ? "IN_NIGHT" : cur.shift) : "US_DAY";
+      if (fieldName === "departmentId" && !editing && !opt?.lockedDepartmentId) {
+        const head = opt?.departments.find((d) => d.id === fieldValue)?.headId;
+        if (head && (!cur.managerId || opt?.departments.some((department) => department.headId === cur.managerId))) next.managerId = head;
       }
       return next;
     });
   };
-  const err = (k: keyof EmployeeInput) => (tried && errs[k] ? <span className="err">{errs[k]}</span> : null);
-  const onFile = (l4: string | null | undefined) => (l4 ? t("On file · ends {l4} — leave blank to keep", { l4 }) : undefined);
+  const err = (fieldName: keyof EmployeeInput) => (tried && errs[fieldName] ? <span className="err">{errs[fieldName]}</span> : null);
+  const onFile = (lastFourDigits: string | null | undefined) => (lastFourDigits ? t("On file · ends {l4} — leave blank to keep", { l4: lastFourDigits }) : undefined);
 
   const next = () => {
     setTried(true);
-    if (!f || Object.keys(errs).length) return;
+    if (!form || Object.keys(errs).length) return;
     setTried(false);
     if (step < 3) { setStep((step + 1) as 2 | 3); return; }
     start(async () => {
-      const r = await saveEmployee(f, editId);
-      if (r.ok) {
-        toast(r.msg!);
+      const saveResult = await saveEmployee(form, editId);
+      if (saveResult.ok) {
+        toast(saveResult.message!);
         if (!editId && pendingPhoto) {
-          const p = await uploadEmployeePhoto(r.data!.id, pendingPhoto);
-          if (!p.ok) toast(t("The employee was added, but the photo could not be saved: {error} You can add it from Edit details.", { error: p.error }), "bad");
+          const photoResult = await uploadEmployeePhoto(saveResult.data!.id, pendingPhoto);
+          if (!photoResult.ok) toast(t("The employee was added, but the photo could not be saved: {error} You can add it from Edit details.", { error: photoResult.error }), "bad");
         }
         onClose();
       }
-      else setServerErr(r.error);
+      else setServerErr(saveResult.error);
     });
   };
 
@@ -82,20 +82,20 @@ export function EmployeeForm({ editId, photo, onClose }: { editId?: string; phot
 
   return (
     <Modal title={title} eyebrow={eyebrow} onClose={onClose} maxWidth={760}
-      footer={opt && f ? (
+      footer={opt && form ? (
         <>
           <button className="btn btn-ghost" onClick={() => (step > 1 ? setStep((step - 1) as 1 | 2) : onClose())}>{step > 1 ? t("Back") : t("Cancel")}</button>
-          <button className="btn btn-gold" disabled={busy} onClick={next}>{busy ? t("Saving…") : step < 3 ? t("Continue") : editing ? t("Save changes") : t("Create employee")}<Icon n="arrow" s={16} /></button>
+          <button className="btn btn-gold" disabled={busy} onClick={next}>{busy ? t("Saving…") : step < 3 ? t("Continue") : editing ? t("Save changes") : t("Create employee")}<Icon name="arrow" size={16} /></button>
         </>
       ) : undefined}>
       {loadErr && <div className="err" role="alert">{loadErr}</div>}
       {!opt && !loadErr && <div className="faint">{t("Loading…")}</div>}
-      {opt && f && (
+      {opt && form && (
         <div className="col" style={{ gap: 20 }}>
           <div className="steps" aria-label={t("Step {step} of 3", { step })}>
-            {STEPS.map((s, i) => (
-              <span key={s} className={`st${step === i + 1 ? " on" : ""}${step > i + 1 ? " done" : ""}`} aria-current={step === i + 1 ? "step" : undefined}>
-                <i>{step > i + 1 ? "✓" : i + 1}</i>{t(s)}
+            {STEPS.map((stepLabel, i) => (
+              <span key={stepLabel} className={`st${step === i + 1 ? " on" : ""}${step > i + 1 ? " done" : ""}`} aria-current={step === i + 1 ? "step" : undefined}>
+                <i>{step > i + 1 ? "✓" : i + 1}</i>{t(stepLabel)}
               </span>
             ))}
           </div>
@@ -103,46 +103,46 @@ export function EmployeeForm({ editId, photo, onClose }: { editId?: string; phot
           {step === 1 && (
             <div className="col" style={{ gap: 14, animation: "enter .4s both" }}>
               <div className="field">{t("Photo")} <span className="hint">{t("optional")}</span>
-                <PhotoField id={editId} name={f.firstName ? `${f.firstName} ${f.lastName}`.trim() : t("New hire")} photo={editing ? savedPhoto : null} pending={editing ? null : pendingPhoto} busy={photoBusy}
+                <PhotoField id={editId} name={form.firstName ? `${form.firstName} ${form.lastName}`.trim() : t("New hire")} photo={editing ? savedPhoto : null} pending={editing ? null : pendingPhoto} busy={photoBusy}
                   onPick={editing
                     ? async (blob) => {
                       setPhotoBusy(true);
-                      const r = await uploadEmployeePhoto(editId!, blob);
+                      const result = await uploadEmployeePhoto(editId!, blob);
                       setPhotoBusy(false);
-                      if (r.ok) { setSavedPhoto(Date.now()); toast(t("Photo saved")); return null; }
-                      return r.error;
+                      if (result.ok) { setSavedPhoto(Date.now()); toast(t("Photo saved")); return null; }
+                      return result.error;
                     }
                     : (blob) => { setPendingPhoto(blob); }}
                   onRemove={editing
                     ? async () => {
                       setPhotoBusy(true);
-                      const r = await removeEmployeePhoto(editId!);
+                      const result = await removeEmployeePhoto(editId!);
                       setPhotoBusy(false);
-                      if (r.ok) { setSavedPhoto(null); toast(t("Photo removed")); return null; }
-                      return r.error;
+                      if (result.ok) { setSavedPhoto(null); toast(t("Photo removed")); return null; }
+                      return result.error;
                     }
                     : () => { setPendingPhoto(null); }} />
               </div>
               <div className="grid3">
-                <label className="field">{t("First name *")}<input value={f.firstName} onChange={(e) => set("firstName", e.target.value)} placeholder={t("e.g. Meera")} maxLength={60} autoFocus />{err("firstName")}</label>
-                <label className="field">{t("Middle name")}<input value={f.middleName} onChange={(e) => set("middleName", e.target.value)} maxLength={60} />{err("middleName")}</label>
-                <label className="field">{t("Last name *")}<input value={f.lastName} onChange={(e) => set("lastName", e.target.value)} placeholder={t("e.g. Joshi")} maxLength={60} />{err("lastName")}</label>
+                <label className="field">{t("First name *")}<input value={form.firstName} onChange={(e) => set("firstName", e.target.value)} placeholder={t("e.g. Meera")} maxLength={60} autoFocus />{err("firstName")}</label>
+                <label className="field">{t("Middle name")}<input value={form.middleName} onChange={(e) => set("middleName", e.target.value)} maxLength={60} />{err("middleName")}</label>
+                <label className="field">{t("Last name *")}<input value={form.lastName} onChange={(e) => set("lastName", e.target.value)} placeholder={t("e.g. Joshi")} maxLength={60} />{err("lastName")}</label>
               </div>
               <div className="grid2">
-                <label className="field">{t("Father’s name *")}<input value={f.fatherName} onChange={(e) => set("fatherName", e.target.value)} placeholder={t("e.g. Prakash Joshi")} maxLength={120} />{err("fatherName")}</label>
-                <label className="field">{t("Work email *")}<input type="email" value={f.email} onChange={(e) => set("email", e.target.value)} placeholder="meera.joshi@company.com" maxLength={200} />{err("email")}</label>
+                <label className="field">{t("Father’s name *")}<input value={form.fatherName} onChange={(e) => set("fatherName", e.target.value)} placeholder={t("e.g. Prakash Joshi")} maxLength={120} />{err("fatherName")}</label>
+                <label className="field">{t("Work email *")}<input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="meera.joshi@company.com" maxLength={200} />{err("email")}</label>
                 <div className="field">{t("Phone")} {editing ? "" : "*"}
-                  <PhoneInput code={f.phoneCountry || "+91"} number={f.phone} placeholder={onFile(opt.editing?.last4.phone)}
+                  <PhoneInput code={form.phoneCountry || "+91"} number={form.phone} placeholder={onFile(opt.editing?.last4.phone)}
                     onChange={(c, n) => { set("phoneCountry", c); set("phone", n); }} />
                   {err("phone")}
                 </div>
                 <label className="field">{t("Joining office")} <span className="hint">{t("optional")}</span>
-                  <input value={f.joiningOffice} onChange={(e) => set("joiningOffice", e.target.value)} placeholder={t("e.g. Noida office")} maxLength={120} />
+                  <input value={form.joiningOffice} onChange={(e) => set("joiningOffice", e.target.value)} placeholder={t("e.g. Noida office")} maxLength={120} />
                 </label>
                 <label className="field">{t("Work location")} <span className="hint">{t("optional · India if not set")}</span>
-                  <select value={f.location} onChange={(e) => set("location", e.target.value)}>
+                  <select value={form.location} onChange={(e) => set("location", e.target.value)}>
                     <option value="">{t("Not set (India)")}</option>
-                    {LOCATIONS.map((l) => <option key={l.v} value={l.v}>{t(l.l)}</option>)}
+                    {LOCATIONS.map((l) => <option key={l.value} value={l.value}>{t(l.label)}</option>)}
                   </select>
                   <span className="hint">{t("Decides payroll, holidays and the attendance time zone.")}</span>
                 </label>
@@ -154,14 +154,14 @@ export function EmployeeForm({ editId, photo, onClose }: { editId?: string; phot
             <div className="col" style={{ gap: 14, animation: "enter .4s both" }}>
               {india ? (
                 <div className="grid3">
-                  <label className="field">PAN <span className="hint">{t("optional")}</span><input value={f.pan} onChange={(e) => set("pan", e.target.value.toUpperCase())} placeholder={onFile(opt.editing?.last4.pan) ?? "ABCDE1234F"} maxLength={10} style={{ textTransform: "uppercase" }} autoComplete="off" />{err("pan")}</label>
-                  <label className="field">Aadhaar <span className="hint">{t("optional")}</span><input value={f.aadhaar} onChange={(e) => set("aadhaar", e.target.value)} placeholder={onFile(opt.editing?.last4.aadhaar) ?? "1234 5678 9012"} maxLength={14} inputMode="numeric" autoComplete="off" />{err("aadhaar")}</label>
-                  <label className="field">UAN <span className="hint">{t("if they have PF already")}</span><input value={f.uan} onChange={(e) => set("uan", e.target.value)} placeholder={onFile(opt.editing?.last4.uan) ?? t("12-digit UAN")} maxLength={14} inputMode="numeric" autoComplete="off" />{err("uan")}</label>
+                  <label className="field">PAN <span className="hint">{t("optional")}</span><input value={form.pan} onChange={(e) => set("pan", e.target.value.toUpperCase())} placeholder={onFile(opt.editing?.last4.pan) ?? "ABCDE1234F"} maxLength={10} style={{ textTransform: "uppercase" }} autoComplete="off" />{err("pan")}</label>
+                  <label className="field">Aadhaar <span className="hint">{t("optional")}</span><input value={form.aadhaar} onChange={(e) => set("aadhaar", e.target.value)} placeholder={onFile(opt.editing?.last4.aadhaar) ?? "1234 5678 9012"} maxLength={14} inputMode="numeric" autoComplete="off" />{err("aadhaar")}</label>
+                  <label className="field">UAN <span className="hint">{t("if they have PF already")}</span><input value={form.uan} onChange={(e) => set("uan", e.target.value)} placeholder={onFile(opt.editing?.last4.uan) ?? t("12-digit UAN")} maxLength={14} inputMode="numeric" autoComplete="off" />{err("uan")}</label>
                 </div>
               ) : (
-                <div className="note-box"><Icon n="globe" s={18} /><span>{t("PAN, Aadhaar and UAN apply to the India team only. US employees are paid outside Indian payroll.")}</span></div>
+                <div className="note-box"><Icon name="globe" size={18} /><span>{t("PAN, Aadhaar and UAN apply to the India team only. US employees are paid outside Indian payroll.")}</span></div>
               )}
-              <label className="field">{t("Address")}<textarea value={f.address} onChange={(e) => set("address", e.target.value)} placeholder={opt.editing?.hasAddress ? t("On file — leave blank to keep") : t("House, street, city, state, PIN / ZIP")} maxLength={500} /></label>
+              <label className="field">{t("Address")}<textarea value={form.address} onChange={(e) => set("address", e.target.value)} placeholder={opt.editing?.hasAddress ? t("On file — leave blank to keep") : t("House, street, city, state, PIN / ZIP")} maxLength={500} /></label>
               <p className="faint" style={{ margin: 0, fontSize: 12.5 }}>{t("IDs, phone and address are encrypted. Only the last four digits are shown after saving.")}</p>
             </div>
           )}
@@ -169,9 +169,9 @@ export function EmployeeForm({ editId, photo, onClose }: { editId?: string; phot
           {step === 3 && (
             <div className="col" style={{ gap: 16, animation: "enter .4s both" }}>
               <div className="grid2">
-                <label className="field">{t("Designation *")}<input value={f.designation} onChange={(e) => set("designation", e.target.value)} placeholder={t("e.g. Associate — Contract Review")} maxLength={120} />{err("designation")}</label>
+                <label className="field">{t("Designation *")}<input value={form.designation} onChange={(e) => set("designation", e.target.value)} placeholder={t("e.g. Associate — Contract Review")} maxLength={120} />{err("designation")}</label>
                 <label className="field">{t("Department *")}
-                  <select value={f.departmentId} disabled={!!opt.lockedDepartmentId} onChange={(e) => set("departmentId", e.target.value)}>
+                  <select value={form.departmentId} disabled={!!opt.lockedDepartmentId} onChange={(e) => set("departmentId", e.target.value)}>
                     <option value="" disabled>{t("Select a department")}</option>
                     {opt.departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
                   </select>
@@ -179,25 +179,25 @@ export function EmployeeForm({ editId, photo, onClose }: { editId?: string; phot
                   {err("departmentId")}
                 </label>
                 <label className="field">{t("Reporting manager")} {opt.editing && !opt.editing.hadManager ? "" : "*"}
-                  <select value={f.managerId} onChange={(e) => set("managerId", e.target.value)}>
+                  <select value={form.managerId} onChange={(e) => set("managerId", e.target.value)}>
                     <option value="">{opt.editing && !opt.editing.hadManager ? t("No manager") : t("Select a manager")}</option>
                     {opt.managers.map((m) => <option key={m.id} value={m.id}>{m.name} — {m.title}</option>)}
                   </select>
                   {err("managerId")}
                 </label>
-                <label className="field">{t("Date of joining *")}<input type="date" value={f.dateOfJoining} onChange={(e) => set("dateOfJoining", e.target.value)} />{err("dateOfJoining")}</label>
+                <label className="field">{t("Date of joining *")}<input type="date" value={form.dateOfJoining} onChange={(e) => set("dateOfJoining", e.target.value)} />{err("dateOfJoining")}</label>
                 <label className="field">{t("Shift")}
-                  <select value={f.shift} disabled={!india} onChange={(e) => set("shift", e.target.value as EmployeeInput["shift"])}>
-                    {(india ? SHIFT_OPTIONS.IN : SHIFT_OPTIONS.US).map((s) => <option key={s.v} value={s.v}>{t(s.l)}</option>)}
+                  <select value={form.shift} disabled={!india} onChange={(e) => set("shift", e.target.value as EmployeeInput["shift"])}>
+                    {(india ? SHIFT_OPTIONS.IN : SHIFT_OPTIONS.US).map((shiftOption) => <option key={shiftOption.value} value={shiftOption.value}>{t(shiftOption.label)}</option>)}
                   </select>
                 </label>
               </div>
               <div>
                 <div className="field" style={{ marginBottom: 10 }}>{t("Role")} <span className="hint">{t("decides what they can see after signing in")}</span></div>
                 <div className="ltypes" role="radiogroup" aria-label={t("Role")}>
-                  {opt.roles.map((r) => (
-                    <button key={r.id} type="button" role="radio" aria-checked={f.roleId === r.id} className={`ltype${f.roleId === r.id ? " on" : ""}`} onClick={() => set("roleId", r.id)}>
-                      <span className="tick"><Icon n="ok" s={12} /></span><b>{r.name}</b><small>{t("{n} permissions", { n: r.perms })}</small>
+                  {opt.roles.map((role) => (
+                    <button key={role.id} type="button" role="radio" aria-checked={form.roleId === role.id} className={`ltype${form.roleId === role.id ? " on" : ""}`} onClick={() => set("roleId", role.id)}>
+                      <span className="tick"><Icon name="ok" size={12} /></span><b>{role.name}</b><small>{t("{n} permissions", { n: role.perms })}</small>
                     </button>
                   ))}
                 </div>
@@ -205,7 +205,7 @@ export function EmployeeForm({ editId, photo, onClose }: { editId?: string; phot
               </div>
               {!editing && india && (
                 <div style={{ display: "flex", gap: 14, alignItems: "center", padding: "14px 16px", borderRadius: 14, border: "1px dashed var(--line2)", background: "var(--accentsoft)" }}>
-                  <Icon n="lock" s={20} />
+                  <Icon name="lock" size={20} />
                   <div><b>{t("Salary is set by Finance")}</b><div className="muted" style={{ fontSize: 13 }}>{t("After you save, Finance is notified to set up the salary structure. The new hire signs in with an emailed code on their work email.")}</div></div>
                 </div>
               )}

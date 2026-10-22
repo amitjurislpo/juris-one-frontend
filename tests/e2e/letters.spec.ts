@@ -1,14 +1,14 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectLanded, login, sql } from "./helpers";
 
-const T0 = new Date().toISOString();
+const TEST_START_TIME = new Date().toISOString();
 const toast = (page: Page) => page.locator(".toast").last();
 const ORIGIN = { Origin: "http://localhost:3006" };
 
 async function cleanup() {
   // issued letters are protected by a trigger: lift it for the cleanup only (T0 is an ISO timestamp made here)
-  await sql(`ALTER TABLE issued_letters DISABLE TRIGGER USER; DELETE FROM issued_letters WHERE issued_at >= '${T0}'; ALTER TABLE issued_letters ENABLE TRIGGER USER`);
-  await sql(`DELETE FROM notifications WHERE created_at >= $1`, [T0]);
+  await sql(`ALTER TABLE issued_letters DISABLE TRIGGER USER; DELETE FROM issued_letters WHERE issued_at >= '${TEST_START_TIME}'; ALTER TABLE issued_letters ENABLE TRIGGER USER`);
+  await sql(`DELETE FROM notifications WHERE created_at >= $1`, [TEST_START_TIME]);
 }
 
 test.describe("HR letters", () => {
@@ -68,11 +68,11 @@ test.describe("HR letters", () => {
     await expect(offer).toHaveAttribute("disabled", "");
 
     // and the API refuses it as well
-    const [x] = await sql<{ t: string; e: string }>(
-      `SELECT t.id AS t, e.id AS e FROM letter_templates t JOIN employees e ON e.business_id = t.business_id WHERE t.name = 'Offer letter' AND e.code = 'JC-072'`);
-    const r = await page.request.post("/api/letters", { data: { templateId: x.t, employeeId: x.e }, headers: ORIGIN });
-    expect(r.status()).toBe(403);
-    const issued = await sql(`SELECT 1 FROM issued_letters WHERE template_name = 'Offer letter' AND issued_at >= $1`, [T0]);
+    const [ids] = await sql<{ templateId: string; employeeId: string }>(
+      `SELECT t.id AS "templateId", e.id AS "employeeId" FROM letter_templates t JOIN employees e ON e.business_id = t.business_id WHERE t.name = 'Offer letter' AND e.code = 'JC-072'`);
+    const response = await page.request.post("/api/letters", { data: { templateId: ids.templateId, employeeId: ids.employeeId }, headers: ORIGIN });
+    expect(response.status()).toBe(403);
+    const issued = await sql(`SELECT 1 FROM issued_letters WHERE template_name = 'Offer letter' AND issued_at >= $1`, [TEST_START_TIME]);
     expect(issued).toHaveLength(0);
   });
 

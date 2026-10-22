@@ -15,7 +15,7 @@ export default function ProofsPage() {
 
   return (
     <div className="col">
-      <PageHeader eyebrow={t("Finance · Old-regime declarations")} title={t("Investment")} em={t("proofs")} sub={t("Verify what employees declared. Approved amounts reduce their TDS from the next payroll.")} />
+      <PageHeader eyebrow={t("Finance · Old-regime declarations")} title={t("Investment")} emphasis={t("proofs")} sub={t("Verify what employees declared. Approved amounts reduce their TDS from the next payroll.")} />
       <div className="toolbar enter" style={{ ["--i" as string]: 1 }}>
         <SearchBox placeholder={t("Search name, ID or department")} label={t("Search proofs")} />
         <SegmentedFilter name="status" dflt="All" label={t("Status")} options={[{ value: "All", label: t("All") }, { value: "Pending", label: t("To verify") }, { value: "Verified", label: t("Verified") }]} />
@@ -27,21 +27,21 @@ export default function ProofsPage() {
             <table className="t">
               <thead>
                 <tr>
-                  <SortableHeader k="name" dflt="pend" dfltDir="desc">{t("Employee")}</SortableHeader>
-                  <SortableHeader k="reg" dflt="pend" dfltDir="desc">{t("Regime")}</SortableHeader>
-                  <SortableHeader k="dec" dflt="pend" dfltDir="desc" right>{t("Declared")}</SortableHeader>
-                  <SortableHeader k="pend" dflt="pend" dfltDir="desc">{t("Status")}</SortableHeader>
+                  <SortableHeader sortKey="name" dflt="pending" dfltDir="desc">{t("Employee")}</SortableHeader>
+                  <SortableHeader sortKey="regime" dflt="pending" dfltDir="desc">{t("Regime")}</SortableHeader>
+                  <SortableHeader sortKey="declared" dflt="pending" dfltDir="desc" right>{t("Declared")}</SortableHeader>
+                  <SortableHeader sortKey="pending" dflt="pending" dfltDir="desc">{t("Status")}</SortableHeader>
                   <th><span className="sr-only">{t("Actions")}</span></th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r, i) => (
-                  <tr key={r.id} style={{ animationDelay: `${i * 40}ms` }}>
-                    <td><div className="person"><Avatar id={r.id} name={r.name} photo={r.photo} /><div><b>{r.name}</b><small>{r.code} · {r.department}</small></div></div></td>
-                    <td><span className={`chip nodot ${r.regime === "OLD" ? "info" : "gold"}`}>{r.regime === "OLD" ? t("Old") : t("New")}</span></td>
-                    <td className="r num">{formatRupees(r.declared)}</td>
-                    <td>{r.pending ? <span className="chip warn">{t("{n} to verify", { n: r.pending })}</span> : r.approved ? <span className="chip ok">{t("Verified")}</span> : <span className="chip neutral">{t("Nothing submitted")}</span>}</td>
-                    <td className="r"><ReviewButton employeeId={r.id} name={r.name} gold={r.pending > 0} /></td>
+                {rows.map((row, i) => (
+                  <tr key={row.id} style={{ animationDelay: `${i * 40}ms` }}>
+                    <td><div className="person"><Avatar id={row.id} name={row.name} photo={row.photo} /><div><b>{row.name}</b><small>{row.code} · {row.department}</small></div></div></td>
+                    <td><span className={`chip nodot ${row.regime === "OLD" ? "info" : "gold"}`}>{row.regime === "OLD" ? t("Old") : t("New")}</span></td>
+                    <td className="r num">{formatRupees(row.declared)}</td>
+                    <td>{row.pending ? <span className="chip warn">{t("{n} to verify", { n: row.pending })}</span> : row.approved ? <span className="chip ok">{t("Verified")}</span> : <span className="chip neutral">{t("Nothing submitted")}</span>}</td>
+                    <td className="r"><ReviewButton employeeId={row.id} name={row.name} gold={row.pending > 0} /></td>
                   </tr>
                 ))}
               </tbody>

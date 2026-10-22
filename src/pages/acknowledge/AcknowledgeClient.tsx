@@ -18,8 +18,8 @@ export function AcknowledgeClient({ policy, left, name }: { policy: PolicyToRead
   const [err, setErr] = useState("");
   const [busy, start] = useTransition();
   const accept = () => start(async () => {
-    const r = await acknowledgePolicy(policy.id, policy.version);
-    if (r.ok) { toast(r.msg!); setAgree(false); router.refresh(); } else { setErr(r.error); router.refresh(); }
+    const result = await acknowledgePolicy(policy.id, policy.version);
+    if (result.ok) { toast(result.message!); setAgree(false); router.refresh(); } else { setErr(result.error); router.refresh(); }
   });
 
   return (
@@ -34,7 +34,7 @@ export function AcknowledgeClient({ policy, left, name }: { policy: PolicyToRead
           {policy.body ? <PolicyText body={policy.body} /> : <p className="muted">{t("This policy is in the attached PDF.")}</p>}
           {policy.fileName && (
             <a className="btn btn-sm" style={{ marginTop: 12 }} href={`/api/policies/${policy.id}/versions/${policy.version}/file`} target="_blank" rel="noopener">
-              <Icon n="doc" s={14} />{t("Open {file}", { file: policy.fileName })}
+              <Icon name="doc" size={14} />{t("Open {file}", { file: policy.fileName })}
             </a>
           )}
         </div>
@@ -46,7 +46,7 @@ export function AcknowledgeClient({ policy, left, name }: { policy: PolicyToRead
           {err && <div className="err" role="alert">{err}</div>}
           <div style={{ display: "flex", gap: 8, justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
             <small className="muted">{t("Your acceptance is recorded with the date, time and your device for the company's records.")}</small>
-            <button className="btn btn-gold" disabled={!agree || busy} onClick={accept}><Icon n="check" s={15} />{busy ? t("Saving…") : t("I accept")}</button>
+            <button className="btn btn-gold" disabled={!agree || busy} onClick={accept}><Icon name="check" size={15} />{busy ? t("Saving…") : t("I accept")}</button>
           </div>
         </footer>
       </section>

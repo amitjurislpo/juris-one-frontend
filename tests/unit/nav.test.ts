@@ -3,7 +3,7 @@ import { landingFor, NAV, navAllowed } from "@/lib/nav";
 import { PERMISSION_KEYS, SALARY_PERMISSIONS } from "@/lib/permissions";
 
 const set = (...p: string[]) => new Set(p);
-const visible = (perms: Set<string>, reports = false) => NAV.filter((n) => navAllowed(n, perms, reports)).map((n) => n.id);
+const visible = (perms: Set<string>, reports = false) => NAV.filter((item) => navAllowed(item, perms, reports)).map((item) => item.id);
 
 const ADMIN = set(...PERMISSION_KEYS.filter((p) => p !== "self"));
 const HR_MANAGER = set("self", "dir", "att.all", "appr.leave", "appr.reg", "people.view", "people.add", "access.toggle", "dept.manage", "holidays.manage");
@@ -18,15 +18,15 @@ describe("navigation access", () => {
   });
 
   it("gives Admin no self-service pages", () => {
-    const v = visible(ADMIN);
-    for (const id of ["home", "attendance", "leave", "payslips", "declare"]) expect(v).not.toContain(id);
-    expect(v).toContain("roles");
+    const visibleIds = visible(ADMIN);
+    for (const id of ["home", "attendance", "leave", "payslips", "declare"]) expect(visibleIds).not.toContain(id);
+    expect(visibleIds).toContain("roles");
   });
 
   it("never shows finance pages to HR", () => {
-    const v = visible(HR_MANAGER);
-    for (const id of ["payroll", "structures", "tax", "proofs"]) expect(v).not.toContain(id);
-    for (const p of SALARY_PERMISSIONS) expect(HR_MANAGER.has(p)).toBe(false);
+    const visibleIds = visible(HR_MANAGER);
+    for (const id of ["payroll", "structures", "tax", "proofs"]) expect(visibleIds).not.toContain(id);
+    for (const permission of SALARY_PERMISSIONS) expect(HR_MANAGER.has(permission)).toBe(false);
   });
 
   it("shows My team only with active direct reports", () => {
@@ -35,10 +35,10 @@ describe("navigation access", () => {
   });
 
   it("lets Finance Executive approve regularizations but not leave", () => {
-    const v = visible(FIN_EXEC);
-    expect(v).toContain("approvals");
-    expect(v).toContain("payroll");
-    expect(v).not.toContain("register");
+    const visibleIds = visible(FIN_EXEC);
+    expect(visibleIds).toContain("approvals");
+    expect(visibleIds).toContain("payroll");
+    expect(visibleIds).not.toContain("register");
   });
 
   it("shows My letters to everyone with self; HR letters only to those who manage them", () => {
