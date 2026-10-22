@@ -18,7 +18,7 @@ export default function LettersPage() {
 
   return (
     <div className="col">
-      <PageHeader eyebrow={t("People ops")} title={t("HR")} em={t("letters")}
+      <PageHeader eyebrow={t("People ops")} title={t("HR")} emphasis={t("letters")}
         sub={t("Pick a template and an employee. The letter gets a reference number, a PDF and a permanent record, and the employee finds it under My letters. Letters that state a salary can only be issued by someone who manages salary structures.")} />
       <IssueLetter templates={templates} employees={employees} canSalary={can(user, "struct.manage")} />
       <TemplatesTable templates={templates} fields={meta.fields} />
@@ -29,14 +29,14 @@ export default function LettersPage() {
           <table className="t">
             <thead><tr><th>{t("Reference")}</th><th>{t("Employee")}</th><th className="hide-sm">{t("Letter")}</th><th className="hide-sm">{t("Issued")}</th><th></th></tr></thead>
             <tbody>
-              {issued.map((l) => (
-                <tr key={l.id}>
-                  <td className="mono" style={{ fontSize: 12.5 }}>{l.reference}</td>
-                  <td><b>{l.employeeName}</b> <span className="muted mono" style={{ fontSize: 12 }}>{l.employeeCode}</span></td>
-                  <td className="muted hide-sm">{t(TYPE_LABEL[l.type])}{l.needsSalary && <span className="chip warn nodot" style={{ marginLeft: 6 }}>{t("States salary")}</span>}</td>
-                  <td className="muted hide-sm">{formatDayMonthYear(isoDateIn(l.issuedAt, user.timeZone))} · {l.issuedBy}</td>
+              {issued.map((letter) => (
+                <tr key={letter.id}>
+                  <td className="mono" style={{ fontSize: 12.5 }}>{letter.reference}</td>
+                  <td><b>{letter.employeeName}</b> <span className="muted mono" style={{ fontSize: 12 }}>{letter.employeeCode}</span></td>
+                  <td className="muted hide-sm">{t(TYPE_LABEL[letter.type])}{letter.needsSalary && <span className="chip warn nodot" style={{ marginLeft: 6 }}>{t("States salary")}</span>}</td>
+                  <td className="muted hide-sm">{formatDayMonthYear(isoDateIn(letter.issuedAt, user.timeZone))} · {letter.issuedBy}</td>
                   <td className="r">
-                    {l.canOpen ? <a className="btn btn-sm" href={`/api/letters/${l.id}/pdf`} download><Icon n="download" s={14} />{t("PDF")}</a>
+                    {letter.canOpen ? <a className="btn btn-sm" href={`/api/letters/${letter.id}/pdf`} download><Icon name="download" size={14} />{t("PDF")}</a>
                       : <span className="faint" style={{ fontSize: 12 }}>{t("Salary letter")}</span>}
                   </td>
                 </tr>

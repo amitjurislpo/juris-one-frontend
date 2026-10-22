@@ -8,8 +8,8 @@ import { PHONE_COUNTRIES, phoneCountry, phoneDigits } from "@/lib/phone";
 const FLAGS: Record<string, FlagComponent> = { AE, AU, BD, FR, GB, IE, IN, JP, LK, NP, QA, SA, SG, US, ZA };
 
 function Flag({ iso }: { iso: string }) {
-  const F = FLAGS[iso];
-  return F ? <F aria-hidden="true" style={{ width: 20, height: 14, borderRadius: 2, flex: "none", boxShadow: "0 0 0 1px var(--line)" }} /> : null;
+  const FlagIcon = FLAGS[iso];
+  return FlagIcon ? <FlagIcon aria-hidden="true" style={{ width: 20, height: 14, borderRadius: 2, flex: "none", boxShadow: "0 0 0 1px var(--line)" }} /> : null;
 }
 
 /**
@@ -27,7 +27,7 @@ export function PhoneInput({ code, number, onChange, placeholder, disabled, id, 
   const current = phoneCountry(code) ?? PHONE_COUNTRIES[0];
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
-  const [up, setUp] = useState(false); // open upwards when the dialog / page has no room below
+  const [opensUpwards, setOpensUpwards] = useState(false); // open upwards when the dialog / page has no room below
   const wrap = useRef<HTMLSpanElement>(null);
   const list = useRef<HTMLUListElement>(null);
   const listId = useId();
@@ -43,8 +43,8 @@ export function PhoneInput({ code, number, onChange, placeholder, disabled, id, 
   }, [open, active]);
 
   const choose = (i: number) => {
-    const c = PHONE_COUNTRIES[i];
-    onChange(c.code, number.replace(/\D/g, "").slice(0, c.digits));
+    const country = PHONE_COUNTRIES[i];
+    onChange(country.code, number.replace(/\D/g, "").slice(0, country.digits));
     setOpen(false);
   };
   const openAt = () => {
@@ -52,12 +52,12 @@ export function PhoneInput({ code, number, onChange, placeholder, disabled, id, 
     // the nearest scrolling box (a dialog body) clips the list: flip it when there's more room above
     const btn = wrap.current!.getBoundingClientRect();
     let box: DOMRect = new DOMRect(0, 0, window.innerWidth, window.innerHeight);
-    for (let el = wrap.current!.parentElement; el; el = el.parentElement) {
-      const o = getComputedStyle(el).overflowY;
-      if (o === "auto" || o === "scroll" || o === "hidden") { box = el.getBoundingClientRect(); break; }
+    for (let ancestor = wrap.current!.parentElement; ancestor; ancestor = ancestor.parentElement) {
+      const overflowY = getComputedStyle(ancestor).overflowY;
+      if (overflowY === "auto" || overflowY === "scroll" || overflowY === "hidden") { box = ancestor.getBoundingClientRect(); break; }
     }
     const below = box.bottom - btn.bottom, above = btn.top - box.top;
-    setUp(below < 270 && above > below);
+    setOpensUpwards(below < 270 && above > below);
     setOpen(true);
   };
   const onKey = (e: React.KeyboardEvent) => {
@@ -66,7 +66,7 @@ export function PhoneInput({ code, number, onChange, placeholder, disabled, id, 
       return;
     }
     if (e.key === "Escape") { e.preventDefault(); setOpen(false); }
-    else if (e.key === "ArrowDown") { e.preventDefault(); setActive((a) => Math.min(PHONE_COUNTRIES.length - 1, a + 1)); }
+    else if (e.key === "ArrowDown") { e.preventDefault(); setActive((activeIndex) => Math.min(PHONE_COUNTRIES.length - 1, activeIndex + 1)); }
     else if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => Math.max(0, a - 1)); }
     else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); choose(active); }
     else if (e.key === "Tab") setOpen(false);
@@ -84,11 +84,11 @@ export function PhoneInput({ code, number, onChange, placeholder, disabled, id, 
         <Flag iso={current.iso} /><span>{current.code}</span><span aria-hidden="true" style={{ fontSize: 10, opacity: 0.6 }}>▾</span>
       </button>
       {open && (
-        <ul ref={list} id={listId} role="listbox" aria-label={t("Country code")} className={`phone-cc-list${up ? " up" : ""}`}>
-          {PHONE_COUNTRIES.map((c, i) => (
-            <li key={c.code} id={`${listId}-${i}`} data-i={i} role="option" aria-selected={c.code === current.code}
+        <ul ref={list} id={listId} role="listbox" aria-label={t("Country code")} className={`phone-cc-list${opensUpwards ? " up" : ""}`}>
+          {PHONE_COUNTRIES.map((listedCountry, i) => (
+            <li key={listedCountry.code} id={`${listId}-${i}`} data-i={i} role="option" aria-selected={listedCountry.code === current.code}
               className={i === active ? "on" : undefined} onMouseEnter={() => setActive(i)} onMouseDown={(e) => { e.preventDefault(); choose(i); }}>
-              <Flag iso={c.iso} /><span style={{ flex: 1 }}>{c.name}</span><span className="muted">{c.code}</span>
+              <Flag iso={listedCountry.iso} /><span style={{ flex: 1 }}>{listedCountry.name}</span><span className="muted">{listedCountry.code}</span>
             </li>
           ))}
         </ul>

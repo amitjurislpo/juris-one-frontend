@@ -1,5 +1,5 @@
-/** Hindi for the fixed messages the API sends back (errors and success notices). Merged into `hi`; the English text is the key. */
-export const hiApi: Record<string, string> = {
+/** Hindi for the fixed messages the API sends back (errors and success notices). Merged into `hindiMessages`; the English text is the key. */
+export const hindiApiMessages: Record<string, string> = {
   "Roles are set up for your business by JurisOne.": "आपके बिज़नेस के रोल ज्यूरिसवन द्वारा तय किए जाते हैं।",
   "Earned leave isn't available during probation. Choose another leave type.": "परिवीक्षा अवधि के दौरान अर्जित अवकाश उपलब्ध नहीं है। कोई दूसरा अवकाश प्रकार चुनें।",
   "A newer version of this policy has been published. Please read it before accepting.": "इस नीति का नया संस्करण प्रकाशित हो चुका है। स्वीकार करने से पहले कृपया उसे पढ़ें।",

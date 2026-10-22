@@ -6,15 +6,15 @@ import { PageLoading, useData, usePage } from "@/lib/page";
 /** Juris Track — only for businesses with the module (plan or grant); everyone else gets a 404. */
 export default function JurisTrackPage() {
   const { t } = usePage();
-  const jt = useData<{ module: string; status: string }>("/api/juris-track");
-  if (!jt) return <PageLoading />;
+  const jurisTrack = useData<{ module: string; status: string }>("/api/juris-track");
+  if (!jurisTrack) return <PageLoading />;
 
   return (
     <div className="col">
       <PageHeader eyebrow={t("Juris Track")} title={<>{t("Juris Track")}</>} sub={t("Included in your JurisOne subscription.")} />
       <section className="card enter" style={{ ["--i" as string]: 1, padding: "48px 28px", textAlign: "center" }}>
         <span style={{ width: 56, height: 56, margin: "0 auto 16px", background: "var(--accentsoft)", color: "var(--accent)", display: "grid", placeItems: "center", borderRadius: 14 }}>
-          <Icon n="sparkle" s={26} />
+          <Icon name="sparkle" size={26} />
         </span>
         <span className="chip gold nodot" style={{ marginBottom: 12 }}>{t("Coming soon")}</span>
         <h2 className="display" style={{ fontSize: 34, margin: "0 0 10px" }}>{t("Something new is on its way")}</h2>

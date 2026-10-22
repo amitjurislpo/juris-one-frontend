@@ -59,9 +59,9 @@ export interface PayView {
 /** The immutable payslip stored when a payroll month closes (paise). */
 export interface PayslipSnapshot {
   version: 1;
-  ym: string;
+  month: string;
   company: { name: string; address: string };
-  employee: { code: string; name: string; designation: string; department: string; doj: string; panLast4: string | null; uanLast4: string | null; bankName: string | null; bankLast4: string | null };
+  employee: { code: string; name: string; designation: string; department: string; dateOfJoining: string; panLast4: string | null; uanLast4: string | null; bankName: string | null; bankLast4: string | null };
   regime: "NEW" | "OLD";
   payDate: string;
   attendance: { daysInMonth: number; eligibleDays: number; weeklyOffs: number; holidays: number; present: number; lopDays: number; paidDays: number };
@@ -101,8 +101,8 @@ export interface TaxProjection {
 
 /** A policy setting as stored (defaults merged with saved values). */
 type SettingKey = keyof typeof DEFAULT_SETTINGS;
-type Widen<T> = T extends readonly (infer U)[] ? Widen<U>[] : T extends object ? { -readonly [K in keyof T]: Widen<T[K]> } : T extends string ? string : T extends number ? number : T;
-export type SettingValue<K extends SettingKey> = Widen<(typeof DEFAULT_SETTINGS)[K]>;
+type Widen<T> = T extends readonly (infer Element)[] ? Widen<Element>[] : T extends object ? { -readonly [Key in keyof T]: Widen<T[Key]> } : T extends string ? string : T extends number ? number : T;
+export type SettingValue<Key extends SettingKey> = Widen<(typeof DEFAULT_SETTINGS)[Key]>;
 
 /** A business's subscription today (from the API). `daysLeft`: whole days until the end date (0 = ends today). */
 export interface SubscriptionCurrent {
@@ -177,15 +177,15 @@ export interface PolicyToRead {
   body: string;
   fileName: string | null;
   publishedAt: string;
-  requiresAck?: boolean;
+  requiresAcknowledgement?: boolean;
   acknowledgedAt?: string | null;
 }
 
 /** A policy as HR / the owner manage it: the draft, its published versions and who accepted the current one. */
 export interface PolicyDetail {
-  id: string; title: string; body: string; fileName: string | null; requiresAck: boolean; status: "DRAFT" | "PUBLISHED" | "ARCHIVED"; version: number;
+  id: string; title: string; body: string; fileName: string | null; requiresAcknowledgement: boolean; status: "DRAFT" | "PUBLISHED" | "ARCHIVED"; version: number;
   updatedAt: string; hasChanges: boolean;
-  versions: { versionId: string; version: number; title: string; publishedAt: string; publishedBy: string | null; fileName: string | null; requiresAck: boolean;
+  versions: { versionId: string; version: number; title: string; publishedAt: string; publishedBy: string | null; fileName: string | null; requiresAcknowledgement: boolean;
     bodySha256: string; fileSha256: string | null; acknowledgements: number }[];
   people: { code: string; name: string; department: string | null; acknowledgedAt: string | null; lastVersion: number | null }[];
 }

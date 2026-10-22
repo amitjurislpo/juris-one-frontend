@@ -6,12 +6,12 @@ import type { ActionResult } from "@/lib/action";
 const enc = encodeURIComponent;
 const PAGES = ["/roles", "/settings"];
 
-export async function setPermission(roleId: string, perm: string, on: boolean): Promise<ActionResult> {
-  return apiAction(on ? "PUT" : "DELETE", `/api/roles/${enc(roleId)}/permissions/${enc(perm)}`, undefined, PAGES);
+export async function setPermission(roleId: string, perm: string, isGranted: boolean): Promise<ActionResult> {
+  return apiAction(isGranted ? "PUT" : "DELETE", `/api/roles/${enc(roleId)}/permissions/${enc(perm)}`, undefined, PAGES);
 }
 
-export async function setAssignable(roleId: string, assignableRoleId: string, on: boolean): Promise<ActionResult> {
-  return apiAction(on ? "PUT" : "DELETE", `/api/roles/${enc(roleId)}/assignable-roles/${enc(assignableRoleId)}`, undefined, PAGES);
+export async function setAssignable(roleId: string, assignableRoleId: string, isAssignable: boolean): Promise<ActionResult> {
+  return apiAction(isAssignable ? "PUT" : "DELETE", `/api/roles/${enc(roleId)}/assignable-roles/${enc(assignableRoleId)}`, undefined, PAGES);
 }
 
 export async function createRole(input: { name: string; fromRoleId: string }): Promise<ActionResult<{ id: string }>> {

@@ -33,7 +33,7 @@ test.describe("email code sign-in", () => {
     await openLogin(page);
     await requestCode(page, await emailOf("JC-049"));
     await expect(page.getByText("n•••")).toBeVisible(); // the address is masked
-    for (let n = 1; n <= 6; n++) await expect(box(page, n)).toBeVisible();
+    for (let boxNumber = 1; boxNumber <= 6; boxNumber++) await expect(box(page, boxNumber)).toBeVisible();
     await expect(box(page, 1)).toBeFocused();
     await expect(page.getByRole("note")).toContainText(OTP); // only the dev environment shows the fixed code
     await expect(page.getByRole("button", { name: /Resend code in \d+s/ })).toBeDisabled(); // 30-second timer

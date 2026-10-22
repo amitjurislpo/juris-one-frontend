@@ -20,10 +20,10 @@ export default function StructuresPage() {
 
   return (
     <div className="col">
-      <PageHeader eyebrow={t("Finance · Compensation")} title={t("Salary")} em={t("structures")} sub={t("Set a breakup once. Payroll and TDS use it every month until you add a revision (appraisal or change).")} />
+      <PageHeader eyebrow={t("Finance · Compensation")} title={t("Salary")} emphasis={t("structures")} sub={t("Set a breakup once. Payroll and TDS use it every month until you add a revision (appraisal or change).")} />
       <div className="toolbar enter" style={{ ["--i" as string]: 1 }}>
         <SearchBox placeholder={t("Search name, ID or designation")} label={t("Search structures")} />
-        <SelectFilter name="departmentId" label={t("Department")} dflt="All" options={[{ value: "All", label: t("All") }, ...departments.map((d) => ({ value: d.id, label: d.name }))]} />
+        <SelectFilter name="departmentId" label={t("Department")} dflt="All" options={[{ value: "All", label: t("All") }, ...departments.map((department) => ({ value: department.id, label: department.name }))]} />
         <SegmentedFilter name="structureStatus" dflt="All" label={t("Structure")} options={[{ value: "All", label: t("All") }, { value: "Set", label: t("Set up") }, { value: "Missing", label: t("Not set") }]} />
         <span className="tcount">{t("{a} of {b}", { a: rows.length, b: all.length })}</span>
       </div>
@@ -33,28 +33,28 @@ export default function StructuresPage() {
             <table className="t">
               <thead>
                 <tr>
-                  <SortableHeader k="name" dflt="name">{t("Employee")}</SortableHeader>
-                  <SortableHeader k="basic" dflt="name" right>{t("Basic")}</SortableHeader>
+                  <SortableHeader sortKey="name" dflt="name">{t("Employee")}</SortableHeader>
+                  <SortableHeader sortKey="basic" dflt="name" right>{t("Basic")}</SortableHeader>
                   <th className="r">{t("HRA")}</th><th className="r">{t("LTA")}</th><th className="r">{t("Special")}</th>
-                  <SortableHeader k="gross" dflt="name" right>{t("Monthly gross")}</SortableHeader>
-                  <SortableHeader k="since" dflt="name">{t("Effective from")}</SortableHeader>
+                  <SortableHeader sortKey="gross" dflt="name" right>{t("Monthly gross")}</SortableHeader>
+                  <SortableHeader sortKey="since" dflt="name">{t("Effective from")}</SortableHeader>
                   <th><span className="sr-only">{t("Actions")}</span></th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r, i) => (
-                  <tr key={r.id} style={{ animationDelay: `${i * 35}ms` }}>
-                    <td><div className="person"><Avatar id={r.id} name={r.name} photo={r.photo} /><div><b>{r.name}</b><small>{r.code} · {r.title}</small></div></div></td>
-                    {r.current ? (
+                {rows.map((row, i) => (
+                  <tr key={row.id} style={{ animationDelay: `${i * 35}ms` }}>
+                    <td><div className="person"><Avatar id={row.id} name={row.name} photo={row.photo} /><div><b>{row.name}</b><small>{row.code} · {row.title}</small></div></div></td>
+                    {row.current ? (
                       <>
-                        <td className="r num muted">{formatRupees(r.current.basic)}</td><td className="r num muted">{formatRupees(r.current.hra)}</td><td className="r num muted">{formatRupees(r.current.lta)}</td><td className="r num muted">{formatRupees(r.current.special)}</td>
-                        <td className="r num" style={{ fontWeight: 600 }}>{formatRupees(r.gross)}</td>
-                        <td><span className="muted">{formatDayMonthYear(r.current.from)}</span>{r.revisions.length > 1 && <HistoryButton name={r.name} revs={r.revisions} today={today} />}</td>
+                        <td className="r num muted">{formatRupees(row.current.basic)}</td><td className="r num muted">{formatRupees(row.current.hra)}</td><td className="r num muted">{formatRupees(row.current.lta)}</td><td className="r num muted">{formatRupees(row.current.special)}</td>
+                        <td className="r num" style={{ fontWeight: 600 }}>{formatRupees(row.gross)}</td>
+                        <td><span className="muted">{formatDayMonthYear(row.current.from)}</span>{row.revisions.length > 1 && <HistoryButton name={row.name} revs={row.revisions} today={today} />}</td>
                       </>
                     ) : (
                       <><td colSpan={5}><span className="chip warn">{t("Not set — needed before payroll")}</span></td><td></td></>
                     )}
-                    <td className="r"><StructureButton emp={{ id: r.id, code: r.code, name: r.name, title: r.title, dateOfJoining: r.dateOfJoining }} current={r.current} minFrom={minFrom > r.dateOfJoining ? minFrom : r.dateOfJoining} /></td>
+                    <td className="r"><StructureButton emp={{ id: row.id, code: row.code, name: row.name, title: row.title, dateOfJoining: row.dateOfJoining }} current={row.current} minFrom={minFrom > row.dateOfJoining ? minFrom : row.dateOfJoining} /></td>
                   </tr>
                 ))}
               </tbody>

@@ -7,7 +7,7 @@ import { NewPolicyButton } from "./PoliciesClient";
 
 
 interface Row {
-  id: string; title: string; status: "DRAFT" | "PUBLISHED" | "ARCHIVED"; version: number; requiresAck: boolean; updatedAt: string; publishedAt: string | null;
+  id: string; title: string; status: "DRAFT" | "PUBLISHED" | "ARCHIVED"; version: number; requiresAcknowledgement: boolean; updatedAt: string; publishedAt: string | null;
   hasChanges: boolean; acknowledged: number; required: number;
 }
 
@@ -32,21 +32,21 @@ export default function PoliciesPage() {
           <table className="t">
             <thead><tr><th>{t("Policy")}</th><th>{t("Status")}</th><th>{t("Version")}</th><th>{t("Accepted")}</th><th className="hide-sm">{t("Last change")}</th></tr></thead>
             <tbody>
-              {rows.map((r) => (
-                <tr key={r.id}>
+              {rows.map((row) => (
+                <tr key={row.id}>
                   <td>
-                    <Link href={`/policies/${r.id}`} className="person" style={{ textDecoration: "none", color: "inherit" }}>
-                      <span className="kpi-ico" style={{ width: 34, height: 34, background: "var(--accentsoft)", color: "var(--accent)" }}><Icon n="book" s={16} /></span>
-                      <div><b>{r.title}</b><small>{r.requiresAck ? t("Must be accepted") : t("For information")}</small></div>
+                    <Link href={`/policies/${row.id}`} className="person" style={{ textDecoration: "none", color: "inherit" }}>
+                      <span className="kpi-ico" style={{ width: 34, height: 34, background: "var(--accentsoft)", color: "var(--accent)" }}><Icon name="book" size={16} /></span>
+                      <div><b>{row.title}</b><small>{row.requiresAcknowledgement ? t("Must be accepted") : t("For information")}</small></div>
                     </Link>
                   </td>
                   <td>
-                    <span className={`chip ${STATUS[r.status].cls}`}>{t(STATUS[r.status].text)}</span>
-                    {r.status !== "DRAFT" && r.hasChanges && <span className="chip warn nodot" style={{ marginLeft: 6 }}>{t("Unpublished changes")}</span>}
+                    <span className={`chip ${STATUS[row.status].cls}`}>{t(STATUS[row.status].text)}</span>
+                    {row.status !== "DRAFT" && row.hasChanges && <span className="chip warn nodot" style={{ marginLeft: 6 }}>{t("Unpublished changes")}</span>}
                   </td>
-                  <td className="num">{r.version ? `v${r.version}` : "—"}</td>
-                  <td>{r.status === "PUBLISHED" && r.requiresAck ? <span className="num">{r.acknowledged} / {r.required}</span> : <span className="muted">—</span>}</td>
-                  <td className="muted hide-sm">{formatDayMonthYear(r.updatedAt.slice(0, 10))}</td>
+                  <td className="num">{row.version ? `v${row.version}` : "—"}</td>
+                  <td>{row.status === "PUBLISHED" && row.requiresAcknowledgement ? <span className="num">{row.acknowledged} / {row.required}</span> : <span className="muted">—</span>}</td>
+                  <td className="muted hide-sm">{formatDayMonthYear(row.updatedAt.slice(0, 10))}</td>
                 </tr>
               ))}
             </tbody>

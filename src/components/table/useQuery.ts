@@ -8,27 +8,27 @@ import { useNavigate, useSearchParams } from "react-router";
  */
 export function useQuery() {
   const navigate = useNavigate();
-  const [sp] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const pending = useIsFetching() > 0;
 
-  const get = useCallback((k: string, dflt = "") => sp.get(k) ?? dflt, [sp]);
+  const get = useCallback((parameterName: string, dflt = "") => searchParams.get(parameterName) ?? dflt, [searchParams]);
 
   const set = useCallback(
     (patch: Record<string, string | null>) => {
       // build from the browser's URL, not the router state: during a transition the state lags a change that was just made
       const next = new URLSearchParams(window.location.search);
-      for (const [k, v] of Object.entries(patch)) {
-        if (v === null || v === "") next.delete(k);
-        else next.set(k, v);
+      for (const [parameterName, parameterValue] of Object.entries(patch)) {
+        if (parameterValue === null || parameterValue === "") next.delete(parameterName);
+        else next.set(parameterName, parameterValue);
       }
       if (!("page" in patch)) next.delete("page");
-      const qs = next.toString();
+      const queryString = next.toString();
       // a transition keeps the current rows on screen until the new ones are loaded
       const path = window.location.pathname;
-      startTransition(() => { navigate(qs ? `${path}?${qs}` : path, { replace: true, preventScrollReset: true }); });
+      startTransition(() => { navigate(queryString ? `${path}?${queryString}` : path, { replace: true, preventScrollReset: true }); });
     },
     [navigate],
   );
 
-  return { get, set, pending, params: sp };
+  return { get, set, pending, params: searchParams };
 }

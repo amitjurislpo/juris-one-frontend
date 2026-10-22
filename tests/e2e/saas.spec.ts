@@ -15,10 +15,10 @@ const PDF = { name: "doc.pdf", mimeType: "application/pdf", buffer: Buffer.from(
 
 const toast = (page: Page) => page.locator(".toast").last();
 
-async function lastLink(to: string) {
-  await expect.poll(async () => (await sql("SELECT 1 FROM email_outbox WHERE \"to\" = $1", [to])).length, { timeout: 10_000 }).toBeGreaterThan(0);
-  const [m] = await sql<{ text: string }>("SELECT text FROM email_outbox WHERE \"to\" = $1 ORDER BY created_at DESC LIMIT 1", [to]);
-  const link = /\/onboard\/[A-Za-z0-9_-]+/.exec(m.text);
+async function lastLink(recipient: string) {
+  await expect.poll(async () => (await sql("SELECT 1 FROM email_outbox WHERE \"to\" = $1", [recipient])).length, { timeout: 10_000 }).toBeGreaterThan(0);
+  const [email] = await sql<{ text: string }>("SELECT text FROM email_outbox WHERE \"to\" = $1 ORDER BY created_at DESC LIMIT 1", [recipient]);
+  const link = /\/onboard\/[A-Za-z0-9_-]+/.exec(email.text);
   expect(link).not.toBeNull();
   return link![0];
 }
@@ -41,20 +41,20 @@ test.describe.serial("a business on JurisOne, end to end", () => {
     await login(page, ADMIN_EMAIL);
     await expectLanded(page, "/platform");
     await page.getByRole("button", { name: "New business" }).click();
-    const d = page.getByRole("dialog", { name: "New business" });
-    await d.getByLabel("Business name").fill(BUSINESS);
-    await d.getByLabel("Employee ID prefix").fill("EA");
+    const dialog = page.getByRole("dialog", { name: "New business" });
+    await dialog.getByLabel("Business name").fill(BUSINESS);
+    await dialog.getByLabel("Employee ID prefix").fill("EA");
     const [plan] = await sql<{ id: string }>("SELECT id::text FROM subscription_plans WHERE name = 'Standard'");
-    await d.getByRole("combobox", { name: /^Plan/ }).selectOption(plan.id);
-    await d.getByLabel("Name *", { exact: true }).fill("Esha Owner");
+    await dialog.getByRole("combobox", { name: /^Plan/ }).selectOption(plan.id);
+    await dialog.getByLabel("Name *", { exact: true }).fill("Esha Owner");
     // the phone takes the country's digits only, and must be complete
-    await d.getByLabel("Phone number", { exact: true }).fill("12345");
-    await d.getByRole("button", { name: "Create business" }).click();
-    await expect(d.getByText("India numbers have 10 digits")).toBeVisible();
-    await d.getByLabel("Phone number", { exact: true }).fill("98765432109999");
-    await expect(d.getByLabel("Phone number", { exact: true })).toHaveValue("9876543210");
-    await d.getByLabel(/Email \(signs in with it\)/).fill(OWNER_EMAIL);
-    await d.getByRole("button", { name: "Create business" }).click();
+    await dialog.getByLabel("Phone number", { exact: true }).fill("12345");
+    await dialog.getByRole("button", { name: "Create business" }).click();
+    await expect(dialog.getByText("India numbers have 10 digits")).toBeVisible();
+    await dialog.getByLabel("Phone number", { exact: true }).fill("98765432109999");
+    await expect(dialog.getByLabel("Phone number", { exact: true })).toHaveValue("9876543210");
+    await dialog.getByLabel(/Email \(signs in with it\)/).fill(OWNER_EMAIL);
+    await dialog.getByRole("button", { name: "Create business" }).click();
     await expect(page).toHaveURL(/\/platform\/[0-9a-f-]{36}$/);
     businessPath = new URL(page.url()).pathname;
     await expect(page.getByRole("heading", { name: BUSINESS })).toBeVisible();
@@ -62,9 +62,9 @@ test.describe.serial("a business on JurisOne, end to end", () => {
     await expect(page.getByText("Not in the plan. Grant it on its own")).toBeVisible();
 
     await page.getByRole("button", { name: "Grant Juris Track" }).click();
-    const g = page.getByRole("dialog", { name: "Grant Juris Track" });
-    await g.getByLabel("Notes").fill("Launch partner");
-    await g.getByRole("button", { name: "Grant", exact: true }).click();
+    const grantDialog = page.getByRole("dialog", { name: "Grant Juris Track" });
+    await grantDialog.getByLabel("Notes").fill("Launch partner");
+    await grantDialog.getByRole("button", { name: "Grant", exact: true }).click();
     await expect(toast(page)).toContainText("Juris Track granted");
     await expect(page.locator("tr", { hasText: "Launch partner" }).locator(".chip")).toHaveText("Active");
   });
@@ -95,11 +95,11 @@ test.describe.serial("a business on JurisOne, end to end", () => {
     await asOwner(page);
     await page.goto("/onboarding");
     await page.getByRole("button", { name: "New onboarding" }).click();
-    const d = page.getByRole("dialog", { name: "New onboarding" });
-    await d.getByLabel(/Candidate name/).fill("Riya Sen");
-    await d.getByLabel(/Personal email/).fill(CANDIDATE);
-    await d.getByLabel("Designation").fill("Associate");
-    await d.getByRole("button", { name: "Send link" }).click();
+    const dialog = page.getByRole("dialog", { name: "New onboarding" });
+    await dialog.getByLabel(/Candidate name/).fill("Riya Sen");
+    await dialog.getByLabel(/Personal email/).fill(CANDIDATE);
+    await dialog.getByLabel("Designation").fill("Associate");
+    await dialog.getByRole("button", { name: "Send link" }).click();
     await expect(page).toHaveURL(/\/onboarding\/[0-9a-f-]{36}$/);
     await expect(page.locator(".chip", { hasText: "Link sent" })).toBeVisible();
 
@@ -118,13 +118,13 @@ test.describe.serial("a business on JurisOne, end to end", () => {
     await page.getByRole("button", { name: "Mark verified" }).click();
     await expect(toast(page)).toContainText("Onboarding verified");
     await page.getByRole("button", { name: "Add employee" }).click();
-    const a = page.getByRole("dialog", { name: "Add employee" });
-    await a.getByLabel(/Work email/).fill(WORK_EMAIL);
-    await a.getByLabel(/Department/).selectOption({ label: "Human Resources" });
-    await a.getByLabel(/Role/).selectOption({ label: "Employee" });
-    await a.getByLabel(/Reporting manager/).selectOption({ index: 1 });
-    await a.getByLabel(/Joining date/).fill("2026-10-01");
-    await a.getByRole("button", { name: "Add employee" }).click();
+    const employeeDialog = page.getByRole("dialog", { name: "Add employee" });
+    await employeeDialog.getByLabel(/Work email/).fill(WORK_EMAIL);
+    await employeeDialog.getByLabel(/Department/).selectOption({ label: "Human Resources" });
+    await employeeDialog.getByLabel(/Role/).selectOption({ label: "Employee" });
+    await employeeDialog.getByLabel(/Reporting manager/).selectOption({ index: 1 });
+    await employeeDialog.getByLabel(/Joining date/).fill("2026-10-01");
+    await employeeDialog.getByRole("button", { name: "Add employee" }).click();
     await expect(toast(page)).toContainText("portal access is off until you turn it on");
     await expect(page.locator(".chip", { hasText: "Employee added" })).toBeVisible();
   });
@@ -206,28 +206,28 @@ test.describe.serial("a business on JurisOne, end to end", () => {
 
 async function candidateFillsIn(browser: Browser, link: string) {
   const ctx = await browser.newContext(); // signed out: the link is the only credential
-  const c = await ctx.newPage();
-  await c.goto(link);
-  await expect(c.getByRole("heading", { name: /Welcome, Riya/ })).toBeVisible();
-  await c.getByLabel("Father's name *").fill("Amit Sen");
-  await c.getByLabel("Date of birth *").fill("1996-04-02");
-  await c.getByLabel("Mobile number", { exact: true }).fill("9810011223");
-  await c.getByLabel("Current address *").fill("14 Park Street, Kolkata 700016");
-  await c.getByLabel("Bank *").fill("HDFC Bank");
-  await c.getByLabel("Account number *").fill("50100123456789");
-  await c.getByLabel("IFSC *").fill("HDFC0001234");
-  await c.getByLabel("Emergency contact *").fill("Amit Sen");
-  await c.getByLabel("Emergency contact phone", { exact: true }).fill("9810044556");
-  await c.getByRole("button", { name: "Save for later" }).click();
-  await expect(c.getByText("Saved. You can come back")).toBeVisible();
+  const candidatePage = await ctx.newPage();
+  await candidatePage.goto(link);
+  await expect(candidatePage.getByRole("heading", { name: /Welcome, Riya/ })).toBeVisible();
+  await candidatePage.getByLabel("Father's name *").fill("Amit Sen");
+  await candidatePage.getByLabel("Date of birth *").fill("1996-04-02");
+  await candidatePage.getByLabel("Mobile number", { exact: true }).fill("9810011223");
+  await candidatePage.getByLabel("Current address *").fill("14 Park Street, Kolkata 700016");
+  await candidatePage.getByLabel("Bank *").fill("HDFC Bank");
+  await candidatePage.getByLabel("Account number *").fill("50100123456789");
+  await candidatePage.getByLabel("IFSC *").fill("HDFC0001234");
+  await candidatePage.getByLabel("Emergency contact *").fill("Amit Sen");
+  await candidatePage.getByLabel("Emergency contact phone", { exact: true }).fill("9810044556");
+  await candidatePage.getByRole("button", { name: "Save for later" }).click();
+  await expect(candidatePage.getByText("Saved. You can come back")).toBeVisible();
   const kinds = ["ID_PROOF", "ADDRESS_PROOF", "PAN", "AADHAAR", "SALARY_SLIP", "SALARY_SLIP", "SALARY_SLIP"];
   for (const [i, kind] of kinds.entries()) {
-    await c.getByLabel("Document type").selectOption(kind);
-    await c.locator('input[type="file"]').setInputFiles(PDF);
-    await expect(c.locator("table.t tbody tr")).toHaveCount(i + 1); // wait for this upload before the next
+    await candidatePage.getByLabel("Document type").selectOption(kind);
+    await candidatePage.locator('input[type="file"]').setInputFiles(PDF);
+    await expect(candidatePage.locator("table.t tbody tr")).toHaveCount(i + 1); // wait for this upload before the next
   }
-  await c.getByRole("button", { name: "Submit to HR" }).click();
-  await expect(c.getByText("Thank you — your details were sent to HR")).toBeVisible();
-  await expect(c.getByText("Submitted.")).toBeVisible();
+  await candidatePage.getByRole("button", { name: "Submit to HR" }).click();
+  await expect(candidatePage.getByText("Thank you — your details were sent to HR")).toBeVisible();
+  await expect(candidatePage.getByText("Submitted.")).toBeVisible();
   await ctx.close();
 }

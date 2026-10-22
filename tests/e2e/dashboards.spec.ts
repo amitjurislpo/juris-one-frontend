@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { OWNER, expectLanded, login } from "./helpers";
 
-const h3 = (page: Page, name: string | RegExp) => page.getByRole("heading", { level: 3, name });
+const cardHeading = (page: Page, name: string | RegExp) => page.getByRole("heading", { level: 3, name });
 
 /** REQUIREMENTS §8 demo IDs → where they land and which Home cards they get (§5.12). */
 const ROLES: { id: string; who: string; cards: (string | RegExp)[]; not: (string | RegExp)[] }[] = [
@@ -15,14 +15,14 @@ const ROLES: { id: string; who: string; cards: (string | RegExp)[]; not: (string
 ];
 
 test.describe("home & overview for every demo role", () => {
-  for (const r of ROLES) {
-    test(`${r.who} (${r.id}) lands on Home with the right cards and no salary`, async ({ page }) => {
-      await login(page, r.id);
+  for (const role of ROLES) {
+    test(`${role.who} (${role.id}) lands on Home with the right cards and no salary`, async ({ page }) => {
+      await login(page, role.id);
       await expectLanded(page, "/home");
-      await expect(h3(page, "Attendance activity")).toBeVisible();
-      await expect(h3(page, "Upcoming holidays")).toBeVisible();
-      for (const c of r.cards) await expect(h3(page, c)).toBeVisible();
-      for (const c of r.not) await expect(h3(page, c)).toHaveCount(0);
+      await expect(cardHeading(page, "Attendance activity")).toBeVisible();
+      await expect(cardHeading(page, "Upcoming holidays")).toBeVisible();
+      for (const card of role.cards) await expect(cardHeading(page, card)).toBeVisible();
+      for (const hiddenCard of role.not) await expect(cardHeading(page, hiddenCard)).toHaveCount(0);
       // Salary is never shown on Home.
       await expect(page.locator("main")).not.toContainText("₹");
       // Admin-only pages stay closed.
@@ -38,7 +38,7 @@ test.describe("home & overview for every demo role", () => {
     await expectLanded(page, "/overview");
     await expect(page.getByText("Headcount")).toBeVisible();
     await expect(page.getByText("Checked in now")).toBeVisible();
-    for (const c of [/^Payroll ·/, "People by department", "HR queue", "Finance queue", "Shortcuts"]) await expect(h3(page, c)).toBeVisible();
+    for (const card of [/^Payroll ·/, "People by department", "HR queue", "Finance queue", "Shortcuts"]) await expect(cardHeading(page, card)).toBeVisible();
     await expect(page.getByText("net payout")).toBeVisible();
     // Admin has no attendance, leave or payslips of their own.
     await page.goto("/home");

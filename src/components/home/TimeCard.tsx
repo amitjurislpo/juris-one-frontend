@@ -19,7 +19,7 @@ export interface TimeCardProps {
 }
 
 /** Prototype check-in card: live timer, 9h progress track, punch log. */
-export function TimeCard(p: TimeCardProps) {
+export function TimeCard(card: TimeCardProps) {
   const router = useRouter();
   const toast = useToast();
   const readOnly = useReadOnly();
@@ -28,21 +28,21 @@ export function TimeCard(p: TimeCardProps) {
   useEffect(() => {
     const tick = () => setNow(Date.now());
     tick();
-    const t = setInterval(tick, 1000);
-    return () => clearInterval(t);
+    const intervalId = setInterval(tick, 1000);
+    return () => clearInterval(intervalId);
   }, []);
 
-  const liveMs = p.checkedIn && p.openSince && now ? Math.max(0, now - Date.parse(p.openSince)) : 0;
-  const secs = Math.floor(p.closedMinutes * 60 + liveMs / 1000);
-  const target = p.targetHours * 3600;
+  const liveMs = card.checkedIn && card.openSince && now ? Math.max(0, now - Date.parse(card.openSince)) : 0;
+  const secs = Math.floor(card.closedMinutes * 60 + liveMs / 1000);
+  const target = card.targetHours * 3600;
   const pct = Math.min(1, secs / target);
   const left = Math.max(0, target - secs);
 
-  const go = () =>
+  const punchNow = () =>
     start(async () => {
-      const r = await punch(p.checkedIn ? "OUT" : "IN");
-      if (r.ok) toast(r.msg!);
-      else toast(r.error, "bad");
+      const result = await punch(card.checkedIn ? "OUT" : "IN");
+      if (result.ok) toast(result.message!);
+      else toast(result.error, "bad");
       router.refresh();
     });
 
@@ -51,38 +51,38 @@ export function TimeCard(p: TimeCardProps) {
       <span className="spot"></span>
       <div className="aur"></div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, position: "relative" }}>
-        <div><span className="eyebrow">Today&apos;s shift</span><div style={{ fontWeight: 600, marginTop: 2 }}>{p.shiftText}</div></div>
-        <span className={`chip ${p.checkedIn ? "ok" : "neutral"}`}>{p.checkedIn ? "Checked in" : "Checked out"}</span>
+        <div><span className="eyebrow">Today&apos;s shift</span><div style={{ fontWeight: 600, marginTop: 2 }}>{card.shiftText}</div></div>
+        <span className={`chip ${card.checkedIn ? "ok" : "neutral"}`}>{card.checkedIn ? "Checked in" : "Checked out"}</span>
       </div>
       <div style={{ position: "relative" }}>
         <div className="bigtime" aria-label="Worked today" suppressHydrationWarning>
           {pad(Math.floor(secs / 3600))}<span>:</span>{pad(Math.floor((secs % 3600) / 60))}<span>:</span>{pad(secs % 60)}
         </div>
-        <div className="faint" style={{ marginTop: 6, fontSize: 13 }}>worked today · {Math.round(pct * 100)}% of a {p.targetHours}h shift</div>
+        <div className="faint" style={{ marginTop: 6, fontSize: 13 }}>worked today · {Math.round(pct * 100)}% of a {card.targetHours}h shift</div>
       </div>
       <div style={{ position: "relative" }}>
         <div className="shift-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(pct * 100)} aria-label="Shift progress">
           <div className="fill" style={{ width: `${pct * 100}%` }}></div>
           <div className="knob" style={{ left: `${pct * 100}%` }}></div>
         </div>
-        <div className="shift-ticks" style={{ marginTop: 10 }}>{p.ticks.map((t) => <span key={t}>{t}</span>)}</div>
+        <div className="shift-ticks" style={{ marginTop: 10 }}>{card.ticks.map((tickLabel) => <span key={tickLabel}>{tickLabel}</span>)}</div>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", position: "relative" }}>
         {!readOnly && (
           <div className="punch">
-            {!p.checkedIn && <span className="halo"></span>}
-            <button className="btn btn-gold btn-lg" style={{ minWidth: 160 }} disabled={busy} onClick={go}>
-              <Icon n={p.checkedIn ? "logout" : "sunrise"} s={16} />{busy ? "Saving…" : p.checkedIn ? "Check out" : "Check in"}
+            {!card.checkedIn && <span className="halo"></span>}
+            <button className="btn btn-gold btn-lg" style={{ minWidth: 160 }} disabled={busy} onClick={punchNow}>
+              <Icon name={card.checkedIn ? "logout" : "sunrise"} size={16} />{busy ? "Saving…" : card.checkedIn ? "Check out" : "Check in"}
             </button>
           </div>
         )}
         <span className="muted" style={{ fontSize: 13 }}>
-          {p.checkedIn ? (pct >= 1 ? "Shift target reached" : `${Math.floor(left / 3600)}h ${pad(Math.floor((left % 3600) / 60))}m left in your shift`) : "Not tracking right now"}
+          {card.checkedIn ? (pct >= 1 ? "Shift target reached" : `${Math.floor(left / 3600)}h ${pad(Math.floor((left % 3600) / 60))}m left in your shift`) : "Not tracking right now"}
         </span>
       </div>
-      {p.log.length > 0 && (
+      {card.log.length > 0 && (
         <div className="timeline" style={{ position: "relative" }}>
-          {p.log.map((e, i) => (
+          {card.log.map((e, i) => (
             <div className="t" key={i}><b>{e.time}</b><span>{e.label}</span><span className="faint" style={{ marginLeft: "auto", fontSize: 12.5 }}>{e.detail}</span></div>
           ))}
         </div>

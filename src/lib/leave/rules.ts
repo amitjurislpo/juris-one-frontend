@@ -6,14 +6,14 @@ import { addDays, weekdayOf } from "../attendance/engine";
 export type Part = "FULL" | "FIRST_HALF" | "SECOND_HALF";
 
 /** Working days in [from, to]: weekly offs and the employee's holidays are skipped (never counted as leave). */
-export function workingDays(from: string, to: string, weeklyOffs: number[], holidays: Map<string, string>) {
+export function workingDays(from: string, endDate: string, weeklyOffs: number[], holidays: Map<string, string>) {
   const dates: string[] = [];
   const skipped: { date: string; name: string }[] = [];
-  for (let d = from; d <= to; d = addDays(d, 1)) {
-    if (weeklyOffs.includes(weekdayOf(d))) continue;
-    const h = holidays.get(d);
-    if (h) { skipped.push({ date: d, name: h }); continue; }
-    dates.push(d);
+  for (let date = from; date <= endDate; date = addDays(date, 1)) {
+    if (weeklyOffs.includes(weekdayOf(date))) continue;
+    const holidayName = holidays.get(date);
+    if (holidayName) { skipped.push({ date, name: holidayName }); continue; }
+    dates.push(date);
   }
   return { dates, skipped };
 }
@@ -40,9 +40,9 @@ export function paidFractions(dates: string[], part: Part, paidDays: number): Ma
   const unit = dates.length === 1 && part !== "FULL" ? 0.5 : 1;
   const out = new Map<string, number>();
   let left = paidDays;
-  for (const d of dates) {
+  for (const date of dates) {
     const take = Math.min(unit, Math.max(0, left));
-    out.set(d, unit ? take / unit : 0);
+    out.set(date, unit ? take / unit : 0);
     left -= take;
   }
   return out;
@@ -51,10 +51,10 @@ export function paidFractions(dates: string[], part: Part, paidDays: number): Ma
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /** Monthly accrual, pro-rata in the joining month (and zero before it). */
-export function accrualFor(ym: string, dojIso: string, perMonth: number): number {
-  const [y, m] = ym.split("-").map(Number);
-  const dim = new Date(Date.UTC(y, m, 0)).getUTCDate();
-  const first = `${ym}-01`, last = `${ym}-${String(dim).padStart(2, "0")}`;
+export function accrualFor(month: string, dojIso: string, perMonth: number): number {
+  const [year, monthNumber] = month.split("-").map(Number);
+  const dim = new Date(Date.UTC(year, monthNumber, 0)).getUTCDate();
+  const first = `${month}-01`, last = `${month}-${String(dim).padStart(2, "0")}`;
   if (dojIso > last) return 0;
   if (dojIso <= first) return perMonth;
   const daysLeft = dim - Number(dojIso.slice(8)) + 1;
@@ -77,12 +77,12 @@ export interface Credit { id: string; amount: number; expiresOn: string; expired
 export function compOffExpiries(credits: Credit[], used: number, today: string): { id: string; amount: number }[] {
   let toAllocate = used;
   const out: { id: string; amount: number }[] = [];
-  for (const c of [...credits].sort((a, b) => a.expiresOn.localeCompare(b.expiresOn))) {
-    const usable = c.amount - c.expired;
+  for (const credit of [...credits].sort((a, b) => a.expiresOn.localeCompare(b.expiresOn))) {
+    const usable = credit.amount - credit.expired;
     const fromThis = Math.min(Math.max(0, toAllocate), usable);
     toAllocate -= fromThis;
     const remaining = round2(usable - fromThis);
-    if (c.expiresOn < today && remaining > 0) out.push({ id: c.id, amount: remaining });
+    if (credit.expiresOn < today && remaining > 0) out.push({ id: credit.id, amount: remaining });
   }
   return out;
 }

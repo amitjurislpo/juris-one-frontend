@@ -10,16 +10,16 @@ export function Greeting({ first, timeZone, initialIso }: { first: string; timeZ
   useEffect(() => {
     const tick = () => setNow(new Date());
     tick();
-    const t = setInterval(tick, 1000);
-    return () => clearInterval(t);
+    const intervalId = setInterval(tick, 1000);
+    return () => clearInterval(intervalId);
   }, []);
-  const at = now ?? new Date(initialIso);
-  const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone, hour: "numeric", hourCycle: "h23" }).format(at));
+  const instant = now ?? new Date(initialIso);
+  const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone, hour: "numeric", hourCycle: "h23" }).format(instant));
   const greet = t(hour < 5 ? "Working late" : hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening");
-  const clock = new Intl.DateTimeFormat("en-US", { timeZone, hour: "numeric", minute: "2-digit", second: "2-digit" }).format(at);
+  const clock = new Intl.DateTimeFormat("en-US", { timeZone, hour: "numeric", minute: "2-digit", second: "2-digit" }).format(instant);
   return (
     <div>
-      <span className="eyebrow">{formatWeekdayDayMonthYear(isoInZone(at, timeZone))} · <span className="num" suppressHydrationWarning>{clock}</span></span>
+      <span className="eyebrow">{formatWeekdayDayMonthYear(isoInZone(instant, timeZone))} · <span className="num" suppressHydrationWarning>{clock}</span></span>
       <h1 className="display" suppressHydrationWarning>{greet}, <em>{first}</em></h1>
       <p>{t("Here's your day at a glance.")}</p>
     </div>

@@ -41,9 +41,9 @@ interface MeResponse {
 export const CURRENT_USER_QUERY_KEY = ["api", "/api/me"];
 
 export async function fetchMe(): Promise<CurrentUser | null> {
-  const me = await apiGet<MeResponse>("/api/me");
-  if (!me) return null;
-  return { ...me.user, perms: new Set(me.user.perms), subscriptionActive: me.subscriptionActive, readOnly: me.readOnly, modules: me.modules, pendingPolicies: me.pendingPolicies };
+  const response = await apiGet<MeResponse>("/api/me");
+  if (!response) return null;
+  return { ...response.user, perms: new Set(response.user.perms), subscriptionActive: response.subscriptionActive, readOnly: response.readOnly, modules: response.modules, pendingPolicies: response.pendingPolicies };
 }
 
 /**
@@ -52,13 +52,13 @@ export async function fetchMe(): Promise<CurrentUser | null> {
  * `loading` is true until the first answer.
  */
 export function useCurrentUser(): { user: CurrentUser | null; loading: boolean } {
-  const q = useQuery({
+  const query = useQuery({
     queryKey: CURRENT_USER_QUERY_KEY,
     queryFn: fetchMe,
     // keep showing the user while a refetch runs
     placeholderData: (prev) => prev,
   });
-  return { user: q.data ?? null, loading: q.isPending };
+  return { user: query.data ?? null, loading: query.isPending };
 }
 
 /** True while the business's subscription has ended: the UI hides every action (the API refuses writes with 402). */
@@ -68,13 +68,13 @@ export function useReadOnly(): boolean {
 
 export const can = (u: CurrentUser | null, ...perms: Permission[]) => !!u && perms.some((p) => u.perms.has(p));
 
-export function allowedNav(u: CurrentUser) {
-  return NAV.filter((n) => navAllowed(n, u.perms, u.hasReports) && (!n.module || u.modules.includes(n.module)));
+export function allowedNav(user: CurrentUser) {
+  return NAV.filter((item) => navAllowed(item, user.perms, user.hasReports) && (!item.module || user.modules.includes(item.module)));
 }
 
-export function landingPath(u: CurrentUser) {
-  if (u.perms.has("self")) return "/home";
-  if (u.perms.has("roles.manage")) return "/overview";
-  const first = allowedNav(u)[0];
+export function landingPath(user: CurrentUser) {
+  if (user.perms.has("self")) return "/home";
+  if (user.perms.has("roles.manage")) return "/overview";
+  const first = allowedNav(user)[0];
   return first ? `/${first.id}` : "/no-access";
 }

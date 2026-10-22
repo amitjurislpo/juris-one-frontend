@@ -24,16 +24,16 @@ export default function PlansPage() {
               <tr><th>{t("Plan")}</th><th className="r">{t("Price")}</th><th>{t("Period")}</th><th>{t("People")}</th><th>{t("Modules")}</th><th className="r">{t("Businesses")}</th><th>{t("Status")}</th><th></th></tr>
             </thead>
             <tbody>
-              {plans.map((p) => (
-                <tr key={p.id}>
-                  <td><b>{p.name}</b>{p.description && <><br /><small className="muted">{p.description}</small></>}</td>
-                  <td className="r num">{formatRupees(p.pricePaise)}</td>
-                  <td>{t(p.periodMonths === 1 ? "{n} month" : "{n} months", { n: p.periodMonths })}</td>
-                  <td>{p.maxEmployees ? t("Up to {n}", { n: p.maxEmployees }) : t("No limit")}</td>
-                  <td>{p.modules.length ? p.modules.map((m) => <span key={m} className="chip gold">{t(MODULE_LABELS[m] ?? m)}</span>) : <span className="muted">{t("Core HR")}</span>}</td>
-                  <td className="r num">{p.businesses}</td>
-                  <td><span className={`chip ${p.active ? "ok" : "neutral"}`}>{p.active ? t("Offered") : t("Retired")}</span></td>
-                  <td className="r"><PlanButton plan={p} /></td>
+              {plans.map((plan) => (
+                <tr key={plan.id}>
+                  <td><b>{plan.name}</b>{plan.description && <><br /><small className="muted">{plan.description}</small></>}</td>
+                  <td className="r num">{formatRupees(plan.pricePaise)}</td>
+                  <td>{t(plan.periodMonths === 1 ? "{n} month" : "{n} months", { n: plan.periodMonths })}</td>
+                  <td>{plan.maxEmployees ? t("Up to {n}", { n: plan.maxEmployees }) : t("No limit")}</td>
+                  <td>{plan.modules.length ? plan.modules.map((moduleKey) => <span key={moduleKey} className="chip gold">{t(MODULE_LABELS[moduleKey] ?? moduleKey)}</span>) : <span className="muted">{t("Core HR")}</span>}</td>
+                  <td className="r num">{plan.businesses}</td>
+                  <td><span className={`chip ${plan.active ? "ok" : "neutral"}`}>{plan.active ? t("Offered") : t("Retired")}</span></td>
+                  <td className="r"><PlanButton plan={plan} /></td>
                 </tr>
               ))}
             </tbody>

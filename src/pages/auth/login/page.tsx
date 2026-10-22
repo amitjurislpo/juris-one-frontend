@@ -11,14 +11,14 @@ const DEV_CODE = (import.meta.env.VITE_DEV_OTP_CODE as string | undefined) || un
 export default function LoginPage() {
   const { user } = useCurrentUser();
   const t = useT();
-  const q = useSearchRecord();
+  const queryParameters = useSearchRecord();
   if (user) return <Navigate to={landingPath(user)} replace />;
-  const notice = q.signedout
+  const notice = queryParameters.signedout
     ? t("Signed out securely.")
     : undefined;
   return (
     <AuthFrame>
-      <LoginForm notice={notice} next={q.next} devCode={DEV_CODE} />
+      <LoginForm notice={notice} next={queryParameters.next} devCode={DEV_CODE} />
     </AuthFrame>
   );
 }

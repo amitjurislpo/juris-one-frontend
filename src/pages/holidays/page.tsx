@@ -19,8 +19,8 @@ export default function HolidaysPage() {
 
   return (
     <div className="col">
-      <PageHeader eyebrow={t("People operations")} title={t("Holiday")} em={t("calendar")} sub={t("India and US teams each see their own holidays — plus the ones marked for everyone.")} />
-      <HolidayPlanner holidays={items.map(({ date, name, region: r }) => ({ date, name, region: r }))} today={today} />
+      <PageHeader eyebrow={t("People operations")} title={t("Holiday")} emphasis={t("calendar")} sub={t("India and US teams each see their own holidays — plus the ones marked for everyone.")} />
+      <HolidayPlanner holidays={items.map(({ date, name, region: holidayRegion }) => ({ date, name, region: holidayRegion }))} today={today} />
       <div className="toolbar enter" style={{ ["--i" as string]: 3 }}>
         <SearchBox placeholder={t("Search holidays")} label={t("Search holidays")} />
         <SegmentedFilter name="region" dflt="All" label={t("Team")} options={[{ value: "All", label: t("All teams") }, { value: "IN", label: t("India") }, { value: "US", label: t("US") }]} />
@@ -32,23 +32,23 @@ export default function HolidaysPage() {
             <table className="t">
               <thead>
                 <tr>
-                  <SortableHeader k="date" dflt="date">{t("Date")}</SortableHeader>
-                  <SortableHeader k="name" dflt="date">{t("Holiday")}</SortableHeader>
-                  <SortableHeader k="region" dflt="date">{t("Applies to")}</SortableHeader>
-                  <SortableHeader k="addedBy" dflt="date">{t("Added by")}</SortableHeader>
+                  <SortableHeader sortKey="date" dflt="date">{t("Date")}</SortableHeader>
+                  <SortableHeader sortKey="name" dflt="date">{t("Holiday")}</SortableHeader>
+                  <SortableHeader sortKey="region" dflt="date">{t("Applies to")}</SortableHeader>
+                  <SortableHeader sortKey="addedBy" dflt="date">{t("Added by")}</SortableHeader>
                   <th><span className="sr-only">{t("Actions")}</span></th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((h) => {
-                  const past = h.date < today;
+                {rows.map((holiday) => {
+                  const past = holiday.date < today;
                   return (
-                    <tr key={h.id} className={past ? "dim" : undefined}>
-                      <td className="num">{formatWeekdayDayMonthYear(h.date)}</td>
-                      <td><b style={{ fontWeight: 600 }}>{h.name}</b></td>
-                      <td><span className={`chip nodot ${RCHIP[h.region]}`}>{t(RLABEL[h.region])}</span></td>
-                      <td className="muted">{h.addedBy}</td>
-                      <td className="r">{past ? <span className="faint" style={{ fontSize: 12 }}>{t("Passed")}</span> : <DeleteHoliday id={h.id} name={h.name} />}</td>
+                    <tr key={holiday.id} className={past ? "dim" : undefined}>
+                      <td className="num">{formatWeekdayDayMonthYear(holiday.date)}</td>
+                      <td><b style={{ fontWeight: 600 }}>{holiday.name}</b></td>
+                      <td><span className={`chip nodot ${RCHIP[holiday.region]}`}>{t(RLABEL[holiday.region])}</span></td>
+                      <td className="muted">{holiday.addedBy}</td>
+                      <td className="r">{past ? <span className="faint" style={{ fontSize: 12 }}>{t("Passed")}</span> : <DeleteHoliday id={holiday.id} name={holiday.name} />}</td>
                     </tr>
                   );
                 })}

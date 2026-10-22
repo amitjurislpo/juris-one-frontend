@@ -5,9 +5,9 @@ const HOL = new Map([["2026-10-20", "Dussehra"]]);
 
 describe("working days", () => {
   it("skips weekends and the employee's holidays", () => {
-    const r = workingDays("2026-10-16", "2026-10-21", [0, 6], HOL); // Fri → Wed
-    expect(r.dates).toEqual(["2026-10-16", "2026-10-19", "2026-10-21"]);
-    expect(r.skipped).toEqual([{ date: "2026-10-20", name: "Dussehra" }]);
+    const result = workingDays("2026-10-16", "2026-10-21", [0, 6], HOL); // Fri → Wed
+    expect(result.dates).toEqual(["2026-10-16", "2026-10-19", "2026-10-21"]);
+    expect(result.skipped).toEqual([{ date: "2026-10-20", name: "Dussehra" }]);
   });
   it("half day applies only to a single date", () => {
     expect(requestDays(["2026-10-21"], "FIRST_HALF")).toBe(0.5);
@@ -24,8 +24,8 @@ describe("loss of pay when the balance is short", () => {
   });
   it("leave without pay is all LOP", () => expect(lopSplit(2, 10, false, false)).toEqual({ paidDays: 0, lopDays: 2 }));
   it("shortfall lands on the last days", () => {
-    const f = paidFractions(["2026-10-21", "2026-10-22", "2026-10-23"], "FULL", 1.5);
-    expect([...f.values()]).toEqual([1, 0.5, 0]);
+    const fractions = paidFractions(["2026-10-21", "2026-10-22", "2026-10-23"], "FULL", 1.5);
+    expect([...fractions.values()]).toEqual([1, 0.5, 0]);
     expect([...paidFractions(["2026-10-21"], "FIRST_HALF", 0.5).values()]).toEqual([1]);
   });
 });

@@ -17,49 +17,49 @@ const LOCATIONS = [["IN_IST", "India · IST"], ["US_ET", "US East · ET"], ["US_
 
 /** Loads the people form options (departments, roles, managers) when a dialog opens. */
 function useOptions() {
-  const [opt, setOpt] = useState<FormOptions | null>(null);
-  const [err, setErr] = useState("");
+  const [options, setOptions] = useState<FormOptions | null>(null);
+  const [errorMessage, setErrorMessage] = useState("");
   const load = async () => {
-    if (opt) return;
-    const r = await getFormOptions();
-    if (r.ok) setOpt(r.data!); else setErr(r.error);
+    if (options) return;
+    const optionsResult = await getFormOptions();
+    if (optionsResult.ok) setOptions(optionsResult.data!); else setErrorMessage(optionsResult.error);
   };
-  return { opt, err, load };
+  return { options, errorMessage, load };
 }
 
-function PlanFields({ p, set, opt }: { p: PlanInput; set: (p: PlanInput) => void; opt: FormOptions | null }) {
+function PlanFields({ plan, set, options }: { plan: PlanInput; set: (plan: PlanInput) => void; options: FormOptions | null }) {
   const t = useT();
-  const on = (k: keyof PlanInput) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => set({ ...p, [k]: e.target.value });
-  const req = p.requiredDocs ?? DEFAULT_REQUIRED;
+  const bindField = (fieldName: keyof PlanInput) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => set({ ...plan, [fieldName]: e.target.value });
+  const req = plan.requiredDocs ?? DEFAULT_REQUIRED;
   return (
     <>
       <div className="grid2">
-        <label className="field">{t("Candidate name *")}<input value={p.candidateName} onChange={on("candidateName")} maxLength={120} autoFocus /></label>
-        <label className="field">{t("Personal email *")} <span className="hint">{t("the link goes here")}</span><input type="email" value={p.personalEmail} onChange={on("personalEmail")} maxLength={200} /></label>
+        <label className="field">{t("Candidate name *")}<input value={plan.candidateName} onChange={bindField("candidateName")} maxLength={120} autoFocus /></label>
+        <label className="field">{t("Personal email *")} <span className="hint">{t("the link goes here")}</span><input type="email" value={plan.personalEmail} onChange={bindField("personalEmail")} maxLength={200} /></label>
       </div>
       <div className="grid3">
-        <label className="field">{t("Designation")}<input value={p.designation ?? ""} onChange={on("designation")} maxLength={120} placeholder={t("e.g. Associate")} /></label>
+        <label className="field">{t("Designation")}<input value={plan.designation ?? ""} onChange={bindField("designation")} maxLength={120} placeholder={t("e.g. Associate")} /></label>
         <label className="field">{t("Department")}
-          <select value={p.departmentId ?? ""} onChange={on("departmentId")}><option value="">—</option>{opt?.departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select>
+          <select value={plan.departmentId ?? ""} onChange={bindField("departmentId")}><option value="">—</option>{options?.departments.map((department) => <option key={department.id} value={department.id}>{department.name}</option>)}</select>
         </label>
-        <label className="field">{t("Joining date")}<input type="date" value={p.joiningDate ?? ""} onChange={on("joiningDate")} /></label>
+        <label className="field">{t("Joining date")}<input type="date" value={plan.joiningDate ?? ""} onChange={bindField("joiningDate")} /></label>
       </div>
       <div className="grid3">
         <label className="field">{t("Role")}
-          <select value={p.roleId ?? ""} onChange={on("roleId")}><option value="">—</option>{opt?.roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}</select>
+          <select value={plan.roleId ?? ""} onChange={bindField("roleId")}><option value="">—</option>{options?.roles.map((role) => <option key={role.id} value={role.id}>{role.name}</option>)}</select>
         </label>
         <label className="field">{t("Reporting manager")}
-          <select value={p.managerId ?? ""} onChange={on("managerId")}><option value="">—</option>{opt?.managers.map((m) => <option key={m.id} value={m.id}>{m.name} — {m.title}</option>)}</select>
+          <select value={plan.managerId ?? ""} onChange={bindField("managerId")}><option value="">—</option>{options?.managers.map((manager) => <option key={manager.id} value={manager.id}>{manager.name} — {manager.title}</option>)}</select>
         </label>
         <label className="field">{t("Location")}
-          <select value={p.location ?? "IN_IST"} onChange={on("location")}>{LOCATIONS.map(([v, l]) => <option key={v} value={v}>{t(l)}</option>)}</select>
+          <select value={plan.location ?? "IN_IST"} onChange={bindField("location")}>{LOCATIONS.map(([locationCode, locationLabel]) => <option key={locationCode} value={locationCode}>{t(locationLabel)}</option>)}</select>
         </label>
       </div>
       <div className="field">{t("Documents the candidate must upload")}
         <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 16px" }}>
-          {Object.entries(DOC_KINDS).map(([k, l]) => (
-            <label key={k} style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 400 }}>
-              <input type="checkbox" checked={req.includes(k)} onChange={(e) => set({ ...p, requiredDocs: e.target.checked ? [...req, k] : req.filter((x) => x !== k) })} />{t(l)}
+          {Object.entries(DOC_KINDS).map(([documentKind, kindLabel]) => (
+            <label key={documentKind} style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 400 }}>
+              <input type="checkbox" checked={req.includes(documentKind)} onChange={(e) => set({ ...plan, requiredDocs: e.target.checked ? [...req, documentKind] : req.filter((requiredKind) => requiredKind !== documentKind) })} />{t(kindLabel)}
             </label>
           ))}
         </div>
@@ -75,15 +75,15 @@ export function StartOnboardingButton() {
   const toast = useToast();
   const t = useT();
   const router = useRouter();
-  const { opt, err: optErr, load } = useOptions();
+  const { options, errorMessage: optionsError, load } = useOptions();
   const [open, setOpen] = useState(false);
-  const [p, setP] = useState<PlanInput>(blank);
-  const [err, setErr] = useState("");
+  const [plan, setPlan] = useState<PlanInput>(blank);
+  const [errorMessage, setErrorMessage] = useState("");
   const [busy, start] = useTransition();
-  const close = () => { setOpen(false); setErr(""); setP(blank); };
+  const close = () => { setOpen(false); setErrorMessage(""); setPlan(blank); };
   const save = () => start(async () => {
-    const r = await startOnboarding(p);
-    if (r.ok) { toast(r.msg!); close(); router.push(`/onboarding/${r.data!.id}`); } else setErr(r.error);
+    const result = await startOnboarding(plan);
+    if (result.ok) { toast(result.message!); close(); router.push(`/onboarding/${result.data!.id}`); } else setErrorMessage(result.error);
   });
   if (readOnly) return null;
   return (
@@ -92,14 +92,14 @@ export function StartOnboardingButton() {
         setOpen(true);
         void load();
         // start from the business's default document list
-        void getOnboardingDefaults().then((r) => { if (r.ok) setP((cur) => ({ ...cur, requiredDocs: r.data!.requiredDocs })); });
-      }}><Icon n="plus" s={16} />{t("New onboarding")}</button>
+        void getOnboardingDefaults().then((defaultsResult) => { if (defaultsResult.ok) setPlan((cur) => ({ ...cur, requiredDocs: defaultsResult.data!.requiredDocs })); });
+      }}><Icon name="plus" size={16} />{t("New onboarding")}</button>
       {open && (
         <Modal title={t("New onboarding")} eyebrow={t("The candidate gets a link valid for 7 days")} maxWidth={760} onClose={close}
           footer={<><button className="btn btn-ghost" onClick={close}>{t("Cancel")}</button><button className="btn btn-gold" disabled={busy} onClick={save}>{busy ? t("Sending…") : t("Send link")}</button></>}>
           <div className="col" style={{ gap: 14 }}>
-            <PlanFields p={p} set={(x) => { setP(x); setErr(""); }} opt={opt} />
-            {(err || optErr) && <div className="err" role="alert">{err || optErr}</div>}
+            <PlanFields plan={plan} set={(x) => { setPlan(x); setErrorMessage(""); }} options={options} />
+            {(errorMessage || optionsError) && <div className="err" role="alert">{errorMessage || optionsError}</div>}
           </div>
         </Modal>
       )}
@@ -111,25 +111,25 @@ export function EditPlanButton({ id, plan }: { id: string; plan: PlanInput }) {
   const readOnly = useReadOnly();
   const toast = useToast();
   const t = useT();
-  const { opt, load } = useOptions();
+  const { options, load } = useOptions();
   const [open, setOpen] = useState(false);
-  const [p, setP] = useState<PlanInput>(plan);
-  const [err, setErr] = useState("");
+  const [editedPlan, setEditedPlan] = useState<PlanInput>(plan);
+  const [errorMessage, setErrorMessage] = useState("");
   const [busy, start] = useTransition();
   const save = () => start(async () => {
-    const r = await updateOnboarding(id, p);
-    if (r.ok) { toast(r.msg!); setOpen(false); } else setErr(r.error);
+    const result = await updateOnboarding(id, editedPlan);
+    if (result.ok) { toast(result.message!); setOpen(false); } else setErrorMessage(result.error);
   });
   if (readOnly) return null;
   return (
     <>
-      <button className="btn" onClick={() => { setP(plan); setOpen(true); void load(); }}><Icon n="edit" s={14} />{t("Edit")}</button>
+      <button className="btn" onClick={() => { setEditedPlan(plan); setOpen(true); void load(); }}><Icon name="edit" size={14} />{t("Edit")}</button>
       {open && (
         <Modal title={t("Onboarding details")} eyebrow={plan.candidateName} maxWidth={760} onClose={() => setOpen(false)}
           footer={<><button className="btn btn-ghost" onClick={() => setOpen(false)}>{t("Cancel")}</button><button className="btn btn-gold" disabled={busy} onClick={save}>{busy ? t("Saving…") : t("Save")}</button></>}>
           <div className="col" style={{ gap: 14 }}>
-            <PlanFields p={p} set={(x) => { setP(x); setErr(""); }} opt={opt} />
-            {err && <div className="err" role="alert">{err}</div>}
+            <PlanFields plan={editedPlan} set={(x) => { setEditedPlan(x); setErrorMessage(""); }} options={options} />
+            {errorMessage && <div className="err" role="alert">{errorMessage}</div>}
           </div>
         </Modal>
       )}
@@ -145,15 +145,15 @@ export function DocumentDecision({ id, docId, name, status }: { id: string; docI
   const [reject, setReject] = useState(false);
   const [comment, setComment] = useState("");
   const [busy, start] = useTransition();
-  const run = (s: "VERIFIED" | "REJECTED", c?: string) => start(async () => {
-    const r = await decideDocument(id, docId, s, c);
-    toast(r.ok ? r.msg! : r.error, r.ok ? undefined : "bad");
-    if (r.ok) { setReject(false); setComment(""); }
+  const run = (decision: "VERIFIED" | "REJECTED", reviewComment?: string) => start(async () => {
+    const result = await decideDocument(id, docId, decision, reviewComment);
+    toast(result.ok ? result.message! : result.error, result.ok ? undefined : "bad");
+    if (result.ok) { setReject(false); setComment(""); }
   });
   if (readOnly) return null;
   return (
     <span style={{ display: "inline-flex", gap: 4 }}>
-      {status !== "VERIFIED" && <button className="btn btn-sm" disabled={busy} onClick={() => run("VERIFIED")}><Icon n="check" s={13} />{t("Verify")}</button>}
+      {status !== "VERIFIED" && <button className="btn btn-sm" disabled={busy} onClick={() => run("VERIFIED")}><Icon name="check" size={13} />{t("Verify")}</button>}
       {status !== "REJECTED" && <button className="btn btn-sm btn-ghost" disabled={busy} onClick={() => setReject(true)}>{t("Reject")}</button>}
       {reject && (
         <Modal title={t("Reject document")} eyebrow={name} size="sm" onClose={() => setReject(false)}
@@ -173,19 +173,19 @@ export function OnboardingActions({ id, status, name }: { id: string; status: st
   const [ask, setAsk] = useState<null | "back" | "cancel">(null);
   const [comment, setComment] = useState("");
   const [busy, start] = useTransition();
-  const run = (fn: () => Promise<{ ok: boolean; msg?: string; error?: string }>) => start(async () => {
-    const r = await fn();
-    toast(r.ok ? r.msg! : r.error!, r.ok ? undefined : "bad");
-    if (r.ok) { setAsk(null); setComment(""); }
+  const run = (action: () => Promise<{ ok: boolean; message?: string; error?: string }>) => start(async () => {
+    const result = await action();
+    toast(result.ok ? result.message! : result.error!, result.ok ? undefined : "bad");
+    if (result.ok) { setAsk(null); setComment(""); }
   });
   const open = ["INVITED", "IN_PROGRESS", "CHANGES_REQUESTED"].includes(status);
   const cancelParts = t("Cancel the onboarding of {name}? Their link stops working. Uploaded documents are kept with this record.", { name: "\u0000" }).split("\u0000");
   if (readOnly) return null;
   return (
     <>
-      {open && <button className="btn" disabled={busy} onClick={() => run(() => resendOnboarding(id))}><Icon n="upload" s={14} />{t("Send a new link")}</button>}
+      {open && <button className="btn" disabled={busy} onClick={() => run(() => resendOnboarding(id))}><Icon name="upload" size={14} />{t("Send a new link")}</button>}
       {(status === "SUBMITTED" || status === "VERIFIED") && <button className="btn" onClick={() => setAsk("back")}>{t("Send back")}</button>}
-      {status === "SUBMITTED" && <button className="btn btn-gold" disabled={busy} onClick={() => run(() => setOnboardingStatus(id, "VERIFIED"))}><Icon n="check" s={14} />{t("Mark verified")}</button>}
+      {status === "SUBMITTED" && <button className="btn btn-gold" disabled={busy} onClick={() => run(() => setOnboardingStatus(id, "VERIFIED"))}><Icon name="check" size={14} />{t("Mark verified")}</button>}
       {status !== "ADDED" && status !== "CANCELLED" && <button className="btn btn-ghost" onClick={() => setAsk("cancel")}>{t("Cancel onboarding")}</button>}
       {ask === "back" && (
         <Modal title={t("Send back to the candidate")} eyebrow={name} size="sm" onClose={() => setAsk(null)}
@@ -210,55 +210,55 @@ export function AddEmployeeButton({ id, name, plan }: { id: string; name: string
   const toast = useToast();
   const t = useT();
   const router = useRouter();
-  const { opt, err: optErr, load } = useOptions();
+  const { options, errorMessage: optionsError, load } = useOptions();
   const [open, setOpen] = useState(false);
-  const [f, setF] = useState({ workEmail: "", designation: plan.designation ?? "", departmentId: plan.departmentId ?? "", managerId: plan.managerId ?? "",
+  const [form, setForm] = useState({ workEmail: "", designation: plan.designation ?? "", departmentId: plan.departmentId ?? "", managerId: plan.managerId ?? "",
     roleId: plan.roleId ?? "", joiningDate: plan.joiningDate ?? "", location: plan.location ?? "", joiningOffice: "", shift: plan.location && plan.location !== "IN_IST" ? "US_DAY" : "IN_NIGHT" });
-  const [err, setErr] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const [busy, start] = useTransition();
-  const on = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => { setF({ ...f, [k]: e.target.value }); setErr(""); };
-  const india = !f.location || f.location === "IN_IST";
+  const bindField = (fieldName: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => { setForm({ ...form, [fieldName]: e.target.value }); setErrorMessage(""); };
+  const india = !form.location || form.location === "IN_IST";
   const save = () => start(async () => {
-    const r = await addOnboardedEmployee(id, { ...f, shift: india ? f.shift : "US_DAY" });
-    if (r.ok) { toast(r.msg!); setOpen(false); router.refresh(); } else setErr(r.error);
+    const result = await addOnboardedEmployee(id, { ...form, shift: india ? form.shift : "US_DAY" });
+    if (result.ok) { toast(result.message!); setOpen(false); router.refresh(); } else setErrorMessage(result.error);
   });
   if (readOnly) return null;
   return (
     <>
-      <button className="btn btn-gold" onClick={() => { setOpen(true); void load(); }}><Icon n="plus" s={14} />{t("Add employee")}</button>
+      <button className="btn btn-gold" onClick={() => { setOpen(true); void load(); }}><Icon name="plus" size={14} />{t("Add employee")}</button>
       {open && (
         <Modal title={t("Add employee")} eyebrow={t("{name} · from onboarding", { name })} maxWidth={760} onClose={() => setOpen(false)}
           footer={<><button className="btn btn-ghost" onClick={() => setOpen(false)}>{t("Cancel")}</button><button className="btn btn-gold" disabled={busy} onClick={save}>{busy ? t("Adding…") : t("Add employee")}</button></>}>
           <div className="col" style={{ gap: 14 }}>
             <p className="muted" style={{ margin: 0 }}>{t("Name, identity, contact and bank details come from the candidate's form; verified documents go on their record. Portal access stays off until you turn it on — then they can sign in with an emailed code on their work email.")}</p>
             <div className="grid2">
-              <label className="field">{t("Work email *")} <span className="hint">{t("they sign in with it")}</span><input type="email" value={f.workEmail} onChange={on("workEmail")} maxLength={200} autoFocus /></label>
-              <label className="field">{t("Designation *")}<input value={f.designation} onChange={on("designation")} maxLength={120} /></label>
+              <label className="field">{t("Work email *")} <span className="hint">{t("they sign in with it")}</span><input type="email" value={form.workEmail} onChange={bindField("workEmail")} maxLength={200} autoFocus /></label>
+              <label className="field">{t("Designation *")}<input value={form.designation} onChange={bindField("designation")} maxLength={120} /></label>
             </div>
             <div className="grid3">
               <label className="field">{t("Department *")}
-                <select value={f.departmentId} onChange={on("departmentId")}><option value="">—</option>{opt?.departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select>
+                <select value={form.departmentId} onChange={bindField("departmentId")}><option value="">—</option>{options?.departments.map((department) => <option key={department.id} value={department.id}>{department.name}</option>)}</select>
               </label>
               <label className="field">{t("Role *")}
-                <select value={f.roleId} onChange={on("roleId")}><option value="">—</option>{opt?.roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}</select>
+                <select value={form.roleId} onChange={bindField("roleId")}><option value="">—</option>{options?.roles.map((role) => <option key={role.id} value={role.id}>{role.name}</option>)}</select>
               </label>
               <label className="field">{t("Reporting manager *")}
-                <select value={f.managerId} onChange={on("managerId")}><option value="">—</option>{opt?.managers.map((m) => <option key={m.id} value={m.id}>{m.name} — {m.title}</option>)}</select>
+                <select value={form.managerId} onChange={bindField("managerId")}><option value="">—</option>{options?.managers.map((manager) => <option key={manager.id} value={manager.id}>{manager.name} — {manager.title}</option>)}</select>
               </label>
             </div>
             <div className="grid3">
-              <label className="field">{t("Joining date *")}<input type="date" value={f.joiningDate} onChange={on("joiningDate")} /></label>
+              <label className="field">{t("Joining date *")}<input type="date" value={form.joiningDate} onChange={bindField("joiningDate")} /></label>
               <label className="field">{t("Work location")} <span className="hint">{t("India if not set")}</span>
-                <select value={f.location} onChange={on("location")}><option value="">{t("Not set (India)")}</option>{LOCATIONS.map(([v, l]) => <option key={v} value={v}>{t(l)}</option>)}</select>
+                <select value={form.location} onChange={bindField("location")}><option value="">{t("Not set (India)")}</option>{LOCATIONS.map(([locationCode, locationLabel]) => <option key={locationCode} value={locationCode}>{t(locationLabel)}</option>)}</select>
               </label>
               {india ? (
                 <label className="field">{t("Shift")}
-                  <select value={f.shift} onChange={on("shift")}><option value="IN_NIGHT">{t("Night (US hours)")}</option><option value="IN_DAY">{t("Day")}</option></select>
+                  <select value={form.shift} onChange={bindField("shift")}><option value="IN_NIGHT">{t("Night (US hours)")}</option><option value="IN_DAY">{t("Day")}</option></select>
                 </label>
               ) : <span />}
             </div>
-            <label className="field">{t("Joining office")} <span className="hint">{t("optional")}</span><input value={f.joiningOffice} onChange={on("joiningOffice")} maxLength={120} placeholder={t("e.g. Noida office")} /></label>
-            {(err || optErr) && <div className="err" role="alert">{err || optErr}</div>}
+            <label className="field">{t("Joining office")} <span className="hint">{t("optional")}</span><input value={form.joiningOffice} onChange={bindField("joiningOffice")} maxLength={120} placeholder={t("e.g. Noida office")} /></label>
+            {(errorMessage || optionsError) && <div className="err" role="alert">{errorMessage || optionsError}</div>}
           </div>
         </Modal>
       )}
@@ -273,32 +273,32 @@ export function DefaultDocumentsButton() {
   const t = useT();
   const [open, setOpen] = useState(false);
   const [docs, setDocs] = useState<string[]>(DEFAULT_REQUIRED);
-  const [err, setErr] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const [busy, start] = useTransition();
   const openIt = () => {
-    setErr("");
+    setErrorMessage("");
     setOpen(true);
-    void getOnboardingDefaults().then((r) => (r.ok ? setDocs(r.data!.requiredDocs) : setErr(r.error)));
+    void getOnboardingDefaults().then((r) => (r.ok ? setDocs(r.data!.requiredDocs) : setErrorMessage(r.error)));
   };
   const save = () => start(async () => {
-    const r = await saveOnboardingDefaults(docs);
-    if (r.ok) { toast(r.msg!); setOpen(false); } else setErr(r.error);
+    const result = await saveOnboardingDefaults(docs);
+    if (result.ok) { toast(result.message!); setOpen(false); } else setErrorMessage(result.error);
   });
   if (readOnly) return null;
   return (
     <>
-      <button className="btn" onClick={openIt}><Icon n="doc" s={14} />{t("Default documents")}</button>
+      <button className="btn" onClick={openIt}><Icon name="doc" size={14} />{t("Default documents")}</button>
       {open && (
         <Modal title={t("Default documents")} eyebrow={t("What new onboardings ask for")} size="sm" onClose={() => setOpen(false)}
           footer={<><button className="btn btn-ghost" onClick={() => setOpen(false)}>{t("Cancel")}</button><button className="btn btn-gold" disabled={busy} onClick={save}>{busy ? t("Saving…") : t("Save")}</button></>}>
           <div className="col" style={{ gap: 10 }}>
             <p className="muted" style={{ margin: 0 }}>{t("You can still change the list for each candidate when you start their onboarding.")}</p>
-            {Object.entries(DOC_KINDS).map(([k, l]) => (
-              <label key={k} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <input type="checkbox" checked={docs.includes(k)} onChange={(e) => setDocs(e.target.checked ? [...docs, k] : docs.filter((x) => x !== k))} />{t(l)}
+            {Object.entries(DOC_KINDS).map(([documentKind, kindLabel]) => (
+              <label key={documentKind} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input type="checkbox" checked={docs.includes(documentKind)} onChange={(e) => setDocs(e.target.checked ? [...docs, documentKind] : docs.filter((kind) => kind !== documentKind))} />{t(kindLabel)}
               </label>
             ))}
-            {err && <div className="err" role="alert">{err}</div>}
+            {errorMessage && <div className="err" role="alert">{errorMessage}</div>}
           </div>
         </Modal>
       )}

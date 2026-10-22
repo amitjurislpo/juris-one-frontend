@@ -14,17 +14,17 @@ function useDialog(onClose: () => void) {
   useEffect(() => { close.current = onClose; });
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null;
-    const el = ref.current;
-    const first = el?.querySelector<HTMLElement>("[autofocus], input, select, textarea, button:not(.icon-btn)");
-    (first ?? el)?.focus();
+    const dialog = ref.current;
+    const first = dialog?.querySelector<HTMLElement>("[autofocus], input, select, textarea, button:not(.icon-btn)");
+    (first ?? dialog)?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") { e.stopPropagation(); close.current(); }
-      if (e.key === "Tab" && el) {
-        const items = [...el.querySelectorAll<HTMLElement>("a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])")];
+      if (e.key === "Tab" && dialog) {
+        const items = [...dialog.querySelectorAll<HTMLElement>("a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])")];
         if (!items.length) return;
-        const a = items[0], b = items[items.length - 1];
-        if (e.shiftKey && document.activeElement === a) { e.preventDefault(); b.focus(); }
-        else if (!e.shiftKey && document.activeElement === b) { e.preventDefault(); a.focus(); }
+        const firstItem = items[0], lastItem = items[items.length - 1];
+        if (e.shiftKey && document.activeElement === firstItem) { e.preventDefault(); lastItem.focus(); }
+        else if (!e.shiftKey && document.activeElement === lastItem) { e.preventDefault(); firstItem.focus(); }
       }
     };
     document.addEventListener("keydown", onKey);
@@ -42,7 +42,7 @@ export function Modal({ title, eyebrow, onClose, footer, children, size, maxWidt
       <div ref={ref} tabIndex={-1} className={`modal${size ? " " + size : ""}`} style={maxWidth ? { maxWidth } : undefined} role="dialog" aria-modal="true" aria-labelledby={id}>
         <div className="modal-h">
           <div>{eyebrow && <span className="eyebrow">{eyebrow}</span>}<h2 id={id} className="display">{title}</h2></div>
-          <button className="icon-btn" onClick={onClose} aria-label={t("Close")}><Icon n="x" s={16} /></button>
+          <button className="icon-btn" onClick={onClose} aria-label={t("Close")}><Icon name="x" size={16} /></button>
         </div>
         <div className="modal-b">{children}</div>
         {footer && <div className="modal-f">{footer}</div>}

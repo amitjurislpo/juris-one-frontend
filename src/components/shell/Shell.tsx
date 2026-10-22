@@ -15,7 +15,7 @@ import { ToastProvider } from "./Toasts";
 import { currentTheme, setTheme, type Theme } from "./theme";
 
 export interface ShellProps {
-  me: {
+  currentUser: {
     code: string;
     name: string;
     designation: string;
@@ -38,10 +38,10 @@ export interface ShellProps {
   children: React.ReactNode;
 }
 
-interface PaletteAction { group: string; label: string; icon: string; run: () => void; idx: number }
+interface PaletteAction { group: string; label: string; icon: string; run: () => void; position: number }
 
 export function Shell(props: ShellProps) {
-  const { me, groups, badges, notes, landing, canSelf, businessName } = props;
+  const { currentUser: signedInUser, groups, badges, notes, landing, canSelf, businessName } = props;
   const t = useT();
   const { user } = useCurrentUser();
   const router = useRouter();
@@ -71,12 +71,12 @@ export function Shell(props: ShellProps) {
   }
 
   const toggleTheme = useCallback(() => {
-    const t: Theme = currentTheme() === "dark" ? "light" : "dark";
-    setTheme(t);
-    setThemeState(t);
+    const nextTheme: Theme = currentTheme() === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+    setThemeState(nextTheme);
   }, []);
 
-  const go = useCallback((id: string) => router.push(`/${id}`), [router]);
+  const goToPage = useCallback((id: string) => router.push(`/${id}`), [router]);
   const logout = useCallback(() => { void logoutAction(); }, []);
 
   const openPal = useCallback(() => {
@@ -92,32 +92,32 @@ export function Shell(props: ShellProps) {
     const query = paletteQuery.trim().toLowerCase();
     const out: PaletteAction[] = [];
     const add = (group: string, label: string, icon: string, run: () => void) => {
-      if (!query || label.toLowerCase().includes(query) || group.toLowerCase().includes(query)) out.push({ group, label, icon, run, idx: out.length });
+      if (!query || label.toLowerCase().includes(query) || group.toLowerCase().includes(query)) out.push({ group, label, icon, run, position: out.length });
     };
     if (canSelf) {
-      add(t("Actions"), t("Check in / out"), "sunrise", () => go("home"));
+      add(t("Actions"), t("Check in / out"), "sunrise", () => goToPage("home"));
       add(t("Actions"), t("Apply for leave"), "plus", () => router.push("/leave?apply=1"));
     }
     add(t("Actions"), theme === "dark" ? t("Switch to light theme") : t("Switch to dark theme"), theme === "dark" ? "sun" : "moon", toggleTheme);
-    groups.forEach((bucket) => bucket.items.forEach((n) => add(t("Go to"), t(n.label), n.icon, () => go(n.id))));
+    groups.forEach((bucket) => bucket.items.forEach((n) => add(t("Go to"), t(n.label), n.icon, () => goToPage(n.id))));
     add(t("Account"), t("My profile"), "user", openProfile);
     add(t("Account"), t("Sign out"), "logout", logout);
     return out;
-  }, [paletteQuery, canSelf, theme, groups, go, router, toggleTheme, logout, openProfile, t]);
+  }, [paletteQuery, canSelf, theme, groups, goToPage, router, toggleTheme, logout, openProfile, t]);
 
   const groupedActs = useMemo(() => {
     const groupedActions: { title: string; items: PaletteAction[] }[] = [];
-    acts.forEach((a) => {
-      let G = groupedActions.find((x) => x.title === a.group);
-      if (!G) groupedActions.push((G = { title: a.group, items: [] }));
-      G.items.push(a);
+    acts.forEach((action) => {
+      let actionGroup = groupedActions.find((x) => x.title === action.group);
+      if (!actionGroup) groupedActions.push((actionGroup = { title: action.group, items: [] }));
+      actionGroup.items.push(action);
     });
     return groupedActions;
   }, [acts]);
 
-  const runAct = (a: PaletteAction) => {
+  const runAct = (paletteAction: PaletteAction) => {
     setPaletteOpen(false);
-    a.run();
+    paletteAction.run();
   };
 
   useEffect(() => {
@@ -140,11 +140,11 @@ export function Shell(props: ShellProps) {
       }
     };
     const spot = (e: PointerEvent) => {
-      const c = (e.target as HTMLElement).closest?.(".card") as HTMLElement | null;
-      if (!c) return;
-      const r = c.getBoundingClientRect();
-      c.style.setProperty("--mx", `${e.clientX - r.left}px`);
-      c.style.setProperty("--my", `${e.clientY - r.top}px`);
+      const card = (e.target as HTMLElement).closest?.(".card") as HTMLElement | null;
+      if (!card) return;
+      const bounds = card.getBoundingClientRect();
+      card.style.setProperty("--mx", `${e.clientX - bounds.left}px`);
+      card.style.setProperty("--my", `${e.clientY - bounds.top}px`);
     };
     document.addEventListener("keydown", onKey);
     document.addEventListener("click", away);
@@ -165,18 +165,18 @@ export function Shell(props: ShellProps) {
           <Link className="ws" href={landing}>
             <span className="monogram">{(businessName ?? "J").charAt(0).toUpperCase()}</span>
             <span style={{ flex: 1, minWidth: 0 }}><b>{businessName ?? "JurisOne"}</b><small>{businessName ? t("JurisOne workspace") : t("Platform console")}</small></span>
-            <Icon n="chevD" s={14} />
+            <Icon name="chevD" size={14} />
           </Link>
-          <button className="side-search" type="button" onClick={openPal}><Icon n="search" s={15} />{t("Search")}<kbd>⌘K</kbd></button>
-          {groups.map((G) => (
-            <div key={G.title} style={{ display: "contents" }}>
-              <div className="group">{t(G.title)}</div>
-              {G.items.map((n) => (
-                <Link key={n.id} href={`/${n.id}`} className={`nav-item${page === n.id ? " on" : ""}`} aria-current={page === n.id ? "page" : undefined}>
-                  <span className="ic"><Icon n={n.icon} s={17} /></span>
-                  {t(n.label)}
-                  {n.id === "approvals" && badges.approvals > 0 && <span className="badge">{badges.approvals}</span>}
-                  {n.id === "proofs" && badges.proofs > 0 && <span className="badge">{badges.proofs}</span>}
+          <button className="side-search" type="button" onClick={openPal}><Icon name="search" size={15} />{t("Search")}<kbd>⌘K</kbd></button>
+          {groups.map((navGroup) => (
+            <div key={navGroup.title} style={{ display: "contents" }}>
+              <div className="group">{t(navGroup.title)}</div>
+              {navGroup.items.map((navItem) => (
+                <Link key={navItem.id} href={`/${navItem.id}`} className={`nav-item${page === navItem.id ? " on" : ""}`} aria-current={page === navItem.id ? "page" : undefined}>
+                  <span className="ic"><Icon name={navItem.icon} size={17} /></span>
+                  {t(navItem.label)}
+                  {navItem.id === "approvals" && badges.approvals > 0 && <span className="badge">{badges.approvals}</span>}
+                  {navItem.id === "proofs" && badges.proofs > 0 && <span className="badge">{badges.proofs}</span>}
                 </Link>
               ))}
             </div>
@@ -185,17 +185,17 @@ export function Shell(props: ShellProps) {
 
         <div className="main">
           <header className="top">
-            <button className="icon-btn burger" onClick={() => setSideOpen(true)} aria-label={t("Open menu")} aria-controls="side" aria-expanded={sideOpen}><Icon n="menu" /></button>
-            <div className="crumbs"><span>Juris</span><Icon n="chevR" s={14} /><b>{t(PAGE_TITLES[page] ?? "JurisOne")}</b></div>
+            <button className="icon-btn burger" onClick={() => setSideOpen(true)} aria-label={t("Open menu")} aria-controls="side" aria-expanded={sideOpen}><Icon name="menu" /></button>
+            <div className="crumbs"><span>Juris</span><Icon name="chevR" size={14} /><b>{t(PAGE_TITLES[page] ?? "JurisOne")}</b></div>
             <div className="grow"></div>
-            <button className="top-search" type="button" onClick={openPal}><Icon n="search" s={15} />{t("Search or jump to…")}<kbd>⌘K</kbd></button>
+            <button className="top-search" type="button" onClick={openPal}><Icon name="search" size={15} />{t("Search or jump to…")}<kbd>⌘K</kbd></button>
             <button className="icon-btn" onClick={toggleTheme} aria-label={theme === "dark" ? t("Switch to light theme") : t("Switch to dark theme")}>
-              <Icon n={theme === "dark" ? "sun" : "moon"} s={17} />
+              <Icon name={theme === "dark" ? "sun" : "moon"} size={17} />
             </button>
             <LanguageSwitcher />
             <div className="menu-anchor" style={{ position: "relative" }}>
               <button className="icon-btn" onClick={() => { setNotif(!notif); setMenu(false); }} aria-label={t("Notifications ({n} unread)", { n: props.unread })} aria-expanded={notif}>
-                <Icon n="bell" s={17} />
+                <Icon name="bell" size={17} />
                 {(props.unread > 0 || badges.approvals + badges.proofs > 0) && <span style={{ position: "absolute", top: 8, right: 9, width: 7, height: 7, borderRadius: "50%", background: "var(--accent)", boxShadow: "0 0 0 2px var(--surface)" }}></span>}
               </button>
               {notif && (
@@ -205,12 +205,12 @@ export function Shell(props: ShellProps) {
                     {props.unread > 0 ? <span className="chip gold nodot">{props.unread} {t("unread")}</span> : <span className="chip neutral nodot">{t("All read")}</span>}
                   </div>
                   {notes.length === 0 && <div className="n faint">{t("You're all caught up.")}</div>}
-                  {notes.map((n, i) => {
-                    const unread = n.id ? !!n.unread : true;
-                    const body = (<><i style={unread ? undefined : { background: "transparent", boxShadow: "inset 0 0 0 1px var(--line3)" }}></i><div><div style={{ fontWeight: unread ? 600 : 400 }}>{n.text}</div><div className="faint" style={{ fontSize: 12, marginTop: 2 }}>{n.meta}{n.sticky ? ` · ${t("accept to clear")}` : ""}</div></div></>);
+                  {notes.map((notification, i) => {
+                    const unread = notification.id ? !!notification.unread : true;
+                    const body = (<><i style={unread ? undefined : { background: "transparent", boxShadow: "inset 0 0 0 1px var(--line3)" }}></i><div><div style={{ fontWeight: unread ? 600 : 400 }}>{notification.text}</div><div className="faint" style={{ fontSize: 12, marginTop: 2 }}>{notification.meta}{notification.sticky ? ` · ${t("accept to clear")}` : ""}</div></div></>);
                     // opening a stored notification marks it read (policy ones clear only when the policy is accepted)
-                    const onOpen = () => { if (n.id && n.unread && !n.sticky) startTransition(() => { void markNotification(n.id!, true).then(() => router.refresh()); }); setNotif(false); };
-                    return n.href ? <Link key={n.id ?? i} href={n.href} onClick={onOpen} className="n" style={{ color: "inherit", textDecoration: "none" }}>{body}</Link> : <div key={n.id ?? i} className="n">{body}</div>;
+                    const onOpen = () => { if (notification.id && notification.unread && !notification.sticky) startTransition(() => { void markNotification(notification.id!, true).then(() => router.refresh()); }); setNotif(false); };
+                    return notification.href ? <Link key={notification.id ?? i} href={notification.href} onClick={onOpen} className="n" style={{ color: "inherit", textDecoration: "none" }}>{body}</Link> : <div key={notification.id ?? i} className="n">{body}</div>;
                   })}
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 8, padding: "8px 10px 4px", borderTop: "1px solid var(--line)" }}>
                     <button type="button" className="btn btn-sm btn-ghost" disabled={props.unread === 0} onClick={() => startTransition(() => { void markAllNotifications().then(() => router.refresh()); })}>{t("Mark all read")}</button>
@@ -221,22 +221,22 @@ export function Shell(props: ShellProps) {
             </div>
             <div className="menu-anchor" style={{ position: "relative" }}>
               <button className="profile" onClick={() => { setMenu(!menu); setNotif(false); }} aria-haspopup="menu" aria-expanded={menu}>
-                <Avatar id={user?.id} name={me.name} photo={user?.photo} plain />
-                <span className="who"><b>{me.name}</b><small>{me.designation}</small></span>
-                <Icon n="chevD" s={14} />
+                <Avatar id={user?.id} name={signedInUser.name} photo={user?.photo} plain />
+                <span className="who"><b>{signedInUser.name}</b><small>{signedInUser.designation}</small></span>
+                <Icon name="chevD" size={14} />
               </button>
               {menu && (
                 <div className="menu" role="menu">
                   <div className="head">
-                    <Avatar id={user?.id} name={me.name} photo={user?.photo} lg plain />
-                    <div style={{ display: "flex", flexDirection: "column", gap: 3, minWidth: 0 }}><b>{me.name}</b><span className="faint" style={{ fontSize: 12.5 }}>{me.code} · {me.roleName}</span></div>
+                    <Avatar id={user?.id} name={signedInUser.name} photo={user?.photo} isLarge plain />
+                    <div style={{ display: "flex", flexDirection: "column", gap: 3, minWidth: 0 }}><b>{signedInUser.name}</b><span className="faint" style={{ fontSize: 12.5 }}>{signedInUser.code} · {signedInUser.roleName}</span></div>
                   </div>
-                  <button role="menuitem" onClick={() => { setMenu(false); openProfile(); }}><Icon n="user" s={16} />{t("My profile")}</button>
-                  {canSelf && <button role="menuitem" onClick={() => { setMenu(false); go("payslips"); }}><Icon n="doc" s={16} />{t("My payslips")}</button>}
-                  <button role="menuitem" onClick={toggleTheme}><Icon n={theme === "dark" ? "sun" : "moon"} s={16} />{theme === "dark" ? t("Light theme") : t("Dark theme")}</button>
-                  <button role="menuitem" onClick={() => { setMenu(false); openPal(); }}><Icon n="search" s={16} />{t("Command menu")}<kbd style={{ marginLeft: "auto" }}>⌘K</kbd></button>
+                  <button role="menuitem" onClick={() => { setMenu(false); openProfile(); }}><Icon name="user" size={16} />{t("My profile")}</button>
+                  {canSelf && <button role="menuitem" onClick={() => { setMenu(false); goToPage("payslips"); }}><Icon name="doc" size={16} />{t("My payslips")}</button>}
+                  <button role="menuitem" onClick={toggleTheme}><Icon name={theme === "dark" ? "sun" : "moon"} size={16} />{theme === "dark" ? t("Light theme") : t("Dark theme")}</button>
+                  <button role="menuitem" onClick={() => { setMenu(false); openPal(); }}><Icon name="search" size={16} />{t("Command menu")}<kbd style={{ marginLeft: "auto" }}>⌘K</kbd></button>
                   <div className="sep"></div>
-                  <button role="menuitem" className="danger" onClick={logout}><Icon n="logout" s={16} />{t("Sign out")}</button>
+                  <button role="menuitem" className="danger" onClick={logout}><Icon name="logout" size={16} />{t("Sign out")}</button>
                 </div>
               )}
             </div>
@@ -249,22 +249,22 @@ export function Shell(props: ShellProps) {
             <div className="modal sm" role="dialog" aria-modal="true" aria-labelledby="pf-t">
               <div className="modal-h">
                 <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-                  <Avatar id={user?.id} name={me.name} photo={user?.photo} lg plain />
-                  <div><span className="eyebrow">{me.code}</span><h2 id="pf-t" className="display">{me.name}</h2></div>
+                  <Avatar id={user?.id} name={signedInUser.name} photo={user?.photo} isLarge plain />
+                  <div><span className="eyebrow">{signedInUser.code}</span><h2 id="pf-t" className="display">{signedInUser.name}</h2></div>
                 </div>
-                <button className="icon-btn" onClick={() => setProfile(false)} aria-label={t("Close")}><Icon n="x" s={16} /></button>
+                <button className="icon-btn" onClick={() => setProfile(false)} aria-label={t("Close")}><Icon name="x" size={16} /></button>
               </div>
               <div className="modal-b">
-                <div className="kv"><span className="muted">{t("Designation")}</span><b>{me.designation}</b></div>
-                <div className="kv"><span className="muted">{t("Role")}</span><b>{me.roleName}</b></div>
-                <div className="kv"><span className="muted">{t("Department")}</span><b>{me.department}</b></div>
-                <div className="kv"><span className="muted">{t("Reporting manager")}</span><b>{me.manager}</b></div>
-                <div className="kv"><span className="muted">{t("Date of joining")}</span><b>{formatWeekdayDayMonthYear(me.dateOfJoining)}</b></div>
-                {!me.isAdminLike && me.shift && <div className="kv"><span className="muted">{t("Shift")}</span><b>{me.shift}</b></div>}
+                <div className="kv"><span className="muted">{t("Designation")}</span><b>{signedInUser.designation}</b></div>
+                <div className="kv"><span className="muted">{t("Role")}</span><b>{signedInUser.roleName}</b></div>
+                <div className="kv"><span className="muted">{t("Department")}</span><b>{signedInUser.department}</b></div>
+                <div className="kv"><span className="muted">{t("Reporting manager")}</span><b>{signedInUser.manager}</b></div>
+                <div className="kv"><span className="muted">{t("Date of joining")}</span><b>{formatWeekdayDayMonthYear(signedInUser.dateOfJoining)}</b></div>
+                {!signedInUser.isAdminLike && signedInUser.shift && <div className="kv"><span className="muted">{t("Shift")}</span><b>{signedInUser.shift}</b></div>}
               </div>
               <div className="modal-f">
                 <span className="faint" style={{ fontSize: 12.5 }}>{t("To change details, contact HR.")}</span>
-                <button className="btn btn-danger" onClick={() => { setProfile(false); logout(); }}><Icon n="logout" s={16} />{t("Sign out")}</button>
+                <button className="btn btn-danger" onClick={() => { setProfile(false); logout(); }}><Icon name="logout" size={16} />{t("Sign out")}</button>
               </div>
             </div>
           </div>
@@ -274,15 +274,15 @@ export function Shell(props: ShellProps) {
           <div className="pal-wrap" onClick={(e) => e.target === e.currentTarget && setPaletteOpen(false)}>
             <div className="pal" role="dialog" aria-modal="true" aria-label={t("Command menu")}>
               <div className="pal-in">
-                <Icon n="search" s={18} />
+                <Icon name="search" size={18} />
                 <input
                   ref={palIn}
                   value={paletteQuery}
                   onChange={(e) => { setPaletteQuery(e.target.value); setPaletteIndex(0); }}
                   onKeyDown={(e) => {
-                    const L = acts.length;
-                    if (e.key === "ArrowDown") { e.preventDefault(); if (L) setPaletteIndex((paletteIndex + 1) % L); }
-                    else if (e.key === "ArrowUp") { e.preventDefault(); if (L) setPaletteIndex((paletteIndex - 1 + L) % L); }
+                    const actionCount = acts.length;
+                    if (e.key === "ArrowDown") { e.preventDefault(); if (actionCount) setPaletteIndex((paletteIndex + 1) % actionCount); }
+                    else if (e.key === "ArrowUp") { e.preventDefault(); if (actionCount) setPaletteIndex((paletteIndex - 1 + actionCount) % actionCount); }
                     else if (e.key === "Enter") { e.preventDefault(); if (acts[paletteIndex]) runAct(acts[paletteIndex]); }
                     else if (e.key === "Escape") setPaletteOpen(false);
                   }}
@@ -292,12 +292,12 @@ export function Shell(props: ShellProps) {
                 <kbd>esc</kbd>
               </div>
               <div className="pal-list" role="listbox">
-                {groupedActs.map((g) => (
-                  <div key={g.title}>
-                    <div className="pal-g">{g.title}</div>
-                    {g.items.map((a) => (
-                      <button key={a.label} type="button" role="option" aria-selected={a.idx === paletteIndex} className={`pal-item${a.idx === paletteIndex ? " act" : ""}`} onMouseEnter={() => setPaletteIndex(a.idx)} onClick={() => runAct(a)}>
-                        <span className="ic"><Icon n={a.icon} s={15} /></span>{a.label}
+                {groupedActs.map((paletteGroup) => (
+                  <div key={paletteGroup.title}>
+                    <div className="pal-g">{paletteGroup.title}</div>
+                    {paletteGroup.items.map((paletteItem) => (
+                      <button key={paletteItem.label} type="button" role="option" aria-selected={paletteItem.position === paletteIndex} className={`pal-item${paletteItem.position === paletteIndex ? " act" : ""}`} onMouseEnter={() => setPaletteIndex(paletteItem.position)} onClick={() => runAct(paletteItem)}>
+                        <span className="ic"><Icon name={paletteItem.icon} size={15} /></span>{paletteItem.label}
                       </button>
                     ))}
                   </div>

@@ -17,29 +17,29 @@ export function NotificationList({ items, timeZone, empty = "You're all caught u
   const router = useRouter();
   const [busy, start] = useTransition();
   const mark = (id: string, read: boolean) => start(async () => {
-    const r = await markNotification(id, read);
-    if (!r.ok) toast(r.error, "bad");
+    const result = await markNotification(id, read);
+    if (!result.ok) toast(result.error, "bad");
     router.refresh();
   });
-  const open = (n: InboxItem) => {
-    if (!n.readAt && !n.sticky) void markNotification(n.id, true);
-    if (n.link) router.push(n.link); else router.refresh();
+  const open = (notification: InboxItem) => {
+    if (!notification.readAt && !notification.sticky) void markNotification(notification.id, true);
+    if (notification.link) router.push(notification.link); else router.refresh();
   };
   if (!items.length) return <p className="muted" style={{ margin: "6px 0" }}>{empty}</p>;
   return (
     <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column" }}>
-      {items.map((n) => {
-        const unread = !n.readAt;
+      {items.map((inboxItem) => {
+        const unread = !inboxItem.readAt;
         return (
-          <li key={n.id} style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "10px 4px", borderBottom: "1px solid var(--line)" }}>
+          <li key={inboxItem.id} style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "10px 4px", borderBottom: "1px solid var(--line)" }}>
             <span aria-hidden style={{ width: 8, height: 8, borderRadius: "50%", marginTop: 6, flex: "none", background: unread ? "var(--accent)" : "transparent", boxShadow: unread ? "none" : "inset 0 0 0 1px var(--line3)" }}></span>
-            <button type="button" onClick={() => open(n)} style={{ all: "unset", cursor: "pointer", flex: 1, minWidth: 0 }} aria-label={`${unread ? "Unread: " : ""}${n.text}`}>
-              <div style={{ fontWeight: unread ? 600 : 400, fontSize: 13.5, lineHeight: 1.45 }}>{n.text}</div>
-              <div className="faint" style={{ fontSize: 12, marginTop: 2 }}>{formatDateTime(new Date(n.createdAt), timeZone)}</div>
+            <button type="button" onClick={() => open(inboxItem)} style={{ all: "unset", cursor: "pointer", flex: 1, minWidth: 0 }} aria-label={`${unread ? "Unread: " : ""}${inboxItem.text}`}>
+              <div style={{ fontWeight: unread ? 600 : 400, fontSize: 13.5, lineHeight: 1.45 }}>{inboxItem.text}</div>
+              <div className="faint" style={{ fontSize: 12, marginTop: 2 }}>{formatDateTime(new Date(inboxItem.createdAt), timeZone)}</div>
             </button>
-            {n.sticky ? <Link href="/acknowledge" className="chip warn nodot" style={{ textDecoration: "none" }}>Accept to clear</Link>
-              : <button type="button" className="btn btn-sm btn-ghost" disabled={busy} onClick={() => mark(n.id, unread)} aria-label={unread ? "Mark as read" : "Mark as unread"} title={unread ? "Mark as read" : "Mark as unread"}>
-                <Icon n={unread ? "check" : "eye"} s={13} />
+            {inboxItem.sticky ? <Link href="/acknowledge" className="chip warn nodot" style={{ textDecoration: "none" }}>Accept to clear</Link>
+              : <button type="button" className="btn btn-sm btn-ghost" disabled={busy} onClick={() => mark(inboxItem.id, unread)} aria-label={unread ? "Mark as read" : "Mark as unread"} title={unread ? "Mark as read" : "Mark as unread"}>
+                <Icon name={unread ? "check" : "eye"} size={13} />
               </button>}
           </li>
         );
@@ -54,17 +54,17 @@ export function MarkAllReadButton({ disabled }: { disabled?: boolean }) {
   const [busy, start] = useTransition();
   return (
     <button type="button" className="btn btn-sm" disabled={disabled || busy} onClick={() => start(async () => {
-      const r = await markAllNotifications();
-      toast(r.ok ? r.msg! : r.error, r.ok ? undefined : "bad");
+      const result = await markAllNotifications();
+      toast(result.ok ? result.message! : result.error, result.ok ? undefined : "bad");
       router.refresh();
-    })}><Icon n="check" s={13} />Mark all read</button>
+    })}><Icon name="check" size={13} />Mark all read</button>
   );
 }
 
 /** The dashboard card: the newest notifications, unread first. */
-export function NotificationsCard({ items, unread, timeZone, i }: { items: InboxItem[]; unread: number; timeZone: string; i: number }) {
+export function NotificationsCard({ items, unread, timeZone, animationIndex }: { items: InboxItem[]; unread: number; timeZone: string; animationIndex: number }) {
   return (
-    <section className="card pad enter" style={{ ["--i" as string]: i }} aria-labelledby="notif-card-h">
+    <section className="card pad enter" style={{ ["--i" as string]: animationIndex }} aria-labelledby="notif-card-h">
       <div className="card-h">
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <h3 id="notif-card-h">Notifications</h3>

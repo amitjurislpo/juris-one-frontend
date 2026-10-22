@@ -18,7 +18,7 @@ export default function AnnouncementsPage() {
         {can(user, "announcements.manage") && <Link className="btn" href="/manage-announcements">{t("Manage announcements")}</Link>}
       </PageHeader>
       <section className="card pad enter" style={{ ["--i" as string]: 1 }}>
-        {items.map((a) => <AnnouncementItem key={a.id} a={a} full />)}
+        {items.map((a) => <AnnouncementItem key={a.id} announcement={a} full />)}
         {!items.length && <div className="empty"><b className="display">{t("No announcements")}</b><span className="muted">{t("When HR posts something for everyone it will appear here.")}</span></div>}
       </section>
     </div>

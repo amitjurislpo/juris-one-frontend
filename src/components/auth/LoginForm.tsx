@@ -10,9 +10,9 @@ const RESEND_SECONDS = 30;
 
 /** a***@company.com — enough for the person to spot a mistyped address, without printing the whole thing. */
 function maskEmail(email: string) {
-  const at = email.indexOf("@");
-  if (at < 1) return email;
-  return `${email[0]}${"•".repeat(Math.min(Math.max(at - 1, 2), 6))}${email.slice(at)}`;
+  const atIndex = email.indexOf("@");
+  if (atIndex < 1) return email;
+  return `${email[0]}${"•".repeat(Math.min(Math.max(atIndex - 1, 2), 6))}${email.slice(atIndex)}`;
 }
 
 /**
@@ -68,7 +68,7 @@ export function LoginForm({ notice, next, devCode }: { notice?: string; next?: s
         {sent.error && <div className="err" role="alert">{sent.error}</div>}
         <button className="btn btn-gold btn-lg" type="submit" disabled={sending} style={{ width: "100%" }}>
           {sending ? t("Sending code…") : t("Login")}
-          {!sending && <Icon n="arrow" s={16} />}
+          {!sending && <Icon name="arrow" size={16} />}
         </button>
       </form>
     );
@@ -77,10 +77,10 @@ export function LoginForm({ notice, next, devCode }: { notice?: string; next?: s
   return (
     <form ref={formRef} className="login-card" action={action} noValidate>
       <button type="button" className="btn btn-ghost btn-sm" onClick={() => setDismissed(sent)} style={{ alignSelf: "flex-start", marginLeft: -8 }}>
-        <Icon n="chevL" s={15} />{t("Back")}
+        <Icon name="chevL" size={15} />{t("Back")}
       </button>
       <div>
-        <span className="otp-mail" aria-hidden="true"><Icon n="inbox" s={22} /></span>
+        <span className="otp-mail" aria-hidden="true"><Icon name="inbox" size={22} /></span>
         <h2 className="display">{t("Check your email")}</h2>
         <p className="muted" style={{ margin: "10px 0 0", fontSize: 14.5 }}>
           {t("We sent a 6-digit code to")} <strong style={{ color: "var(--text, inherit)" }}>{maskEmail(email)}</strong>. {t("It works once and expires in 10 minutes.")}
@@ -101,7 +101,7 @@ export function LoginForm({ notice, next, devCode }: { notice?: string; next?: s
       {next && <input type="hidden" name="next" value={next} />}
       <button className="btn btn-gold btn-lg" type="submit" disabled={busy} style={{ width: "100%" }}>
         {busy ? t("Signing in…") : t("Verify and sign in")}
-        {!busy && <Icon n="arrow" s={16} />}
+        {!busy && <Icon name="arrow" size={16} />}
       </button>
       <div className="otp-resend">
         <span className="muted">{t("Didn't get it?")}</span>

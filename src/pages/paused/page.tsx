@@ -17,7 +17,7 @@ export default function PausedPage() {
     <div className="col" style={{ alignItems: "center", paddingTop: 48 }}>
       <section className="card enter" style={{ maxWidth: 560, width: "100%", padding: 28, textAlign: "center" }}>
         <span className="kpi-ico" style={{ width: 48, height: 48, margin: "0 auto 14px", background: "var(--warnbg)", color: "var(--warn)", display: "grid", placeItems: "center", borderRadius: 12 }}>
-          <Icon n="lock" s={22} />
+          <Icon name="lock" size={22} />
         </span>
         <h1 className="display" style={{ fontSize: 30, margin: "0 0 8px" }}>{t("JurisOne is paused")}</h1>
         {owner ? (

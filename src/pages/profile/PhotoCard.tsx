@@ -13,12 +13,12 @@ export function PhotoCard() {
   const { user } = useCurrentUser();
   const [busy, setBusy] = useState(false);
   if (!user || readOnly) return null;
-  const run = async (job: () => Promise<{ ok: true; msg?: string } | { ok: false; error: string }>) => {
+  const run = async (job: () => Promise<{ ok: true; message?: string } | { ok: false; error: string }>) => {
     setBusy(true);
-    const r = await job();
+    const result = await job();
     setBusy(false);
-    if (r.ok) { toast(r.msg ?? t("Photo saved")); return null; }
-    return r.error;
+    if (result.ok) { toast(result.message ?? t("Photo saved")); return null; }
+    return result.error;
   };
   return (
     <section className="card" style={{ padding: 18 }}>

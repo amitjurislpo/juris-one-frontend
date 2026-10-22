@@ -23,36 +23,36 @@ export default function ApprovalsPage() {
 
   return (
     <div className="col" style={{ gap: 24 }}>
-      <PageHeader eyebrow={t("Approvals")} title={<><span className="num">{total}</span> {total === 1 ? t("request") : t("requests")}</>} em={t("awaiting you")}
+      <PageHeader eyebrow={t("Approvals")} title={<><span className="num">{total}</span> {total === 1 ? t("request") : t("requests")}</>} emphasis={t("awaiting you")}
         sub={tab === "regularizations" ? t("Regularizations go to HR, Finance and Admin — the first decision counts and updates LOP in payroll.") : t("Approving leave updates the employee's balance and calendar instantly.")}>
         {tabs.length > 1 && <SegmentedFilter name="tab" dflt={canLeave ? "leave" : "regularizations"} label={t("Queue")} options={tabs} />}
       </PageHeader>
       <div className="toolbar enter"><SearchBox placeholder={t("Search by employee")} label={t("Search requests")} /></div>
       <div className="col" style={{ gap: 14 }}>
-        {tab === "leave" && leaveCards.map((l) => (
-          <article className="card req enter" key={l.id}>
+        {tab === "leave" && leaveCards.map((leaveCard) => (
+          <article className="card req enter" key={leaveCard.id}>
             <span className="spot" aria-hidden="true"></span>
-            <span className={`avatar lg ${avatarColorClass(initials(l.name))}`}>{initials(l.name)}</span>
+            <span className={`avatar lg ${avatarColorClass(initials(leaveCard.name))}`}>{initials(leaveCard.name)}</span>
             <div className="body">
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}><b style={{ fontSize: 16 }}>{l.name}</b><span className="chip info">{t(l.type)}</span><span className="faint" style={{ fontSize: 12.5 }}>{l.department}</span></div>
-              <span style={{ fontSize: 14.5 }}>{l.span} · {l.days === 1 ? t("{n} day", { n: l.days }) : t("{n} days", { n: l.days })} <span className="faint">({t(l.part)})</span></span>
-              <span className="muted" style={{ fontSize: 13.5 }}>{l.reason ? `“${l.reason}”` : t("No reason given")}</span>
-              <span className="faint" style={{ fontSize: 12.5 }}>{l.impact}</span>
-              {l.overlap > 0 && <span className="chip warn" style={{ alignSelf: "flex-start" }}>{l.overlap > 1 ? t("{n} overlapping requests in {dept}", { n: l.overlap, dept: l.department }) : t("{n} overlapping request in {dept}", { n: l.overlap, dept: l.department })}</span>}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}><b style={{ fontSize: 16 }}>{leaveCard.name}</b><span className="chip info">{t(leaveCard.type)}</span><span className="faint" style={{ fontSize: 12.5 }}>{leaveCard.department}</span></div>
+              <span style={{ fontSize: 14.5 }}>{leaveCard.span} · {leaveCard.days === 1 ? t("{n} day", { n: leaveCard.days }) : t("{n} days", { n: leaveCard.days })} <span className="faint">({t(leaveCard.part)})</span></span>
+              <span className="muted" style={{ fontSize: 13.5 }}>{leaveCard.reason ? `“${leaveCard.reason}”` : t("No reason given")}</span>
+              <span className="faint" style={{ fontSize: 12.5 }}>{leaveCard.impact}</span>
+              {leaveCard.overlap > 0 && <span className="chip warn" style={{ alignSelf: "flex-start" }}>{leaveCard.overlap > 1 ? t("{n} overlapping requests in {dept}", { n: leaveCard.overlap, dept: leaveCard.department }) : t("{n} overlapping request in {dept}", { n: leaveCard.overlap, dept: leaveCard.department })}</span>}
             </div>
-            <DecideButtons id={l.id} kind="leave" who={l.name} />
+            <DecideButtons id={leaveCard.id} kind="leave" who={leaveCard.name} />
           </article>
         ))}
-        {tab === "regularizations" && regularizationCards.map((r) => (
-          <article className="card req enter" key={r.id}>
+        {tab === "regularizations" && regularizationCards.map((regularizationCard) => (
+          <article className="card req enter" key={regularizationCard.id}>
             <span className="spot" aria-hidden="true"></span>
-            <span className={`avatar lg ${avatarColorClass(initials(r.name))}`}>{initials(r.name)}</span>
+            <span className={`avatar lg ${avatarColorClass(initials(regularizationCard.name))}`}>{initials(regularizationCard.name)}</span>
             <div className="body">
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}><b style={{ fontSize: 16 }}>{r.name}</b><span className="chip gold">{t(r.kind)}</span><span className="faint" style={{ fontSize: 12.5 }}>{t("{dept} · sent to HR, Finance & Admin", { dept: r.department })}</span></div>
-              <span style={{ fontSize: 14.5 }}>{r.date} · {r.detail}</span>
-              <span className="muted" style={{ fontSize: 13.5 }}>{r.reason ? `“${r.reason}”` : t("No reason given")}</span>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}><b style={{ fontSize: 16 }}>{regularizationCard.name}</b><span className="chip gold">{t(regularizationCard.kind)}</span><span className="faint" style={{ fontSize: 12.5 }}>{t("{dept} · sent to HR, Finance & Admin", { dept: regularizationCard.department })}</span></div>
+              <span style={{ fontSize: 14.5 }}>{regularizationCard.date} · {regularizationCard.detail}</span>
+              <span className="muted" style={{ fontSize: 13.5 }}>{regularizationCard.reason ? `“${regularizationCard.reason}”` : t("No reason given")}</span>
             </div>
-            <DecideButtons id={r.id} kind="reg" who={r.name} />
+            <DecideButtons id={regularizationCard.id} kind="reg" who={regularizationCard.name} />
           </article>
         ))}
         {((tab === "leave" && !leaveCards.length) || (tab === "regularizations" && !regularizationCards.length)) && <div className="empty enter"><b>{t("All clear")}</b><span className="muted">{search ? t("No pending request matches that name.") : t("Nothing waiting in this queue.")}</span></div>}
@@ -62,10 +62,10 @@ export default function ApprovalsPage() {
           <span className="spot" aria-hidden="true"></span>
           <div className="card-h"><h3>{t("Decided · last 30 days")}</h3></div>
           <div className="list">
-            {decided.map((x) => (
-              <div className="it" key={x.id}>
-                <span style={{ flex: 1 }}><b>{x.employeeName}</b> <span className="muted">· {x.what}</span><div className="faint" style={{ fontSize: 12 }}>{x.when}</div></span>
-                <span className={`chip ${x.approved ? "ok" : "bad"}`}>{x.approved ? t("Approved") : t("Declined")} · {x.decidedBy}</span>
+            {decided.map((decision) => (
+              <div className="it" key={decision.id}>
+                <span style={{ flex: 1 }}><b>{decision.employeeName}</b> <span className="muted">· {decision.what}</span><div className="faint" style={{ fontSize: 12 }}>{decision.when}</div></span>
+                <span className={`chip ${decision.approved ? "ok" : "bad"}`}>{decision.approved ? t("Approved") : t("Declined")} · {decision.decidedBy}</span>
               </div>
             ))}
           </div>

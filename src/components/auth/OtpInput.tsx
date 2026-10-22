@@ -28,7 +28,7 @@ export function OtpInput({ name = "otp", invalid, disabled, onComplete }: { name
     }
     // several digits at once (paste, or autofill of the whole code into one box)
     const next = [...digits];
-    typed.split("").slice(0, LENGTH - i).forEach((d, k) => { next[i + k] = d; });
+    typed.split("").slice(0, LENGTH - i).forEach((d, offset) => { next[i + offset] = d; });
     commit(next);
     refs.current[Math.min(i + typed.length, LENGTH - 1)]?.focus();
   };
@@ -49,12 +49,12 @@ export function OtpInput({ name = "otp", invalid, disabled, onComplete }: { name
 
   return (
     <div className={`otp${invalid ? " bad" : ""}`} role="group" aria-label={t("Sign-in code")}>
-      {digits.map((d, i) => (
+      {digits.map((digit, i) => (
         <input
           key={i}
           ref={(el) => { refs.current[i] = el; }}
-          className={`otp-box${d ? " filled" : ""}`}
-          value={d}
+          className={`otp-box${digit ? " filled" : ""}`}
+          value={digit}
           onChange={(e) => onChange(i, e.target.value)}
           onKeyDown={(e) => onKeyDown(i, e)}
           onFocus={(e) => e.target.select()}

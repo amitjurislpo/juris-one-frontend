@@ -19,26 +19,26 @@ export function HolidayPlanner({ holidays, today }: { holidays: HolidayEntry[]; 
   const toast = useToast();
   const t = useT();
   const readOnly = useReadOnly();
-  const [ym, setYm] = useState(today.slice(0, 7));
-  const [f, setF] = useState<{ date: string; name: string; region: Region }>({ date: "", name: "", region: "IN" });
+  const [month, setMonth] = useState(today.slice(0, 7));
+  const [form, setForm] = useState<{ date: string; name: string; region: Region }>({ date: "", name: "", region: "IN" });
   const [tried, setTried] = useState(false);
   const [err, setErr] = useState("");
   const [busy, start] = useTransition();
   const nameRef = useRef<HTMLInputElement>(null);
 
-  const move = (n: number) => setYm(new Date(Date.UTC(Number(ym.slice(0, 4)), Number(ym.slice(5)) - 1 + n, 1)).toISOString().slice(0, 7));
-  const first = `${ym}-01`;
-  const n = new Date(Date.UTC(Number(ym.slice(0, 4)), Number(ym.slice(5)), 0)).getUTCDate();
+  const move = (monthOffset: number) => setMonth(new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5)) - 1 + monthOffset, 1)).toISOString().slice(0, 7));
+  const first = `${month}-01`;
+  const daysInMonth = new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5)), 0)).getUTCDate();
   const lead = (weekdayOf(first) + 6) % 7;
 
   const add = () => {
     setTried(true);
     setErr("");
-    if (!f.date || !f.name.trim()) return;
+    if (!form.date || !form.name.trim()) return;
     start(async () => {
-      const r = await addHoliday(f);
-      if (r.ok) { toast(r.msg!); setF({ date: "", name: "", region: f.region }); setTried(false); }
-      else setErr(r.error);
+      const result = await addHoliday(form);
+      if (result.ok) { toast(result.message!); setForm({ date: "", name: "", region: form.region }); setTried(false); }
+      else setErr(result.error);
     });
   };
 
@@ -47,25 +47,25 @@ export function HolidayPlanner({ holidays, today }: { holidays: HolidayEntry[]; 
       <section className="card pad enter" style={{ ["--i" as string]: 1, flex: "1 1 380px", minWidth: 0 }}>
         <span className="spot"></span>
         <div className="card-h">
-          <h3>{t(MONTH_NAMES[Number(ym.slice(5)) - 1])} {ym.slice(0, 4)}</h3>
+          <h3>{t(MONTH_NAMES[Number(month.slice(5)) - 1])} {month.slice(0, 4)}</h3>
           <div className="row" style={{ gap: 6 }}>
-            <button className="icon-btn" onClick={() => move(-1)} aria-label={t("Previous month")}><Icon n="chevL" s={16} /></button>
-            <button className="icon-btn" onClick={() => move(1)} aria-label={t("Next month")}><Icon n="chevR" s={16} /></button>
+            <button className="icon-btn" onClick={() => move(-1)} aria-label={t("Previous month")}><Icon name="chevL" size={16} /></button>
+            <button className="icon-btn" onClick={() => move(1)} aria-label={t("Next month")}><Icon name="chevR" size={16} /></button>
           </div>
         </div>
         <div className="hcal">
           {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((w) => <span className="w" key={w}>{t(w)}</span>)}
           {Array.from({ length: lead }, (_, i) => <span key={`b${i}`}></span>)}
-          {Array.from({ length: n }, (_, i) => {
-            const k = addDays(first, i);
-            const hs = holidays.filter((h) => h.date === k);
-            const wk = [0, 6].includes(weekdayOf(k));
+          {Array.from({ length: daysInMonth }, (_, i) => {
+            const isoDate = addDays(first, i);
+            const dayHolidays = holidays.filter((h) => h.date === isoDate);
+            const isWeekend = [0, 6].includes(weekdayOf(isoDate));
             return (
-              <button key={k} type="button" className={[wk && "wk", k === today && "today", hs.length && "has", f.date === k && "sel"].filter(Boolean).join(" ")}
-                title={hs.map((h) => `${h.name} (${t(RNAME[h.region])})`).join(", ") || (readOnly ? undefined : t("Add a holiday on this date"))}
-                onClick={() => { if (readOnly) return; setF({ ...f, date: k }); requestAnimationFrame(() => nameRef.current?.focus()); }}>
+              <button key={isoDate} type="button" className={[isWeekend && "wk", isoDate === today && "today", dayHolidays.length && "has", form.date === isoDate && "sel"].filter(Boolean).join(" ")}
+                title={dayHolidays.map((holiday) => `${holiday.name} (${t(RNAME[holiday.region])})`).join(", ") || (readOnly ? undefined : t("Add a holiday on this date"))}
+                onClick={() => { if (readOnly) return; setForm({ ...form, date: isoDate }); requestAnimationFrame(() => nameRef.current?.focus()); }}>
                 <b>{i + 1}</b>
-                {hs.map((h) => <small key={h.name + h.region} className={RCLS[h.region]}>{h.name}</small>)}
+                {dayHolidays.map((h) => <small key={h.name + h.region} className={RCLS[h.region]}>{h.name}</small>)}
               </button>
             );
           })}
@@ -76,18 +76,18 @@ export function HolidayPlanner({ holidays, today }: { holidays: HolidayEntry[]; 
         <span className="spot"></span>
         <div className="card-h"><h3>{t("Add holiday")}</h3></div>
         <div className="col" style={{ gap: 14 }}>
-          <label className="field">{t("Date *")}<input type="date" value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} /></label>
-          <label className="field">{t("Holiday name *")}<input ref={nameRef} value={f.name} maxLength={80} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder={t("e.g. Diwali")} onKeyDown={(e) => e.key === "Enter" && add()} /></label>
+          <label className="field">{t("Date *")}<input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></label>
+          <label className="field">{t("Holiday name *")}<input ref={nameRef} value={form.name} maxLength={80} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("e.g. Diwali")} onKeyDown={(e) => e.key === "Enter" && add()} /></label>
           <div className="field">{t("Applies to")}
             <div className="seg" style={{ width: "100%" }} role="group" aria-label={t("Applies to")}>
-              {(["IN", "US", "ALL"] as Region[]).map((r) => (
-                <button key={r} type="button" className={f.region === r ? "on" : undefined} aria-pressed={f.region === r} onClick={() => setF({ ...f, region: r })}>{r === "ALL" ? t("Everyone") : r === "IN" ? t("India team") : t("US team")}</button>
+              {(["IN", "US", "ALL"] as Region[]).map((region) => (
+                <button key={region} type="button" className={form.region === region ? "on" : undefined} aria-pressed={form.region === region} onClick={() => setForm({ ...form, region: region })}>{region === "ALL" ? t("Everyone") : region === "IN" ? t("India team") : t("US team")}</button>
               ))}
             </div>
           </div>
-          {tried && (!f.date || !f.name.trim()) && <p className="err" style={{ margin: 0 }}>{t("Pick a date and enter a name.")}</p>}
+          {tried && (!form.date || !form.name.trim()) && <p className="err" style={{ margin: 0 }}>{t("Pick a date and enter a name.")}</p>}
           {err && <p className="err" role="alert" style={{ margin: 0 }}>{err}</p>}
-          <button className="btn btn-gold" disabled={busy} onClick={add}><Icon n="plus" s={15} />{t("Add to calendar")}</button>
+          <button className="btn btn-gold" disabled={busy} onClick={add}><Icon name="plus" size={15} />{t("Add to calendar")}</button>
           <p className="faint" style={{ margin: 0, fontSize: 12.5 }}>{t("Employees see it under “Upcoming holidays”. Holidays aren't counted as leave or loss of pay.")}</p>
         </div>
       </section>}
@@ -105,10 +105,10 @@ export function DeleteHoliday({ id, name }: { id: string; name: string }) {
   if (readOnly) return null;
   return (
     <>
-      <button className="btn btn-sm btn-ghost" onClick={() => setAsk(true)} aria-label={t("Remove {name}", { name })}><Icon n="trash" s={14} /></button>
+      <button className="btn btn-sm btn-ghost" onClick={() => setAsk(true)} aria-label={t("Remove {name}", { name })}><Icon name="trash" size={14} /></button>
       {ask && (
         <ConfirmDialog title={t("Remove holiday")} danger confirm={t("Remove")} busy={busy} onClose={() => setAsk(false)} body={<>{rmParts[0]}<b>{name}</b>{rmParts[1]}</>}
-          onConfirm={() => start(async () => { const r = await deleteHoliday(id); toast(r.ok ? r.msg! : r.error, "bad"); setAsk(false); })} />
+          onConfirm={() => start(async () => { const result = await deleteHoliday(id); toast(result.ok ? result.message! : result.error, "bad"); setAsk(false); })} />
       )}
     </>
   );

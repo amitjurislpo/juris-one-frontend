@@ -8,7 +8,7 @@ import { usePathname, useRouter } from "@/lib/router";
 const LANDING = ["/", "/home", "/overview", "/platform"];
 
 /** Prototype page header: eyebrow, Balkind display title with gradient <em>, subtitle, actions. Every page but a landing page gets a Back button: to `back` (the parent page) when given, else to the previous page. */
-export function PageHeader({ back, eyebrow, title, em, after, sub, children }: { back?: string; eyebrow: React.ReactNode; title?: React.ReactNode; em?: React.ReactNode; after?: React.ReactNode; sub?: React.ReactNode; children?: React.ReactNode }) {
+export function PageHeader({ back, eyebrow, title, emphasis, after, sub, children }: { back?: string; eyebrow: React.ReactNode; title?: React.ReactNode; emphasis?: React.ReactNode; after?: React.ReactNode; sub?: React.ReactNode; children?: React.ReactNode }) {
   const t = useT();
   const router = useRouter();
   const path = usePathname();
@@ -18,16 +18,16 @@ export function PageHeader({ back, eyebrow, title, em, after, sub, children }: {
       <div>
         <div className="page-top">
           {back ? (
-            <Link href={back} className="back-btn"><Icon n="chevL" s={14} />{t("Back")}</Link>
+            <Link href={back} className="back-btn"><Icon name="chevL" size={14} />{t("Back")}</Link>
           ) : !LANDING.includes(path) && (
-            <button type="button" className="back-btn" onClick={goBack}><Icon n="chevL" s={14} />{t("Back")}</button>
+            <button type="button" className="back-btn" onClick={goBack}><Icon name="chevL" size={14} />{t("Back")}</button>
           )}
           <span className="eyebrow">{eyebrow}</span>
         </div>
         <h1 className="display">
           {title}
-          {title && em ? " " : null}
-          {em && <em>{em}</em>}
+          {title && emphasis ? " " : null}
+          {emphasis && <em>{emphasis}</em>}
           {after}
         </h1>
         {sub && <p>{sub}</p>}

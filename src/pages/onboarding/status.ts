@@ -1,12 +1,12 @@
 /** Onboarding status → chip class and label. */
 export const ONBOARDING_STATUS = {
-  INVITED: { cls: "info", text: "Link sent" },
-  IN_PROGRESS: { cls: "info", text: "Filling in" },
-  SUBMITTED: { cls: "warn", text: "To review" },
-  CHANGES_REQUESTED: { cls: "neutral", text: "Sent back" },
-  VERIFIED: { cls: "ok", text: "Verified" },
-  ADDED: { cls: "ok", text: "Employee added" },
-  CANCELLED: { cls: "neutral", text: "Cancelled" },
+  INVITED: { className: "info", text: "Link sent" },
+  IN_PROGRESS: { className: "info", text: "Filling in" },
+  SUBMITTED: { className: "warn", text: "To review" },
+  CHANGES_REQUESTED: { className: "neutral", text: "Sent back" },
+  VERIFIED: { className: "ok", text: "Verified" },
+  ADDED: { className: "ok", text: "Employee added" },
+  CANCELLED: { className: "neutral", text: "Cancelled" },
 } as const;
 
 export type OnboardingStatus = keyof typeof ONBOARDING_STATUS;

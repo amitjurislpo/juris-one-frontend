@@ -19,7 +19,7 @@ export default function DepartmentsPage() {
   return (
     <div className="col">
       <PageHeader eyebrow={t("People operations")} title={<>{t("Depart")}<em>{t("ments")}</em></>} sub={t("Create departments first — new employees are added into one of these.")}>
-        <NewDepartmentButton by={user.name} heads={heads} />
+        <NewDepartmentButton createdByName={user.name} heads={heads} />
       </PageHeader>
       <div className="toolbar enter" style={{ ["--i" as string]: 1 }}>
         <SearchBox placeholder={t("Search department, head or creator")} label={t("Search departments")} />
@@ -31,28 +31,28 @@ export default function DepartmentsPage() {
             <table className="t">
               <thead>
                 <tr>
-                  <SortableHeader k="name" dflt="name">{t("Department")}</SortableHeader>
-                  <SortableHeader k="head" dflt="name">{t("Head")}</SortableHeader>
-                  <SortableHeader k="employeeCount" dflt="name" right>{t("People")}</SortableHeader>
-                  <SortableHeader k="createdBy" dflt="name">{t("Created by")}</SortableHeader>
-                  <SortableHeader k="createdOn" dflt="name">{t("Created on")}</SortableHeader>
+                  <SortableHeader sortKey="name" dflt="name">{t("Department")}</SortableHeader>
+                  <SortableHeader sortKey="head" dflt="name">{t("Head")}</SortableHeader>
+                  <SortableHeader sortKey="employeeCount" dflt="name" right>{t("People")}</SortableHeader>
+                  <SortableHeader sortKey="createdBy" dflt="name">{t("Created by")}</SortableHeader>
+                  <SortableHeader sortKey="createdOn" dflt="name">{t("Created on")}</SortableHeader>
                   <th><span className="sr-only">{t("Actions")}</span></th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r, i) => (
-                  <tr key={r.id} style={{ animationDelay: `${i * 30}ms` }}>
+                {rows.map((department, i) => (
+                  <tr key={department.id} style={{ animationDelay: `${i * 30}ms` }}>
                     <td>
                       <div className="person">
-                        <span className="kpi-ico" style={{ width: 34, height: 34, background: "var(--accentsoft)", color: "var(--accent)" }}><Icon n="building" s={16} /></span>
-                        <div><b>{r.name}</b>{r.note && <small>{r.note}</small>}</div>
+                        <span className="kpi-ico" style={{ width: 34, height: 34, background: "var(--accentsoft)", color: "var(--accent)" }}><Icon name="building" size={16} /></span>
+                        <div><b>{department.name}</b>{department.note && <small>{department.note}</small>}</div>
                       </div>
                     </td>
-                    <td>{r.head || "—"}</td>
-                    <td className="r num">{r.employeeCount}</td>
-                    <td className="muted">{r.createdBy}</td>
-                    <td className="muted">{formatDayMonthYear(r.createdOn)}</td>
-                    <td className="r">{!r.employeeCount && <DepartmentActions id={r.id} name={r.name} />}</td>
+                    <td>{department.head || "—"}</td>
+                    <td className="r num">{department.employeeCount}</td>
+                    <td className="muted">{department.createdBy}</td>
+                    <td className="muted">{formatDayMonthYear(department.createdOn)}</td>
+                    <td className="r">{!department.employeeCount && <DepartmentActions id={department.id} name={department.name} />}</td>
                   </tr>
                 ))}
               </tbody>

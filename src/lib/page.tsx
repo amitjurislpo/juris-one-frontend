@@ -24,9 +24,9 @@ export interface PageContext {
 const Ctx = createContext<PageContext | null>(null);
 
 export function usePage(): PageContext {
-  const c = useContext(Ctx);
-  if (!c) throw new Error("usePage() outside a page route");
-  return c;
+  const context = useContext(Ctx);
+  if (!context) throw new Error("usePage() outside a page route");
+  return context;
 }
 
 /**
@@ -36,11 +36,11 @@ export function usePage(): PageContext {
  * and gives `undefined`. Errors go to the page's error boundary.
  */
 export function useData<T>(path: string | null): T | undefined {
-  const q = useSuspenseQuery({
+  const query = useSuspenseQuery({
     queryKey: ["api", path],
     queryFn: async () => (path === null ? null : await apiData<T>(path)),
   });
-  return (q.data ?? undefined) as T | undefined;
+  return (query.data ?? undefined) as T | undefined;
 }
 
 /** Shown while a page's data first loads. */

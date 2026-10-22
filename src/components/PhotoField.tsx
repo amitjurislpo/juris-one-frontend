@@ -27,19 +27,19 @@ export function PhotoField({ id, name, photo, pending, onPick, onRemove, busy, d
     if (!file) return;
     setErr("");
     try {
-      const msg = await onPick(await squarePhoto(file));
-      if (msg) setErr(msg);
+      const errorMessage = await onPick(await squarePhoto(file));
+      if (errorMessage) setErr(errorMessage);
     } catch (e) {
       setErr(t((e as Error).message));
     }
   };
-  const remove = async () => { setErr(""); const msg = await onRemove?.(); if (msg) setErr(msg); };
+  const remove = async () => { setErr(""); const errorMessage = await onRemove?.(); if (errorMessage) setErr(errorMessage); };
   const has = !!photo || !!pending;
   return (
     <div style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
       {preview
         ? <span className="avatar lg photo-lg"><img src={preview} alt={name} /></span>
-        : <Avatar id={id} name={name} photo={photo} lg style={{ width: 84, height: 84, fontSize: 28 }} />}
+        : <Avatar id={id} name={name} photo={photo} isLarge style={{ width: 84, height: 84, fontSize: 28 }} />}
       <div className="col" style={{ gap: 8, minWidth: 0 }}>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button type="button" className="btn btn-sm" disabled={busy || disabled} onClick={() => input.current?.click()}>{has ? t("Change photo") : t("Choose photo")}</button>

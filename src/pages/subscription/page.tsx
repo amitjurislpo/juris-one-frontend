@@ -13,9 +13,9 @@ export default function SubscriptionPage() {
   const { t } = usePage();
   const data = useData<Data>("/api/business/subscription");
   if (!data) return <PageLoading />;
-  const s = data.subscription;
-  const chip = subscriptionChip(s);
-  const chipText = s.state === "NONE" || !s ? t("No plan") : s.state === "UPCOMING" ? t("Starts {date}", { date: formatDayMonthYear(s.startsOn!) }) : s.state === "EXPIRED" ? t("Ended {date}", { date: formatDayMonthYear(s.endsOn!) }) : s.daysLeft !== null && s.daysLeft <= 7 ? (s.daysLeft === 0 ? t("Ends today") : t(s.daysLeft === 1 ? "{n} day left" : "{n} days left", { n: s.daysLeft })) : t("Until {date}", { date: formatDayMonthYear(s.endsOn!) });
+  const subscription = data.subscription;
+  const chip = subscriptionChip(subscription);
+  const chipText = subscription.state === "NONE" || !subscription ? t("No plan") : subscription.state === "UPCOMING" ? t("Starts {date}", { date: formatDayMonthYear(subscription.startsOn!) }) : subscription.state === "EXPIRED" ? t("Ended {date}", { date: formatDayMonthYear(subscription.endsOn!) }) : subscription.daysLeft !== null && subscription.daysLeft <= 7 ? (subscription.daysLeft === 0 ? t("Ends today") : t(subscription.daysLeft === 1 ? "{n} day left" : "{n} days left", { n: subscription.daysLeft })) : t("Until {date}", { date: formatDayMonthYear(subscription.endsOn!) });
   const today = new Date().toISOString().slice(0, 10);
 
   return (
@@ -25,15 +25,15 @@ export default function SubscriptionPage() {
       </PageHeader>
 
       <div className="kpis enter" style={{ ["--i" as string]: 1 }}>
-        <div className="card kpi"><span className="l">{t("Plan")}</span><span className="v" style={{ fontSize: 26 }}>{s.planName ?? t("None")}</span><span className={`chip ${chip.cls}`} style={{ alignSelf: "flex-start" }}>{chipText}</span></div>
-        <div className="card kpi"><span className="l">{t("Valid until")}</span><span className="v" style={{ fontSize: 26 }}>{s.endsOn ? formatDayMonthYear(s.endsOn) : "—"}</span><span className="s">{s.startsOn ? t("from {date}", { date: formatDayMonthYear(s.startsOn) }) : ""}</span></div>
-        <div className="card kpi"><span className="l">{t("People")}</span><span className="v num">{s.employees}</span><span className="s">{s.maxEmployees ? t("of {n} on this plan", { n: s.maxEmployees }) : t("no limit on this plan")}</span></div>
-        <div className="card kpi"><span className="l">{t("Modules")}</span><span>{s.modules.length ? s.modules.map((m) => <span key={m} className="chip gold">{t(MODULE_LABELS[m] ?? m)}</span>) : <span className="muted">{t("Core HR")}</span>}</span></div>
+        <div className="card kpi"><span className="l">{t("Plan")}</span><span className="v" style={{ fontSize: 26 }}>{subscription.planName ?? t("None")}</span><span className={`chip ${chip.className}`} style={{ alignSelf: "flex-start" }}>{chipText}</span></div>
+        <div className="card kpi"><span className="l">{t("Valid until")}</span><span className="v" style={{ fontSize: 26 }}>{subscription.endsOn ? formatDayMonthYear(subscription.endsOn) : "—"}</span><span className="s">{subscription.startsOn ? t("from {date}", { date: formatDayMonthYear(subscription.startsOn) }) : ""}</span></div>
+        <div className="card kpi"><span className="l">{t("People")}</span><span className="v num">{subscription.employees}</span><span className="s">{subscription.maxEmployees ? t("of {n} on this plan", { n: subscription.maxEmployees }) : t("no limit on this plan")}</span></div>
+        <div className="card kpi"><span className="l">{t("Modules")}</span><span>{subscription.modules.length ? subscription.modules.map((moduleName) => <span key={moduleName} className="chip gold">{t(MODULE_LABELS[moduleName] ?? moduleName)}</span>) : <span className="muted">{t("Core HR")}</span>}</span></div>
       </div>
 
-      {!s.active && (
+      {!subscription.active && (
         <div className="card enter" style={{ ["--i" as string]: 2, padding: 18, borderColor: "var(--bad)" }} role="alert">
-          <b>{s.state === "UPCOMING" ? t("Your subscription starts on {date}.", { date: formatDayMonthYear(s.startsOn!) }) : t("Your subscription has ended.")}</b>
+          <b>{subscription.state === "UPCOMING" ? t("Your subscription starts on {date}.", { date: formatDayMonthYear(subscription.startsOn!) }) : t("Your subscription has ended.")}</b>
           <p className="muted" style={{ margin: "6px 0 0" }}>{t("Until it is active, everyone can sign in but JurisOne is paused for your business. You can still export your employees. Contact the JurisOne team to renew.")}</p>
         </div>
       )}
@@ -44,13 +44,13 @@ export default function SubscriptionPage() {
           <table className="t">
             <thead><tr><th>{t("Plan")}</th><th>{t("From")}</th><th>{t("To")}</th><th className="r">{t("Price")}</th><th>{t("Status")}</th></tr></thead>
             <tbody>
-              {data.history.map((x) => (
-                <tr key={x.id}>
-                  <td><b>{x.planName}</b></td>
-                  <td>{formatDayMonthYear(x.startsOn)}</td>
-                  <td>{formatDayMonthYear(x.endsOn)}</td>
-                  <td className="r num">{formatRupees(x.pricePaise)}</td>
-                  <td>{x.status === "CANCELLED" ? <span className="chip neutral">{t("Cancelled")}</span> : x.endsOn < today ? <span className="chip neutral">{t("Ended")}</span> : x.startsOn > today ? <span className="chip info">{t("Upcoming")}</span> : <span className="chip ok">{t("Current")}</span>}</td>
+              {data.history.map((historyEntry) => (
+                <tr key={historyEntry.id}>
+                  <td><b>{historyEntry.planName}</b></td>
+                  <td>{formatDayMonthYear(historyEntry.startsOn)}</td>
+                  <td>{formatDayMonthYear(historyEntry.endsOn)}</td>
+                  <td className="r num">{formatRupees(historyEntry.pricePaise)}</td>
+                  <td>{historyEntry.status === "CANCELLED" ? <span className="chip neutral">{t("Cancelled")}</span> : historyEntry.endsOn < today ? <span className="chip neutral">{t("Ended")}</span> : historyEntry.startsOn > today ? <span className="chip info">{t("Upcoming")}</span> : <span className="chip ok">{t("Current")}</span>}</td>
                 </tr>
               ))}
             </tbody>
