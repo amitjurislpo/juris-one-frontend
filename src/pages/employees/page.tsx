@@ -14,11 +14,11 @@ export default function PeoplePage() {
   if (!data) return <PageLoading />;
   const { rows: people, total, page, take, departments, counts, seePay, canAdd } = data;
 
-  const exportQs = new URLSearchParams(Object.entries(searchParams).flatMap(([key, v]) => (typeof v === "string" && key !== "page" ? [[key, v]] : []))).toString();
+  const exportQs = new URLSearchParams(Object.entries(searchParams).flatMap(([key, queryValue]) => (typeof queryValue === "string" && key !== "page" ? [[key, queryValue]] : []))).toString();
 
   return (
     <div className="col">
-      <PageHeader eyebrow={t("People operations")} title={t("All")} em={t("employees")}
+      <PageHeader eyebrow={t("People operations")} title={t("All")} emphasis={t("employees")}
         sub={seePay ? t("Employee records, portal access and reporting lines.") : t("Employee records, portal access and reporting lines. Compensation is visible to Finance only.")}>
         <a className="btn" href={`/api/people/export${exportQs ? `?${exportQs}` : ""}`} download>{t("Export CSV")}</a>
         {canAdd && <AddEmployeeButton />}
@@ -31,7 +31,7 @@ export default function PeoplePage() {
       </div>
       <div className="toolbar enter" style={{ ["--i" as string]: 5 }}>
         <SearchBox placeholder={t("Search name, ID, email, designation, manager")} label={t("Search people")} />
-        <SelectFilter name="departmentId" label={t("Department")} dflt="All" options={[{ value: "All", label: t("All") }, ...departments.map((d) => ({ value: d.id, label: d.name }))]} />
+        <SelectFilter name="departmentId" label={t("Department")} dflt="All" options={[{ value: "All", label: t("All") }, ...departments.map((department) => ({ value: department.id, label: department.name }))]} />
         <SelectFilter name="status" label={t("Status")} dflt="Current" options={[{ value: "Current", label: t("Current") }, { value: "ACTIVE", label: t("Active") }, { value: "PROBATION", label: t("Probation") }, { value: "ONBOARDING", label: t("Onboarding") }, { value: "EXITED", label: t("Past employees") }, { value: "All", label: t("All") }]} />
         <SelectFilter name="access" label={t("Access")} dflt="All" options={[{ value: "All", label: t("All") }, { value: "Enabled", label: t("Enabled") }, { value: "Disabled", label: t("Disabled") }]} />
         <span className="tcount">{t("{total} shown", { total })}</span>

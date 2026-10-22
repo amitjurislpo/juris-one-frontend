@@ -13,8 +13,8 @@ describe("formatting", () => {
   });
 
   it("resolves the calendar date in the employee's zone", () => {
-    const at = new Date("2026-10-06T20:00:00Z"); // 01:30 IST next day, 16:00 ET
-    expect(isoInZone(at, "Asia/Kolkata")).toBe("2026-10-07");
-    expect(isoInZone(at, "America/New_York")).toBe("2026-10-06");
+    const instant = new Date("2026-10-06T20:00:00Z"); // 01:30 IST next day, 16:00 ET
+    expect(isoInZone(instant, "Asia/Kolkata")).toBe("2026-10-07");
+    expect(isoInZone(instant, "America/New_York")).toBe("2026-10-06");
   });
 });

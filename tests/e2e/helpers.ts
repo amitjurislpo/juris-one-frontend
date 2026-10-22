@@ -23,22 +23,22 @@ function e2eDatabaseUrl() {
 }
 
 /** Direct DB access for test setup/teardown (unlock accounts, flip access, read the email outbox). */
-export async function sql<T = unknown>(q: string, params: unknown[] = []): Promise<T[]> {
-  const c = new Client({ connectionString: e2eDatabaseUrl() });
-  await c.connect();
+export async function sql<T = unknown>(query: string, params: unknown[] = []): Promise<T[]> {
+  const client = new Client({ connectionString: e2eDatabaseUrl() });
+  await client.connect();
   try {
-    return (await c.query(q, params)).rows as T[];
+    return (await client.query(query, params)).rows as T[];
   } finally {
-    await c.end();
+    await client.end();
   }
 }
 
 /** Sign-in is by email: a demo employee code (e.g. JC-072) is looked up. */
 export async function emailOf(codeOrEmail: string) {
   if (codeOrEmail.includes("@")) return codeOrEmail;
-  const [r] = await sql<{ email: string }>("SELECT email FROM employees WHERE upper(code) = upper($1) AND business_id IS NOT NULL", [codeOrEmail]);
-  if (!r) throw new Error(`No employee ${codeOrEmail}`);
-  return r.email;
+  const [employee] = await sql<{ email: string }>("SELECT email FROM employees WHERE upper(code) = upper($1) AND business_id IS NOT NULL", [codeOrEmail]);
+  if (!employee) throw new Error(`No employee ${codeOrEmail}`);
+  return employee.email;
 }
 
 /** In the e2e environment every emailed sign-in code is this fixed value (OTP_FIXED_CODE, see scripts/e2e-env.mjs). */

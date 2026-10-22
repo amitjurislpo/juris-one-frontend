@@ -2,29 +2,29 @@ import { expect, test, type Page } from "@playwright/test";
 import { OWNER, expectLanded, login, sql } from "./helpers";
 
 const toast = (page: Page) => page.locator(".toast").last();
-const T0 = new Date().toISOString();
+const TEST_START_TIME = new Date().toISOString();
 
 /** Put seeded demo requests back exactly as they were. */
 async function restore() {
-  await sql(`UPDATE leave_requests SET status = 'PENDING', decided_by = NULL, decided_at = NULL WHERE decided_at >= $1`, [T0]);
-  await sql(`UPDATE regularization_requests SET status = 'PENDING', decided_by = NULL, decided_at = NULL, decided_role = NULL WHERE decided_at >= $1`, [T0]);
-  await sql(`DELETE FROM leave_requests WHERE applied_at >= $1`, [T0]);
-  await sql(`DELETE FROM leave_ledger WHERE at >= $1 AND reason <> 'ACCRUAL'`, [T0]);
-  await sql(`DELETE FROM punches WHERE created_at >= $1`, [T0]);
-  await sql(`DELETE FROM notifications WHERE created_at >= $1`, [T0]);
+  await sql(`UPDATE leave_requests SET status = 'PENDING', decided_by = NULL, decided_at = NULL WHERE decided_at >= $1`, [TEST_START_TIME]);
+  await sql(`UPDATE regularization_requests SET status = 'PENDING', decided_by = NULL, decided_at = NULL, decided_role = NULL WHERE decided_at >= $1`, [TEST_START_TIME]);
+  await sql(`DELETE FROM leave_requests WHERE applied_at >= $1`, [TEST_START_TIME]);
+  await sql(`DELETE FROM leave_ledger WHERE at >= $1 AND reason <> 'ACCRUAL'`, [TEST_START_TIME]);
+  await sql(`DELETE FROM punches WHERE created_at >= $1`, [TEST_START_TIME]);
+  await sql(`DELETE FROM notifications WHERE created_at >= $1`, [TEST_START_TIME]);
 }
 
 async function ledger(code: string, type: string) {
-  const [r] = await sql<{ s: string | null }>(`SELECT sum(l.delta)::text s FROM leave_ledger l JOIN employees e ON e.id = l.employee_id WHERE e.code = $1 AND l.leave_type = $2`, [code, type]);
-  return Number(r.s ?? 0);
+  const [balance] = await sql<{ total: string | null }>(`SELECT sum(l.delta)::text total FROM leave_ledger l JOIN employees e ON e.id = l.employee_id WHERE e.code = $1 AND l.leave_type = $2`, [code, type]);
+  return Number(balance.total ?? 0);
 }
 
-async function pickRange(page: Page, from: number, to: number) {
+async function pickRange(page: Page, firstDay: number, lastDay: number) {
   const picker = page.locator(".drp");
   await picker.getByRole("button", { name: "Next month" }).click(); // November 2026
   await expect(picker.locator(".drp-h b")).toHaveText("November 2026");
-  await picker.locator(".drp-g button", { hasText: new RegExp(`^${from}$`) }).click();
-  await picker.locator(".drp-g button", { hasText: new RegExp(`^${to}$`) }).click();
+  await picker.locator(".drp-g button", { hasText: new RegExp(`^${firstDay}$`) }).click();
+  await picker.locator(".drp-g button", { hasText: new RegExp(`^${lastDay}$`) }).click();
 }
 
 test.describe("leave & approvals", () => {
@@ -80,7 +80,7 @@ test.describe("leave & approvals", () => {
     await expect(toast(page)).toContainText("Approved Naman Tyagi’s casual leave");
     await expect(page.getByText("Decided · last 30 days")).toBeVisible();
     expect(await ledger("JC-049", "CL")).toBeCloseTo(before - 2, 2);
-    const mail = await sql(`SELECT 1 FROM email_outbox WHERE "to" = 'naman.tyagi@jurislpo.com' AND subject LIKE 'Casual leave%approved' AND created_at >= $1`, [T0]);
+    const mail = await sql(`SELECT 1 FROM email_outbox WHERE "to" = 'naman.tyagi@jurislpo.com' AND subject LIKE 'Casual leave%approved' AND created_at >= $1`, [TEST_START_TIME]);
     expect(mail.length).toBe(1);
 
     await page.context().clearCookies();
@@ -101,24 +101,24 @@ test.describe("leave & approvals", () => {
     await expect(card).toContainText("asks to set check-out to 4:36 AM");
 
     // HR has the same request open in another browser
-    const hr = await browser.newPage();
-    await login(hr, "JC-012");
-    await expectLanded(hr, "/home");
-    await hr.goto("/approvals?tab=regularizations");
-    const hrCard = hr.locator("article.req", { hasText: "Siddharth Krishna" });
+    const hrPage = await browser.newPage();
+    await login(hrPage, "JC-012");
+    await expectLanded(hrPage, "/home");
+    await hrPage.goto("/approvals?tab=regularizations");
+    const hrCard = hrPage.locator("article.req", { hasText: "Siddharth Krishna" });
     await expect(hrCard).toBeVisible();
 
     await card.getByRole("button", { name: /Approve/ }).click();
     await expect(toast(page)).toContainText("Approved Siddharth Krishna");
-    const punches = await sql(`SELECT 1 FROM punches WHERE source = 'REGULARIZATION' AND created_at >= $1`, [T0]);
+    const punches = await sql(`SELECT 1 FROM punches WHERE source = 'REGULARIZATION' AND created_at >= $1`, [TEST_START_TIME]);
     expect(punches.length).toBe(1);
 
     await hrCard.getByRole("button", { name: "Decline" }).click();
-    await hr.getByRole("dialog").getByRole("button", { name: "Decline" }).click();
-    await expect(hr.locator(".toast").last()).toContainText("already decided");
-    await hr.close();
-    const [r] = await sql<{ status: string; decided_role: string }>(`SELECT status, decided_role FROM regularization_requests WHERE kind = 'MISSED_CHECKOUT' AND work_date = '2026-10-01'`);
-    expect(r).toEqual({ status: "APPROVED", decided_role: "Finance Executive" });
+    await hrPage.getByRole("dialog").getByRole("button", { name: "Decline" }).click();
+    await expect(hrPage.locator(".toast").last()).toContainText("already decided");
+    await hrPage.close();
+    const [regularization] = await sql<{ status: string; decided_role: string }>(`SELECT status, decided_role FROM regularization_requests WHERE kind = 'MISSED_CHECKOUT' AND work_date = '2026-10-01'`);
+    expect(regularization).toEqual({ status: "APPROVED", decided_role: "Finance Executive" });
   });
 
   test("holiday work earns a comp-off; Admin can approve too", async ({ page }) => {

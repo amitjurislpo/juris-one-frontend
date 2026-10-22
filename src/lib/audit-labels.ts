@@ -15,14 +15,14 @@ export type AuditGroup = keyof typeof AUDIT_GROUPS;
 
 export interface AuditRow {
   id: string;
-  at: string; // ISO timestamp with milliseconds
+  occurredAt: string; // ISO timestamp with milliseconds
   actor: string;
   actorCode: string | null;
   action: string;
   entity: string;
   entityId: string | null;
   subject: string | null; // employee the entity refers to, when it is one
-  ip: string | null;
+  ipAddress: string | null;
   before: unknown;
   after: unknown;
   redacted: boolean;
@@ -36,7 +36,7 @@ export interface AuditRow {
 }
 
 /** "employee.access_toggle" → "Employee · access toggle" */
-export const actionLabel = (a: string) => {
-  const [head, ...rest] = a.split(".");
+export const actionLabel = (action: string) => {
+  const [head, ...rest] = action.split(".");
   return `${head.charAt(0).toUpperCase()}${head.slice(1)} · ${rest.join(" ").replace(/_/g, " ")}`;
 };

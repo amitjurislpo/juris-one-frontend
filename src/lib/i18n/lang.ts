@@ -3,9 +3,9 @@ import { DEFAULT_LANG, LANG_COOKIE, isLang, type Lang } from "./config";
 /** The language chosen on this browser (cookie), outside React — the API client uses it to translate API messages. */
 export function readLang(): Lang {
   try {
-    const m = document.cookie.match(new RegExp(`(?:^|; )${LANG_COOKIE}=([^;]*)`));
-    const v = m ? decodeURIComponent(m[1]) : undefined;
-    return isLang(v) ? v : DEFAULT_LANG;
+    const match = document.cookie.match(new RegExp(`(?:^|; )${LANG_COOKIE}=([^;]*)`));
+    const cookieValue = match ? decodeURIComponent(match[1]) : undefined;
+    return isLang(cookieValue) ? cookieValue : DEFAULT_LANG;
   } catch {
     return DEFAULT_LANG;
   }

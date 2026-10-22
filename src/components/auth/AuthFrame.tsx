@@ -37,15 +37,15 @@ export function AuthFrame({ children }: { children: React.ReactNode }) {
           </div>
           <div className="glass b" style={{ display: "flex", gap: 12, alignItems: "center" }}>
             <span style={{ width: 36, height: 36, borderRadius: "50%", background: "#7CFFB2", color: "#0D3B24", display: "grid", placeItems: "center", flex: "none" }}>
-              <Icon n="ok" s={16} />
+              <Icon name="ok" size={16} />
             </span>
             <div><b style={{ fontSize: 14 }}>Leave approved</b><br /><small>Casual leave · 19 – 22 Oct</small></div>
           </div>
           <div className="glass c">
             <small>Attendance · last 14 weeks</small>
             <div className="mini-heat">
-              {Array.from({ length: 98 }, (_, i) => i + 1).map((n) => (
-                <i key={n} style={{ background: `rgba(255,255,255,${0.12 + ((n * 37) % 10) / 13})` }}></i>
+              {Array.from({ length: 98 }, (_, i) => i + 1).map((cellNumber) => (
+                <i key={cellNumber} style={{ background: `rgba(255,255,255,${0.12 + ((cellNumber * 37) % 10) / 13})` }}></i>
               ))}
             </div>
           </div>

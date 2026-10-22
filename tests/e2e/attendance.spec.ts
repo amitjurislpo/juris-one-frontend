@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { OWNER, expectLanded, login, sql } from "./helpers";
 
 const toast = (page: Page) => page.locator(".toast").last();
-const T0 = new Date().toISOString();
+const TEST_START_TIME = new Date().toISOString();
 
 type PunchRow = { id: string; employee_id: string; at: Date; kind: string; source: string };
 let removed: PunchRow[] = [];
@@ -15,9 +15,9 @@ test.describe("attendance", () => {
     if (removed.length) await sql(`DELETE FROM punches WHERE id = ANY($1::uuid[])`, [removed.map((r) => r.id)]);
   });
   test.afterAll(async () => {
-    await sql(`DELETE FROM punches WHERE created_at >= $1`, [T0]); // punches made by these tests
-    for (const r of removed) await sql(`INSERT INTO punches (id, employee_id, at, kind, source) VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING`, [r.id, r.employee_id, r.at, r.kind, r.source]);
-    await sql(`DELETE FROM regularization_requests WHERE created_at >= $1`, [T0]);
+    await sql(`DELETE FROM punches WHERE created_at >= $1`, [TEST_START_TIME]); // punches made by these tests
+    for (const removedPunch of removed) await sql(`INSERT INTO punches (id, employee_id, at, kind, source) VALUES ($1, $2, $3, $4, $5) ON CONFLICT DO NOTHING`, [removedPunch.id, removedPunch.employee_id, removedPunch.at, removedPunch.kind, removedPunch.source]);
+    await sql(`DELETE FROM regularization_requests WHERE created_at >= $1`, [TEST_START_TIME]);
     await sql(`DELETE FROM holidays WHERE name LIKE 'E2E %'`);
     await sql(`UPDATE settings SET value = jsonb_set(value, '{lateMarksPerHalfDayLop}', '3') WHERE key = 'attendance.policy'`);
   });
@@ -33,16 +33,16 @@ test.describe("attendance", () => {
     await expect(page.locator(".timeline")).toContainText("Web");
 
     // a stale second tab can't record a duplicate check-in
-    const again = await sql<{ n: string }>(`SELECT count(*)::text n FROM punches p JOIN employees e ON e.id = p.employee_id WHERE e.code = 'JC-058' AND p.created_at >= $1`, [T0]);
+    const again = await sql<{ n: string }>(`SELECT count(*)::text n FROM punches p JOIN employees e ON e.id = p.employee_id WHERE e.code = 'JC-058' AND p.created_at >= $1`, [TEST_START_TIME]);
     expect(again[0].n).toBe("1");
 
     // pretend the check-in was 2 hours ago, then check out
-    await sql(`UPDATE punches SET at = at - interval '2 hours' WHERE created_at >= $1 AND employee_id = (SELECT id FROM employees WHERE code = 'JC-058')`, [T0]);
+    await sql(`UPDATE punches SET at = at - interval '2 hours' WHERE created_at >= $1 AND employee_id = (SELECT id FROM employees WHERE code = 'JC-058')`, [TEST_START_TIME]);
     await page.reload();
     await page.getByRole("button", { name: "Check out" }).click();
     await expect(toast(page)).toContainText("Checked out — 2h");
     await expect(page.locator(".timecard .chip")).toHaveText("Checked out");
-    const rows = await sql<{ kind: string; ip: string | null }>(`SELECT kind, ip FROM punches WHERE created_at >= $1 AND employee_id = (SELECT id FROM employees WHERE code = 'JC-058') ORDER BY at`, [T0]);
+    const rows = await sql<{ kind: string; ip: string | null }>(`SELECT kind, ip FROM punches WHERE created_at >= $1 AND employee_id = (SELECT id FROM employees WHERE code = 'JC-058') ORDER BY at`, [TEST_START_TIME]);
     expect(rows.map((r) => r.kind)).toEqual(["IN", "OUT"]);
   });
 
@@ -83,9 +83,9 @@ test.describe("attendance", () => {
     await dialog.getByRole("button", { name: "Send for approval" }).click();
     await expect(toast(page)).toContainText("Regularization sent");
     await expect(page.getByText(/regularization pending — waiting for HR, Finance or Admin/)).toBeVisible();
-    const [r] = await sql<{ kind: string; status: string; proposed_in: Date }>(`SELECT kind, status, proposed_in FROM regularization_requests WHERE created_at >= $1`, [T0]);
-    expect(r).toMatchObject({ kind: "ABSENT", status: "PENDING" });
-    expect(new Date(r.proposed_in).toISOString()).toBe("2026-10-05T14:05:00.000Z");
+    const [regularization] = await sql<{ kind: string; status: string; proposed_in: Date }>(`SELECT kind, status, proposed_in FROM regularization_requests WHERE created_at >= $1`, [TEST_START_TIME]);
+    expect(regularization).toMatchObject({ kind: "ABSENT", status: "PENDING" });
+    expect(new Date(regularization.proposed_in).toISOString()).toBe("2026-10-05T14:05:00.000Z");
     await page.getByRole("button", { name: "Withdraw request" }).click();
     await expect(toast(page)).toContainText("withdrawn");
     await expect(page.getByRole("button", { name: "Request regularization" })).toBeVisible();
@@ -158,7 +158,7 @@ test.describe("attendance", () => {
     await page.getByRole("button", { name: "Save policy" }).click();
     await expect(toast(page)).toContainText("Attendance policy saved");
     await expect(page.getByText("4 in a month = ½ day loss of pay")).toBeVisible();
-    const logged = await sql(`SELECT 1 FROM audit_log WHERE action = 'policy.attendance_change' AND at >= $1`, [T0]);
+    const logged = await sql(`SELECT 1 FROM audit_log WHERE action = 'policy.attendance_change' AND at >= $1`, [TEST_START_TIME]);
     expect(logged.length).toBe(1);
   });
 });

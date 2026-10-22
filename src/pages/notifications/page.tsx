@@ -12,7 +12,7 @@ export default function NotificationsPage() {
   const page = Math.max(1, Number(searchParams.page) || 1);
   const box = useData<InboxPage>(`/api/notifications?page=${page}${unreadOnly ? "&unread=true" : ""}`);
   if (!box) return <PageLoading />;
-  const href = (p: number, unread = unreadOnly) => `/notifications?${new URLSearchParams({ ...(unread ? { filter: "unread" } : {}), ...(p > 1 ? { page: String(p) } : {}) })}`;
+  const href = (pageNumber: number, unread = unreadOnly) => `/notifications?${new URLSearchParams({ ...(unread ? { filter: "unread" } : {}), ...(pageNumber > 1 ? { page: String(pageNumber) } : {}) })}`;
 
   return (
     <div className="col">

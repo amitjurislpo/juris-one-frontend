@@ -39,55 +39,55 @@ export interface PayResult {
   net: number;
 }
 
-export function computePay(i: PayInput): PayResult {
-  const lop = Math.min(Math.max(0, i.lopDays), i.eligibleDays);
-  const paidDays = Math.max(0, i.eligibleDays - lop);
+export function computePay(input: PayInput): PayResult {
+  const lop = Math.min(Math.max(0, input.lopDays), input.eligibleDays);
+  const paidDays = Math.max(0, input.eligibleDays - lop);
   // earned amounts are rounded to whole rupees (100 paise), as on a printed payslip
-  const f = (rate: number) => Math.round((rate * paidDays) / i.daysInMonth / 100) * 100;
+  const earnedFor = (rate: number) => Math.round((rate * paidDays) / input.daysInMonth / 100) * 100;
   const components: PayLine[] = [
-    { label: "Basic", rate: i.structure.basic, earned: f(i.structure.basic) },
-    { label: "House rent allowance", rate: i.structure.hra, earned: f(i.structure.hra) },
-    { label: "Leave travel allowance", rate: i.structure.lta, earned: f(i.structure.lta) },
-    { label: "Special allowance", rate: i.structure.special, earned: f(i.structure.special) },
+    { label: "Basic", rate: input.structure.basic, earned: earnedFor(input.structure.basic) },
+    { label: "House rent allowance", rate: input.structure.hra, earned: earnedFor(input.structure.hra) },
+    { label: "Leave travel allowance", rate: input.structure.lta, earned: earnedFor(input.structure.lta) },
+    { label: "Special allowance", rate: input.structure.special, earned: earnedFor(input.structure.special) },
   ];
-  const grossEarned = components.reduce((a, c) => a + c.earned, 0) + i.bonus;
-  const pf = Math.round(i.pfRate * Math.min(components[0].earned, i.pfWageCeiling));
-  const pt = grossEarned > 0 ? i.professionalTax : 0;
-  const totalDeductions = pf + pt + i.tds + i.otherDeduction;
-  return { daysInMonth: i.daysInMonth, eligibleDays: i.eligibleDays, lopDays: lop, paidDays, components, bonus: i.bonus, grossEarned, pf, pt, tds: i.tds, otherDeduction: i.otherDeduction, totalDeductions, net: grossEarned - totalDeductions };
+  const grossEarned = components.reduce((a, c) => a + c.earned, 0) + input.bonus;
+  const pf = Math.round(input.pfRate * Math.min(components[0].earned, input.pfWageCeiling));
+  const professionalTax = grossEarned > 0 ? input.professionalTax : 0;
+  const totalDeductions = pf + professionalTax + input.tds + input.otherDeduction;
+  return { daysInMonth: input.daysInMonth, eligibleDays: input.eligibleDays, lopDays: lop, paidDays, components, bonus: input.bonus, grossEarned, pf, pt: professionalTax, tds: input.tds, otherDeduction: input.otherDeduction, totalDeductions, net: grossEarned - totalDeductions };
 }
 
-/** Days in [max(doj, 1st), min(exit, month end)] — 0 if not employed that month. */
-export function eligibleDays(ym: string, doj: string, exit: string | null): number {
-  const [y, m] = ym.split("-").map(Number);
-  const dim = new Date(Date.UTC(y, m, 0)).getUTCDate();
-  const first = `${ym}-01`, last = `${ym}-${String(dim).padStart(2, "0")}`;
-  const from = doj > first ? doj : first;
-  const to = exit && exit < last ? exit : last;
-  if (from > to) return 0;
-  return Math.round((Date.parse(to) - Date.parse(from)) / 86400_000) + 1;
+/** Days in [max(dateOfJoining, 1st), min(exit, month end)] — 0 if not employed that month. */
+export function eligibleDays(month: string, dateOfJoining: string, exit: string | null): number {
+  const [year, monthNumber] = month.split("-").map(Number);
+  const dim = new Date(Date.UTC(year, monthNumber, 0)).getUTCDate();
+  const first = `${month}-01`, last = `${month}-${String(dim).padStart(2, "0")}`;
+  const from = dateOfJoining > first ? dateOfJoining : first;
+  const periodEnd = exit && exit < last ? exit : last;
+  if (from > periodEnd) return 0;
+  return Math.round((Date.parse(periodEnd) - Date.parse(from)) / 86400_000) + 1;
 }
 
 /** "Split" helper: Basic 50% · HRA 20% · LTA 5% · Special = the rest (paise, rupee-rounded). */
 export function splitGross(target: number): Structure {
-  const r = (x: number) => Math.round(x / 100) * 100;
-  const basic = r(target * 0.5), hra = r(target * 0.2), lta = r(target * 0.05);
+  const roundToRupee = (x: number) => Math.round(x / 100) * 100;
+  const basic = roundToRupee(target * 0.5), hra = roundToRupee(target * 0.2), lta = roundToRupee(target * 0.05);
   return { basic, hra, lta, special: target - basic - hra - lta };
 }
 
 /** Rupees in words, Indian system (for the payslip). */
-export function rupeesInWords(n: number): string {
-  n = Math.round(n);
-  if (!n) return "Zero";
-  const a = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
-  const b = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
-  const two = (x: number) => (x < 20 ? a[x] : b[Math.floor(x / 10)] + (x % 10 ? " " + a[x % 10] : ""));
-  const three = (x: number) => (x >= 100 ? a[Math.floor(x / 100)] + " Hundred" + (x % 100 ? " " : "") : "") + (x % 100 ? two(x % 100) : "");
+export function rupeesInWords(amount: number): string {
+  amount = Math.round(amount);
+  if (!amount) return "Zero";
+  const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+  const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+  const two = (belowHundred: number) => (belowHundred < 20 ? ones[belowHundred] : tens[Math.floor(belowHundred / 10)] + (belowHundred % 10 ? " " + ones[belowHundred % 10] : ""));
+  const three = (belowThousand: number) => (belowThousand >= 100 ? ones[Math.floor(belowThousand / 100)] + " Hundred" + (belowThousand % 100 ? " " : "") : "") + (belowThousand % 100 ? two(belowThousand % 100) : "");
   const parts: string[] = [];
-  const cr = Math.floor(n / 1e7), lk = Math.floor(n / 1e5) % 100, th = Math.floor(n / 1e3) % 100, rest = n % 1000;
-  if (cr) parts.push((cr >= 100 ? three(cr) : two(cr)) + " Crore");
-  if (lk) parts.push(two(lk) + " Lakh");
-  if (th) parts.push(two(th) + " Thousand");
+  const crores = Math.floor(amount / 1e7), lakhs = Math.floor(amount / 1e5) % 100, thousands = Math.floor(amount / 1e3) % 100, rest = amount % 1000;
+  if (crores) parts.push((crores >= 100 ? three(crores) : two(crores)) + " Crore");
+  if (lakhs) parts.push(two(lakhs) + " Lakh");
+  if (thousands) parts.push(two(thousands) + " Thousand");
   if (rest) parts.push(three(rest));
   return parts.join(" ");
 }

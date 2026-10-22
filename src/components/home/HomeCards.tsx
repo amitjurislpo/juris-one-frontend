@@ -17,74 +17,74 @@ export interface HomeCardsData {
   payslip: { month: string; ready: boolean } | null;
 }
 
-export function HomeCards({ c, i0 }: { c: HomeCardsData; i0: number }) {
+export function HomeCards({ cards, firstCardIndex }: { cards: HomeCardsData; firstCardIndex: number }) {
   const t = useT();
-  let i = i0;
+  let cardIndex = firstCardIndex;
   return (
     <>
-      {c.myLeaves && (
-        <section className="card pad enter" style={{ ["--i" as string]: i++ }}>
+      {cards.myLeaves && (
+        <section className="card pad enter" style={{ ["--i" as string]: cardIndex++ }}>
           <span className="spot"></span>
           <div className="card-h"><h3>{t("My leave requests")}</h3><Link className="btn btn-sm btn-ghost" href="/leave">{t("View all")}</Link></div>
           <div className="list">
-            {!c.myLeaves.length && <div className="faint" style={{ fontSize: 13, padding: "6px 0" }}>{t("No leave requests yet.")}</div>}
-            {c.myLeaves.map((l) => (
-              <div className="it" key={l.id}>
-                <span style={{ width: 32, height: 32, borderRadius: 9, display: "grid", placeItems: "center", background: "var(--hover)", color: "var(--muted)", flex: "none" }}><Icon n="cal" s={15} /></span>
-                <div style={{ flex: 1, minWidth: 0 }}><b style={{ fontSize: 13.5, fontWeight: 600 }}>{t(l.type)}</b><div className="faint" style={{ fontSize: 12.5 }}>{formatDayMonth(l.from)}{l.to !== l.from ? ` – ${formatDayMonth(l.to)}` : ""} · {l.days}d</div></div>
-                <span className={`chip ${LCHIP[l.status]}`}>{t(LLABEL[l.status])}</span>
+            {!cards.myLeaves.length && <div className="faint" style={{ fontSize: 13, padding: "6px 0" }}>{t("No leave requests yet.")}</div>}
+            {cards.myLeaves.map((leave) => (
+              <div className="it" key={leave.id}>
+                <span style={{ width: 32, height: 32, borderRadius: 9, display: "grid", placeItems: "center", background: "var(--hover)", color: "var(--muted)", flex: "none" }}><Icon name="cal" size={15} /></span>
+                <div style={{ flex: 1, minWidth: 0 }}><b style={{ fontSize: 13.5, fontWeight: 600 }}>{t(leave.type)}</b><div className="faint" style={{ fontSize: 12.5 }}>{formatDayMonth(leave.from)}{leave.to !== leave.from ? ` – ${formatDayMonth(leave.to)}` : ""} · {leave.days}d</div></div>
+                <span className={`chip ${LCHIP[leave.status]}`}>{t(LLABEL[leave.status])}</span>
               </div>
             ))}
           </div>
         </section>
       )}
 
-      {c.team && (
-        <section className="card pad enter" style={{ ["--i" as string]: i++ }}>
+      {cards.team && (
+        <section className="card pad enter" style={{ ["--i" as string]: cardIndex++ }}>
           <span className="spot"></span>
           <div className="card-h"><h3>{t("Your team right now")}</h3><Link className="btn btn-sm btn-ghost" href="/team">{t("Open")}</Link></div>
           <div className="list">
-            {c.team.map((m) => (
-              <div className="it" key={m.id}>
-                <Avatar id={m.id} name={m.name} photo={m.photo} />
-                <div style={{ flex: 1, minWidth: 0 }}><b style={{ fontSize: 13.5, fontWeight: 600 }}>{m.name}</b><div className="faint" style={{ fontSize: 12 }}>{m.title}</div></div>
-                <span className={`chip ${m.status.tone}`}>{t(m.status.label)}</span>
+            {cards.team.map((member) => (
+              <div className="it" key={member.id}>
+                <Avatar id={member.id} name={member.name} photo={member.photo} />
+                <div style={{ flex: 1, minWidth: 0 }}><b style={{ fontSize: 13.5, fontWeight: 600 }}>{member.name}</b><div className="faint" style={{ fontSize: 12 }}>{member.title}</div></div>
+                <span className={`chip ${member.status.tone}`}>{t(member.status.label)}</span>
               </div>
             ))}
           </div>
         </section>
       )}
 
-      {c.approvals && (
-        <section className="card pad enter" style={{ ["--i" as string]: i++ }}>
+      {cards.approvals && (
+        <section className="card pad enter" style={{ ["--i" as string]: cardIndex++ }}>
           <span className="spot"></span>
-          <div className="card-h"><h3>{t("Approvals")}</h3><span className="chip gold nodot">{c.approvals.leaveToo ? t("Leave & attendance") : t("Attendance")}</span></div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}><span className="num" style={{ fontSize: 48, fontWeight: 600, letterSpacing: "-.05em", lineHeight: 1 }}>{c.approvals.count}</span><span className="muted">{c.approvals.count === 1 ? t("request waiting") : t("requests waiting")}</span></div>
-          <p className="muted" style={{ margin: "10px 0 16px", fontSize: 13.5 }}>{c.approvals.leaveToo ? t("Leave and regularization requests from every team.") : t("Attendance regularizations that affect payroll.")}</p>
-          <Link className="btn btn-gold" style={{ width: "100%" }} href="/approvals">{t("Review now")}<Icon n="arrow" s={15} /></Link>
+          <div className="card-h"><h3>{t("Approvals")}</h3><span className="chip gold nodot">{cards.approvals.leaveToo ? t("Leave & attendance") : t("Attendance")}</span></div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}><span className="num" style={{ fontSize: 48, fontWeight: 600, letterSpacing: "-.05em", lineHeight: 1 }}>{cards.approvals.count}</span><span className="muted">{cards.approvals.count === 1 ? t("request waiting") : t("requests waiting")}</span></div>
+          <p className="muted" style={{ margin: "10px 0 16px", fontSize: 13.5 }}>{cards.approvals.leaveToo ? t("Leave and regularization requests from every team.") : t("Attendance regularizations that affect payroll.")}</p>
+          <Link className="btn btn-gold" style={{ width: "100%" }} href="/approvals">{t("Review now")}<Icon name="arrow" size={15} /></Link>
         </section>
       )}
 
-      {c.payroll && (
-        <section className="card pad enter" style={{ ["--i" as string]: i++ }}>
+      {cards.payroll && (
+        <section className="card pad enter" style={{ ["--i" as string]: cardIndex++ }}>
           <span className="spot"></span>
-          <div className="card-h"><h3>{t("Payroll")} · {formatMonthLabel(c.payroll.month).split(" ")[0]}</h3><span className={`chip ${c.payroll.status === "Closed" ? "ok" : "warn"}`}>{t(c.payroll.status)}</span></div>
+          <div className="card-h"><h3>{t("Payroll")} · {formatMonthLabel(cards.payroll.month).split(" ")[0]}</h3><span className={`chip ${cards.payroll.status === "Closed" ? "ok" : "warn"}`}>{t(cards.payroll.status)}</span></div>
           <p className="muted" style={{ margin: "0 0 16px", fontSize: 13.5 }}>
-            {c.payroll.proofs !== null && `${t("{n} investment proof(s) waiting for verification.", { n: c.payroll.proofs })} `}
-            {t("{n} regularization(s) may change LOP.", { n: c.payroll.regularizations })}
+            {cards.payroll.proofs !== null && `${t("{n} investment proof(s) waiting for verification.", { n: cards.payroll.proofs })} `}
+            {t("{n} regularization(s) may change LOP.", { n: cards.payroll.regularizations })}
           </p>
           <div style={{ display: "flex", gap: 8 }}>
             <Link className="btn btn-gold" style={{ flex: 1 }} href="/payroll">{t("Open payroll")}</Link>
-            {c.payroll.proofs !== null && <Link className="btn" href="/proofs">{t("Proofs")}</Link>}
+            {cards.payroll.proofs !== null && <Link className="btn" href="/proofs">{t("Proofs")}</Link>}
           </div>
         </section>
       )}
 
-      {c.payslip && (
-        <section className="card pad enter" style={{ ["--i" as string]: i++, display: "flex", gap: 14, alignItems: "center" }}>
+      {cards.payslip && (
+        <section className="card pad enter" style={{ ["--i" as string]: cardIndex++, display: "flex", gap: 14, alignItems: "center" }}>
           <span className="spot"></span>
-          <span className="kpi-ico" style={{ background: "var(--accentsoft)", color: "var(--accent)" }}><Icon n="doc" s={18} /></span>
-          <div style={{ flex: 1 }}><h3 style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>{formatMonthLabel(c.payslip.month).split(" ")[0]} {t("payslip")}</h3><div className="faint" style={{ fontSize: 12.5 }}>{c.payslip.ready ? t("Ready to view and download") : t("Available once Finance closes payroll")}</div></div>
+          <span className="kpi-ico" style={{ background: "var(--accentsoft)", color: "var(--accent)" }}><Icon name="doc" size={18} /></span>
+          <div style={{ flex: 1 }}><h3 style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>{formatMonthLabel(cards.payslip.month).split(" ")[0]} {t("payslip")}</h3><div className="faint" style={{ fontSize: 12.5 }}>{cards.payslip.ready ? t("Ready to view and download") : t("Available once Finance closes payroll")}</div></div>
           <Link className="btn btn-sm" href="/payslips">{t("Open")}</Link>
         </section>
       )}

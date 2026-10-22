@@ -3,7 +3,7 @@ import { readLang } from "./i18n/lang";
 import { translate } from "./i18n/translate";
 
 /** Client for the Spring Boot API. The browser talks to its own origin; `/api/*` is proxied to the API (vite.config.ts). */
-export type ApiResult<T = undefined> = { ok: true; msg?: string; data?: T } | { ok: false; error: string };
+export type ApiResult<T = undefined> = { ok: true; message?: string; data?: T } | { ok: false; error: string };
 
 export interface ApiResponse<T> {
   status: number;
@@ -20,8 +20,8 @@ export class ApiError extends Error {
 }
 
 /** Where to go when the session has ended (set by the app once the router exists). */
-let navigateTo: (to: string) => void = (to) => window.location.assign(to);
-export const setNavigator = (fn: (to: string) => void) => { navigateTo = fn; };
+let navigateTo: (destination: string) => void = (destination) => window.location.assign(destination);
+export const setNavigator = (fn: (destination: string) => void) => { navigateTo = fn; };
 /** Client-side navigation from outside React (after sign-in / sign-out). */
 export const navigate = (to: string) => navigateTo(to);
 
@@ -64,7 +64,7 @@ async function send<T>(method: string, path: string, body: unknown, file?: Blob)
   // the API speaks English; show its fixed messages in the reader's language (unknown or dynamic ones stay English)
   const lang = readLang();
   if (!parsed.ok) parsed = { ...parsed, error: translate(lang, parsed.error) };
-  else if (parsed.msg) parsed = { ...parsed, msg: translate(lang, parsed.msg) };
+  else if (parsed.message) parsed = { ...parsed, message: translate(lang, parsed.message) };
   return { status: res.status, body: parsed };
 }
 
@@ -73,18 +73,18 @@ async function send<T>(method: string, path: string, body: unknown, file?: Blob)
  * is sent to the sign-in page (unless `quiet`, used when asking "who am I?" on a public page).
  */
 export async function apiCall<T>(method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", path: string, body?: unknown, opts: { quiet?: boolean; file?: Blob } = {}): Promise<ApiResponse<T>> {
-  let r = await send<T>(method, path, body, opts.file);
-  if (r.status === 401 && !path.startsWith("/api/auth/")) {
-    if (await refreshSession()) r = await send<T>(method, path, body, opts.file);
-    if (r.status === 401 && !opts.quiet && !onPublicPage()) {
+  let response = await send<T>(method, path, body, opts.file);
+  if (response.status === 401 && !path.startsWith("/api/auth/")) {
+    if (await refreshSession()) response = await send<T>(method, path, body, opts.file);
+    if (response.status === 401 && !opts.quiet && !onPublicPage()) {
       queryClient.clear();
       const next = location.pathname + location.search;
       navigateTo(next && next !== "/" ? `/login?next=${encodeURIComponent(next)}` : "/login");
     }
   }
   // a policy was published since the page was loaded: reload "who am I?" so the acknowledgement screen takes over
-  if (r.status === 428) void queryClient.invalidateQueries();
-  return r;
+  if (response.status === 428) void queryClient.invalidateQueries();
+  return response;
 }
 
 /** Tells the audit log that this page was opened. Fire and forget: no redirect on 401, no refetch, errors ignored. */
@@ -100,44 +100,44 @@ export function reportPageView(path: string) {
 
 /** GET returning `data`, or null on 401 (signed out). Other errors throw. */
 export async function apiGet<T>(path: string): Promise<T | null> {
-  const r = await apiCall<T>("GET", path, undefined, { quiet: true });
-  if (r.status === 401) return null;
-  if (!r.body.ok) throw new ApiError(r.body.error, r.status);
-  return r.body.data as T;
+  const response = await apiCall<T>("GET", path, undefined, { quiet: true });
+  if (response.status === 401) return null;
+  if (!response.body.ok) throw new ApiError(response.body.error, response.status);
+  return response.body.data as T;
 }
 
 /** GET returning `data`; throws an ApiError on any error. */
 export async function apiData<T>(path: string): Promise<T> {
-  const r = await apiCall<T>("GET", path);
-  if (!r.body.ok) throw new ApiError(r.body.error, r.status);
-  return r.body.data as T;
+  const response = await apiCall<T>("GET", path);
+  if (!response.body.ok) throw new ApiError(response.body.error, response.status);
+  return response.body.data as T;
 }
 
 /**
- * A write: returns the API's `{ ok, msg?, data?, error? }` envelope unchanged. On success every cached page is refetched before this resolves
+ * A write: returns the API's `{ ok, message?, data?, error? }` envelope unchanged. On success every cached page is refetched before this resolves
  * (the old `revalidate` page list is accepted and ignored, so action files read as before).
  */
 export async function apiAction<T = undefined>(method: "POST" | "PUT" | "PATCH" | "DELETE", path: string, body?: unknown, _revalidate: string[] = []): Promise<ApiResult<T>> {
-  const r = await apiCall<T>(method, path, body);
+  const response = await apiCall<T>(method, path, body);
   // wait for the refetch: the caller shows its toast together with the fresh data (what revalidatePath did)
-  if (r.body.ok) await queryClient.invalidateQueries();
-  return r.body;
+  if (response.body.ok) await queryClient.invalidateQueries();
+  return response.body;
 }
 
 /** A write whose body is a file (raw bytes, e.g. a photo) or nothing (a DELETE). Like apiAction, every page's data is refetched on success. */
 export async function apiFile(method: "PUT" | "DELETE", path: string, file?: Blob): Promise<ApiResult<undefined>> {
-  const r = await apiCall<undefined>(method, path, undefined, { file });
-  if (r.body.ok) await queryClient.invalidateQueries();
-  return r.body;
+  const response = await apiCall<undefined>(method, path, undefined, { file });
+  if (response.body.ok) await queryClient.invalidateQueries();
+  return response.body;
 }
 
 /** Search params → query string (first value of each). */
-export function toQueryString(sp: Record<string, string | string[] | undefined>): string {
-  const p = new URLSearchParams();
-  for (const [k, v] of Object.entries(sp)) {
-    const x = Array.isArray(v) ? v[0] : v;
-    if (x !== undefined) p.set(k, x);
+export function toQueryString(searchParams: Record<string, string | string[] | undefined>): string {
+  const queryParameters = new URLSearchParams();
+  for (const [parameterName, parameterValue] of Object.entries(searchParams)) {
+    const firstValue = Array.isArray(parameterValue) ? parameterValue[0] : parameterValue;
+    if (firstValue !== undefined) queryParameters.set(parameterName, firstValue);
   }
-  const s = p.toString();
-  return s ? `?${s}` : "";
+  const queryString = queryParameters.toString();
+  return queryString ? `?${queryString}` : "";
 }

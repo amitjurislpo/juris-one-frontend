@@ -21,21 +21,21 @@ export function IssueLetter({ templates, employees, canSalary }: { templates: Le
   const t = useT();
   const toast = useToast();
   const router = useRouter();
-  const [f, setF] = useState({ templateId: "", employeeId: "", lastWorkingDate: "" });
+  const [form, setForm] = useState({ templateId: "", employeeId: "", lastWorkingDate: "" });
   const [preview, setPreview] = useState<{ subject: string; text: string } | null>(null);
   const [err, setErr] = useState("");
   const [busy, start] = useTransition();
   const usable = templates.filter((t) => t.active);
-  const change = (patch: Partial<typeof f>) => { setF({ ...f, ...patch }); setPreview(null); setErr(""); };
-  const ready = f.templateId && f.employeeId;
+  const change = (patch: Partial<typeof form>) => { setForm({ ...form, ...patch }); setPreview(null); setErr(""); };
+  const ready = form.templateId && form.employeeId;
 
   const show = () => start(async () => {
-    const r = await previewLetter(f);
-    if (r.ok) setPreview(r.data!); else { setErr(r.error); setPreview(null); }
+    const result = await previewLetter(form);
+    if (result.ok) setPreview(result.data!); else { setErr(result.error); setPreview(null); }
   });
   const issue = () => start(async () => {
-    const r = await issueLetter(f);
-    if (r.ok) { toast(r.msg!); setPreview(null); setF({ ...f, lastWorkingDate: "" }); router.refresh(); } else setErr(r.error);
+    const result = await issueLetter(form);
+    if (result.ok) { toast(result.message!); setPreview(null); setForm({ ...form, lastWorkingDate: "" }); router.refresh(); } else setErr(result.error);
   });
 
   if (readOnly) return null;
@@ -44,22 +44,22 @@ export function IssueLetter({ templates, employees, canSalary }: { templates: Le
       <div className="card-h"><h3>{t("Issue a letter")}</h3></div>
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-end" }}>
         <label className="field" style={{ minWidth: 240 }}>{t("Template")}
-          <select value={f.templateId} onChange={(e) => change({ templateId: e.target.value })}>
+          <select value={form.templateId} onChange={(e) => change({ templateId: e.target.value })}>
             <option value="">{t("Choose…")}</option>
-            {usable.map((tp) => <option key={tp.id} value={tp.id} disabled={tp.needsSalary && !canSalary}>{tp.name}{tp.needsSalary ? ` ${canSalary ? t("(states salary)") : t("(needs salary access)")}` : ""}</option>)}
+            {usable.map((template) => <option key={template.id} value={template.id} disabled={template.needsSalary && !canSalary}>{template.name}{template.needsSalary ? ` ${canSalary ? t("(states salary)") : t("(needs salary access)")}` : ""}</option>)}
           </select>
         </label>
         <label className="field" style={{ minWidth: 240 }}>{t("Employee")}
-          <select value={f.employeeId} onChange={(e) => change({ employeeId: e.target.value })}>
+          <select value={form.employeeId} onChange={(e) => change({ employeeId: e.target.value })}>
             <option value="">{t("Choose…")}</option>
-            {employees.map((e) => <option key={e.id} value={e.id}>{e.name} · {e.code}{e.status === "EXITED" ? ` ${t("(exited)")}` : ""}</option>)}
+            {employees.map((employee) => <option key={employee.id} value={employee.id}>{employee.name} · {employee.code}{employee.status === "EXITED" ? ` ${t("(exited)")}` : ""}</option>)}
           </select>
         </label>
         <label className="field">{t("Last working day")} <span className="hint">{t("only if the letter uses it")}</span>
-          <input type="date" value={f.lastWorkingDate} onChange={(e) => change({ lastWorkingDate: e.target.value })} />
+          <input type="date" value={form.lastWorkingDate} onChange={(e) => change({ lastWorkingDate: e.target.value })} />
         </label>
-        <button className="btn" disabled={!ready || busy} onClick={show}><Icon n="eye" s={14} />{t("Preview")}</button>
-        <button className="btn btn-gold" disabled={!ready || busy} onClick={issue}><Icon n="upload" s={14} />{t("Issue letter")}</button>
+        <button className="btn" disabled={!ready || busy} onClick={show}><Icon name="eye" size={14} />{t("Preview")}</button>
+        <button className="btn btn-gold" disabled={!ready || busy} onClick={issue}><Icon name="upload" size={14} />{t("Issue letter")}</button>
       </div>
       {err && <div className="err" role="alert" style={{ marginTop: 12 }}>{err}</div>}
       {preview && (
@@ -78,7 +78,7 @@ function TemplateEditor({ id, fields, onClose }: { id: string | null; fields: Le
   const t = useT();
   const toast = useToast();
   const router = useRouter();
-  const [f, setF] = useState<{ type: LetterType; name: string; subject: string; body: string; active: boolean }>({ type: "EXPERIENCE", name: "", subject: "", body: "", active: true });
+  const [form, setForm] = useState<{ type: LetterType; name: string; subject: string; body: string; active: boolean }>({ type: "EXPERIENCE", name: "", subject: "", body: "", active: true });
   const [err, setErr] = useState("");
   const [busy, start] = useTransition();
   const area = useRef<HTMLTextAreaElement>(null);
@@ -86,25 +86,25 @@ function TemplateEditor({ id, fields, onClose }: { id: string | null; fields: Le
   useEffect(() => {
     if (id === null) return;
     let alive = true;
-    void templateDetail(id).then((r) => {
+    void templateDetail(id).then((result) => {
       if (!alive) return;
-      if (r.ok) setF({ type: r.data!.type, name: r.data!.name, subject: r.data!.subject, body: r.data!.body, active: r.data!.active });
-      else setErr(r.error);
+      if (result.ok) setForm({ type: result.data!.type, name: result.data!.name, subject: result.data!.subject, body: result.data!.body, active: result.data!.active });
+      else setErr(result.error);
     });
     return () => { alive = false; };
   }, [id]);
 
   const insert = (name: string) => {
-    const el = area.current;
+    const textarea = area.current;
     const tag = `{{${name}}}`;
-    if (!el) return setF({ ...f, body: f.body + tag });
-    const a = el.selectionStart ?? f.body.length, b = el.selectionEnd ?? a;
-    setF({ ...f, body: f.body.slice(0, a) + tag + f.body.slice(b) });
-    requestAnimationFrame(() => { el.focus(); el.setSelectionRange(a + tag.length, a + tag.length); });
+    if (!textarea) return setForm({ ...form, body: form.body + tag });
+    const selectionStart = textarea.selectionStart ?? form.body.length, selectionEnd = textarea.selectionEnd ?? selectionStart;
+    setForm({ ...form, body: form.body.slice(0, selectionStart) + tag + form.body.slice(selectionEnd) });
+    requestAnimationFrame(() => { textarea.focus(); textarea.setSelectionRange(selectionStart + tag.length, selectionStart + tag.length); });
   };
   const save = () => start(async () => {
-    const r = id ? await updateTemplate(id, { name: f.name, subject: f.subject, body: f.body, active: f.active }) : await createTemplate(f);
-    if (r.ok) { toast(r.msg!); router.refresh(); onClose(); } else setErr(r.error);
+    const result = id ? await updateTemplate(id, { name: form.name, subject: form.subject, body: form.body, active: form.active }) : await createTemplate(form);
+    if (result.ok) { toast(result.message!); router.refresh(); onClose(); } else setErr(result.error);
   });
 
   return (
@@ -114,26 +114,26 @@ function TemplateEditor({ id, fields, onClose }: { id: string | null; fields: Le
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           {!id && (
             <label className="field">{t("Type")}
-              <select value={f.type} onChange={(e) => setF({ ...f, type: e.target.value as LetterType })}>
-                {(Object.keys(TYPE_LABEL) as LetterType[]).map((k) => <option key={k} value={k}>{t(TYPE_LABEL[k])}</option>)}
+              <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as LetterType })}>
+                {(Object.keys(TYPE_LABEL) as LetterType[]).map((letterType) => <option key={letterType} value={letterType}>{t(TYPE_LABEL[letterType])}</option>)}
               </select>
             </label>
           )}
-          <label className="field" style={{ flex: 1, minWidth: 200 }}>{t("Name")}<input value={f.name} maxLength={100} onChange={(e) => { setF({ ...f, name: e.target.value }); setErr(""); }} /></label>
-          <label className="field" style={{ flex: 2, minWidth: 240 }}>{t("Subject line")}<input value={f.subject} maxLength={200} onChange={(e) => { setF({ ...f, subject: e.target.value }); setErr(""); }} /></label>
+          <label className="field" style={{ flex: 1, minWidth: 200 }}>{t("Name")}<input value={form.name} maxLength={100} onChange={(e) => { setForm({ ...form, name: e.target.value }); setErr(""); }} /></label>
+          <label className="field" style={{ flex: 2, minWidth: 240 }}>{t("Subject line")}<input value={form.subject} maxLength={200} onChange={(e) => { setForm({ ...form, subject: e.target.value }); setErr(""); }} /></label>
         </div>
         <label className="field">{t("Letter text")} <span className="hint">{t("plain text; a blank line starts a new paragraph")}</span>
-          <textarea ref={area} rows={14} value={f.body} onChange={(e) => { setF({ ...f, body: e.target.value }); setErr(""); }} style={{ fontFamily: "inherit", lineHeight: 1.55, height: "auto", padding: 12 }} />
+          <textarea ref={area} rows={14} value={form.body} onChange={(e) => { setForm({ ...form, body: e.target.value }); setErr(""); }} style={{ fontFamily: "inherit", lineHeight: 1.55, height: "auto", padding: 12 }} />
         </label>
         <div>
           <span className="eyebrow">{t("Merge fields, click to insert")}</span>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
-            {fields.map((x) => <button key={x.name} type="button" className={`chip ${x.salary ? "warn" : "neutral"} nodot`} title={x.label} style={{ cursor: "pointer" }} onClick={() => insert(x.name)}>{`{{${x.name}}}`}</button>)}
+            {fields.map((field) => <button key={field.name} type="button" className={`chip ${field.salary ? "warn" : "neutral"} nodot`} title={field.label} style={{ cursor: "pointer" }} onClick={() => insert(field.name)}>{`{{${field.name}}}`}</button>)}
           </div>
           <p className="faint" style={{ fontSize: 12, marginTop: 8 }}>{t("Fields in amber state a salary. A template that uses one can only be issued by someone who manages salary structures, never by HR.")}</p>
         </div>
         <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <input type="checkbox" checked={f.active} onChange={(e) => setF({ ...f, active: e.target.checked })} />{t("Available for issuing")}
+          <input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />{t("Available for issuing")}
         </label>
         {err && <div className="err" role="alert">{err}</div>}
       </div>
@@ -149,22 +149,22 @@ export function TemplatesTable({ templates, fields }: { templates: LetterTemplat
     <section className="card enter" style={{ ["--i" as string]: 2 }}>
       <div className="card-h" style={{ padding: "16px 18px 0" }}>
         <h3>{t("Templates")}</h3>
-        {!readOnly && <button className="btn btn-sm" onClick={() => setEditing(null)}><Icon n="plus" s={14} />{t("New template")}</button>}
+        {!readOnly && <button className="btn btn-sm" onClick={() => setEditing(null)}><Icon name="plus" size={14} />{t("New template")}</button>}
       </div>
       <div className="table-wrap">
         <table className="t">
           <thead><tr><th>{t("Template")}</th><th className="hide-sm">{t("Type")}</th><th>{t("Status")}</th><th className="hide-sm">{t("Version")}</th><th></th></tr></thead>
           <tbody>
-            {templates.map((tp) => (
-              <tr key={tp.id}>
-                <td><b>{tp.name}</b><br /><small className="muted">{tp.subject}</small></td>
-                <td className="muted hide-sm">{t(TYPE_LABEL[tp.type])}</td>
+            {templates.map((template) => (
+              <tr key={template.id}>
+                <td><b>{template.name}</b><br /><small className="muted">{template.subject}</small></td>
+                <td className="muted hide-sm">{t(TYPE_LABEL[template.type])}</td>
                 <td>
-                  {tp.active ? <span className="chip ok">{t("On")}</span> : <span className="chip neutral">{t("Off")}</span>}
-                  {tp.needsSalary && <span className="chip warn nodot" style={{ marginLeft: 6 }}>{t("States salary")}</span>}
+                  {template.active ? <span className="chip ok">{t("On")}</span> : <span className="chip neutral">{t("Off")}</span>}
+                  {template.needsSalary && <span className="chip warn nodot" style={{ marginLeft: 6 }}>{t("States salary")}</span>}
                 </td>
-                <td className="num hide-sm">v{tp.version}</td>
-                <td className="r">{!readOnly && <button className="btn btn-sm" onClick={() => setEditing(tp.id)}>{t("Edit")}</button>}</td>
+                <td className="num hide-sm">v{template.version}</td>
+                <td className="r">{!readOnly && <button className="btn btn-sm" onClick={() => setEditing(template.id)}>{t("Edit")}</button>}</td>
               </tr>
             ))}
           </tbody>

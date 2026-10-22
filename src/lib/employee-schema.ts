@@ -36,27 +36,27 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 export type StepErrors = Partial<Record<keyof EmployeeInput, string>>;
 
 /** Step-by-step checks shown in the form (and re-run on the server). */
-export function stepErrors(step: 1 | 2 | 3, f: EmployeeInput, editing: boolean, hadManager = false): StepErrors {
-  const x: StepErrors = {};
-  const india = !f.location || f.location === "IN_IST";
+export function stepErrors(step: 1 | 2 | 3, form: EmployeeInput, editing: boolean, hadManager = false): StepErrors {
+  const errors: StepErrors = {};
+  const india = !form.location || form.location === "IN_IST";
   if (step === 1) {
-    if (!f.firstName.trim()) x.firstName = "First name is required";
-    if (!f.lastName.trim()) x.lastName = "Last name is required";
-    if (f.fatherName.trim().length < 2) x.fatherName = "Father’s name is required";
-    if (!EMAIL_RE.test(f.email.trim())) x.email = "Enter a valid email";
-    if (f.phone || !editing) { const p = phoneProblem(f.phoneCountry, f.phone); if (p) x.phone = p; }
+    if (!form.firstName.trim()) errors.firstName = "First name is required";
+    if (!form.lastName.trim()) errors.lastName = "Last name is required";
+    if (form.fatherName.trim().length < 2) errors.fatherName = "Father’s name is required";
+    if (!EMAIL_RE.test(form.email.trim())) errors.email = "Enter a valid email";
+    if (form.phone || !editing) { const problem = phoneProblem(form.phoneCountry, form.phone); if (problem) errors.phone = problem; }
   }
   if (step === 2 && india) {
-    if (f.pan && !PAN_PATTERN.test(f.pan.trim().toUpperCase())) x.pan = "PAN looks like ABCDE1234F";
-    if (f.aadhaar && !validAadhaar(f.aadhaar)) x.aadhaar = "Aadhaar has 12 digits";
-    if (f.uan && !validUan(f.uan)) x.uan = "UAN has 12 digits";
+    if (form.pan && !PAN_PATTERN.test(form.pan.trim().toUpperCase())) errors.pan = "PAN looks like ABCDE1234F";
+    if (form.aadhaar && !validAadhaar(form.aadhaar)) errors.aadhaar = "Aadhaar has 12 digits";
+    if (form.uan && !validUan(form.uan)) errors.uan = "UAN has 12 digits";
   }
   if (step === 3) {
-    if (f.designation.trim().length < 2) x.designation = "Designation is required";
-    if (!f.departmentId) x.departmentId = "Pick a department";
-    if (!f.managerId && (!editing || hadManager)) x.managerId = "Pick a reporting manager";
-    if (!f.dateOfJoining) x.dateOfJoining = "Pick the date of joining";
-    if (!f.roleId) x.roleId = "Pick a role";
+    if (form.designation.trim().length < 2) errors.designation = "Designation is required";
+    if (!form.departmentId) errors.departmentId = "Pick a department";
+    if (!form.managerId && (!editing || hadManager)) errors.managerId = "Pick a reporting manager";
+    if (!form.dateOfJoining) errors.dateOfJoining = "Pick the date of joining";
+    if (!form.roleId) errors.roleId = "Pick a role";
   }
-  return x;
+  return errors;
 }

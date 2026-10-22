@@ -13,7 +13,7 @@ import { useCurrentUser } from "@/lib/session";
 import { currentTheme } from "./theme";
 
 interface ShellData {
-  me: { code: string; name: string; designation: string; roleName: string; department: string; manager: string; dateOfJoining: string; shift: string | null; isAdminLike: boolean };
+  currentUser: { code: string; name: string; designation: string; roleName: string; department: string; manager: string; dateOfJoining: string; shift: string | null; isAdminLike: boolean };
   groups: { title: NavGroup; items: { id: string; label: string; icon: string }[] }[];
   badges: { approvals: number; proofs: number };
   notes: ShellNote[];
@@ -37,11 +37,11 @@ export function AppLayout() {
   if (!user) return <Navigate to={`/login${loc.pathname !== "/" ? `?next=${encodeURIComponent(loc.pathname + loc.search)}` : ""}`} replace />;
   if (!data) return <PageLoading />;
   // the owner is warned on every page during the last week of the subscription
-  const s = data.subscription;
-  const ending = s?.active && s.daysLeft !== null && s.daysLeft <= 7 && (user.perms as ReadonlySet<string>).has(BUSINESS_MANAGE);
+  const subscription = data.subscription;
+  const ending = subscription?.active && subscription.daysLeft !== null && subscription.daysLeft <= 7 && (user.perms as ReadonlySet<string>).has(BUSINESS_MANAGE);
   return (
     <Shell
-      me={data.me}
+      currentUser={data.currentUser}
       groups={data.groups}
       badges={data.badges}
       notes={data.notes}
@@ -60,7 +60,7 @@ export function AppLayout() {
       {ending && (
         <div className="card" role="status" style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", marginBottom: 20, background: "var(--warnbg)", borderColor: "transparent", color: "var(--warn)" }}>
           <b style={{ flex: 1 }}>
-            {s.daysLeft === 0 ? t("Your JurisOne subscription ends today") : s.daysLeft === 1 ? t("Your JurisOne subscription ends in 1 day") : t("Your JurisOne subscription ends in {n} days", { n: s.daysLeft ?? 0 })} ({formatDayMonthYear(s.endsOn!)}).
+            {subscription.daysLeft === 0 ? t("Your JurisOne subscription ends today") : subscription.daysLeft === 1 ? t("Your JurisOne subscription ends in 1 day") : t("Your JurisOne subscription ends in {n} days", { n: subscription.daysLeft ?? 0 })} ({formatDayMonthYear(subscription.endsOn!)}).
             {" "}{t("After that, everyone can still sign in but JurisOne is paused. Contact the JurisOne team to renew.")}
           </b>
           <Link className="btn btn-sm" href="/subscription">{t("Subscription")}</Link>

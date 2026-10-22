@@ -15,22 +15,22 @@ export default function MyPoliciesPage() {
   return (
     <div className="col">
       <PageHeader eyebrow={t("Company")} title={<>{t("My")} <em>{t("policies")}</em></>} sub={t("The policies that apply to you. When a policy changes you'll be asked to read and accept the new version.")} />
-      {rows.map((p, i) => (
-        <details key={p.id} className="card enter" style={{ ["--i" as string]: i + 1, padding: "14px 18px" }}>
+      {rows.map((policy, i) => (
+        <details key={policy.id} className="card enter" style={{ ["--i" as string]: i + 1, padding: "14px 18px" }}>
           <summary style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", listStyle: "none" }}>
-            <span style={{ width: 34, height: 34, borderRadius: 9, background: "var(--accentsoft)", color: "var(--accent)", display: "grid", placeItems: "center", flex: "none" }}><Icon n="book" s={16} /></span>
+            <span style={{ width: 34, height: 34, borderRadius: 9, background: "var(--accentsoft)", color: "var(--accent)", display: "grid", placeItems: "center", flex: "none" }}><Icon name="book" size={16} /></span>
             <span style={{ flex: 1, minWidth: 0 }}>
-              <b>{p.title}</b><br />
-              <small className="muted">{t("Version {v} · published {date}", { v: p.version, date: formatDayMonthYear(p.publishedAt.slice(0, 10)) })}</small>
+              <b>{policy.title}</b><br />
+              <small className="muted">{t("Version {v} · published {date}", { v: policy.version, date: formatDayMonthYear(policy.publishedAt.slice(0, 10)) })}</small>
             </span>
-            {p.acknowledgedAt ? <span className="chip ok">{t("Accepted {date}", { date: formatDayMonthYear(p.acknowledgedAt.slice(0, 10)) })}</span>
-              : p.requiresAck ? <span className="chip warn">{t("To accept")}</span> : <span className="chip neutral">{t("For information")}</span>}
-            <Icon n="chevD" s={14} />
+            {policy.acknowledgedAt ? <span className="chip ok">{t("Accepted {date}", { date: formatDayMonthYear(policy.acknowledgedAt.slice(0, 10)) })}</span>
+              : policy.requiresAcknowledgement ? <span className="chip warn">{t("To accept")}</span> : <span className="chip neutral">{t("For information")}</span>}
+            <Icon name="chevD" size={14} />
           </summary>
           <div style={{ marginTop: 14, borderTop: "1px solid var(--line)", paddingTop: 14 }}>
-            {p.body ? <PolicyText body={p.body} /> : null}
-            {p.fileName && (
-              <a className="btn btn-sm" href={`/api/policies/${p.id}/versions/${p.version}/file`} target="_blank" rel="noopener"><Icon n="doc" s={14} />{t("Open {file}", { file: p.fileName })}</a>
+            {policy.body ? <PolicyText body={policy.body} /> : null}
+            {policy.fileName && (
+              <a className="btn btn-sm" href={`/api/policies/${policy.id}/versions/${policy.version}/file`} target="_blank" rel="noopener"><Icon name="doc" size={14} />{t("Open {file}", { file: policy.fileName })}</a>
             )}
           </div>
         </details>

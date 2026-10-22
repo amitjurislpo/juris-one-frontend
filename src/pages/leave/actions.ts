@@ -15,13 +15,13 @@ export interface ApplyInput {
 }
 
 /** Live numbers for the apply form — same rules the server enforces on submit. */
-export async function preview(i: ApplyInput): Promise<ActionResult<Preview>> {
-  const q = new URLSearchParams({ type: i.type, from: i.from, to: i.to, part: i.part });
-  return (await apiCall<Preview>("GET", `/api/leave/previews?${q}`)).body;
+export async function preview(input: ApplyInput): Promise<ActionResult<Preview>> {
+  const queryParameters = new URLSearchParams({ type: input.type, from: input.from, to: input.to, part: input.part });
+  return (await apiCall<Preview>("GET", `/api/leave/previews?${queryParameters}`)).body;
 }
 
-export async function applyLeave(i: ApplyInput): Promise<ActionResult> {
-  return apiAction("POST", "/api/leave/requests", i, PAGES);
+export async function applyLeave(input: ApplyInput): Promise<ActionResult> {
+  return apiAction("POST", "/api/leave/requests", input, PAGES);
 }
 
 export async function cancelLeave(id: string): Promise<ActionResult> {

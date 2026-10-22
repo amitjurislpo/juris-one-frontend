@@ -1,5 +1,5 @@
 /** Hindi (हिन्दी). Key = the English text used in the UI; a missing key simply shows the English text. */
-export const hi: Record<string, string> = {
+export const hindiMessages: Record<string, string> = {
   // shell, navigation groups and pages
   "Platform": "प्लेटफ़ॉर्म",
   "My workspace": "मेरा कार्यक्षेत्र",

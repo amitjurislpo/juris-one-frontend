@@ -7,12 +7,12 @@ const PAGES = ["/manage-announcements", "/announcements", "/home", "/overview", 
 
 export interface AnnouncementInput { title: string; body: string; audience: string; pinned: boolean; expiresOn: string }
 
-export async function createAnnouncement(i: AnnouncementInput): Promise<ActionResult<{ id: string }>> {
-  return apiAction("POST", "/api/announcements", i, PAGES);
+export async function createAnnouncement(input: AnnouncementInput): Promise<ActionResult<{ id: string }>> {
+  return apiAction("POST", "/api/announcements", input, PAGES);
 }
 
-export async function updateAnnouncement(id: string, i: AnnouncementInput): Promise<ActionResult> {
-  return apiAction("PUT", `/api/announcements/${encodeURIComponent(id)}`, i, PAGES);
+export async function updateAnnouncement(id: string, input: AnnouncementInput): Promise<ActionResult> {
+  return apiAction("PUT", `/api/announcements/${encodeURIComponent(id)}`, input, PAGES);
 }
 
 export async function setAnnouncementStatus(id: string, status: "PUBLISHED" | "UNPUBLISHED"): Promise<ActionResult> {

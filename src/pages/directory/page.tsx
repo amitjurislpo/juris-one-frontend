@@ -17,10 +17,10 @@ export default function DirectoryPage() {
 
   return (
     <div className="col">
-      <PageHeader eyebrow={t("Directory")} title={t("Find")} em={t("anyone")} sub={t("{n} people at Juris Consultants. Search by name, email or designation.", { n: activeCount })} />
+      <PageHeader eyebrow={t("Directory")} title={t("Find")} emphasis={t("anyone")} sub={t("{n} people at Juris Consultants. Search by name, email or designation.", { n: activeCount })} />
       <div className="toolbar enter" style={{ ["--i" as string]: 1 }}>
-        <SearchBox big placeholder={t("Search name, email or designation")} label={t("Search directory")} />
-        <SelectFilter name="departmentId" label={t("Department")} dflt="All" options={[{ value: "All", label: t("All") }, ...departments.map((x) => ({ value: x.id, label: x.name }))]} />
+        <SearchBox isLarge placeholder={t("Search name, email or designation")} label={t("Search directory")} />
+        <SelectFilter name="departmentId" label={t("Department")} dflt="All" options={[{ value: "All", label: t("All") }, ...departments.map((department) => ({ value: department.id, label: department.name }))]} />
         <SegmentedFilter name="status" dflt="All" label={t("Status")} options={[{ value: "All", label: t("All") }, { value: "Active", label: t("Active") }, { value: "Past", label: t("Past employees") }]} />
       </div>
       <section className="card enter" style={{ ["--i" as string]: 2 }}>
@@ -29,10 +29,10 @@ export default function DirectoryPage() {
             <table className="t">
               <thead>
                 <tr>
-                  <SortableHeader k="name" dflt="name">{t("Name")}</SortableHeader>
-                  <SortableHeader k="email" dflt="name">{t("Email")}</SortableHeader>
-                  <SortableHeader k="title" dflt="name">{t("Designation")}</SortableHeader>
-                  <SortableHeader k="status" dflt="name">{t("Status")}</SortableHeader>
+                  <SortableHeader sortKey="name" dflt="name">{t("Name")}</SortableHeader>
+                  <SortableHeader sortKey="email" dflt="name">{t("Email")}</SortableHeader>
+                  <SortableHeader sortKey="title" dflt="name">{t("Designation")}</SortableHeader>
+                  <SortableHeader sortKey="status" dflt="name">{t("Status")}</SortableHeader>
                 </tr>
               </thead>
               <tbody>

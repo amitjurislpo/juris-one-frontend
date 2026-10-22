@@ -2,14 +2,14 @@ import { expect, test, type Page } from "@playwright/test";
 import { expectLanded, login, sql } from "./helpers";
 
 const toast = (page: Page) => page.locator(".toast").last();
-const T0 = new Date().toISOString();
+const TEST_START_TIME = new Date().toISOString();
 const PDF = Buffer.from("%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n");
 
 async function restore() {
   await sql(`UPDATE declaration_items SET status = 'PENDING', decided_by = NULL, decided_at = NULL, reject_reason = NULL WHERE employee_id = (SELECT id FROM employees WHERE code = 'JC-058')`);
   await sql(`DELETE FROM declaration_items WHERE employee_id = (SELECT id FROM employees WHERE code = 'JC-072')`);
   await sql(`DELETE FROM tax_profiles WHERE employee_id = (SELECT id FROM employees WHERE code = 'JC-072')`);
-  await sql(`DELETE FROM notifications WHERE created_at >= $1`, [T0]);
+  await sql(`DELETE FROM notifications WHERE created_at >= $1`, [TEST_START_TIME]);
 }
 
 test.describe("tax & declarations", () => {
@@ -59,7 +59,7 @@ test.describe("tax & declarations", () => {
     await expect(lic.locator(".chip").last()).toHaveText("Rejected");
     await drawer.getByRole("button", { name: "Approve all pending" }).click();
     await expect(toast(page)).toContainText("3 proofs approved");
-    const logged = await sql(`SELECT 1 FROM audit_log WHERE action = 'proof.decision' AND at >= $1`, [T0]);
+    const logged = await sql(`SELECT 1 FROM audit_log WHERE action = 'proof.decision' AND at >= $1`, [TEST_START_TIME]);
     expect(logged.length).toBe(2);
     const note = await sql(`SELECT 1 FROM notifications n JOIN employees e ON e.id = n.employee_id WHERE e.code = 'JC-058' AND n.text LIKE '%rejected — Premium receipt%'`);
     expect(note.length).toBe(1);
@@ -80,10 +80,10 @@ test.describe("tax & declarations", () => {
     await drawer.getByRole("button", { name: "Close" }).click();
 
     await page.locator("tbody tr", { hasText: "Siddharth Krishna" }).click();
-    const td = page.getByRole("dialog", { name: "Tax computation" });
-    await expect(td.getByRole("button", { name: "New regime" })).toBeVisible();
-    const onNew = (await td.getByRole("button", { name: "New regime" }).getAttribute("aria-pressed")) === "true";
-    await td.getByRole("button", { name: onNew ? "Old regime" : "New regime" }).click(); // override to the other regime
+    const dialog = page.getByRole("dialog", { name: "Tax computation" });
+    await expect(dialog.getByRole("button", { name: "New regime" })).toBeVisible();
+    const onNew = (await dialog.getByRole("button", { name: "New regime" }).getAttribute("aria-pressed")) === "true";
+    await dialog.getByRole("button", { name: onNew ? "Old regime" : "New regime" }).click(); // override to the other regime
     await expect(toast(page)).toContainText("Regime set to");
     await page.goto("/tax?search=Siddharth");
     await expect(page.locator("tbody tr").first()).toContainText("set by Finance");
@@ -104,8 +104,8 @@ test.describe("tax & declarations", () => {
     const [item] = await sql<{ id: string }>(`SELECT d.id FROM declaration_items d JOIN employees e ON e.id = d.employee_id WHERE e.code = 'JC-058' AND d.proof_path IS NOT NULL LIMIT 1`);
     await login(page, "JC-012");
     await expectLanded(page, "/home");
-    for (const p of ["/tax", "/proofs"]) {
-      await page.goto(p);
+    for (const path of ["/tax", "/proofs"]) {
+      await page.goto(path);
       await expectLanded(page, "/home");
     }
     expect((await page.request.get("/api/tax/export")).status()).toBe(403);

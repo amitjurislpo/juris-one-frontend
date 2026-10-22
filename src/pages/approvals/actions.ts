@@ -7,11 +7,11 @@ const enc = encodeURIComponent;
 const PAGES = ["/approvals", "/leave", "/attendance", "/home", "/register", "/team"];
 
 /** HR (`appr.leave`; Admin too). Approving posts the used days to the ledger; any shortfall is LOP. */
-export async function decideLeave(i: { id: string; approve: boolean; note?: string }): Promise<ActionResult> {
-  return apiAction("PUT", `/api/leave/requests/${enc(i.id)}/decision`, { approve: i.approve, note: i.note }, PAGES);
+export async function decideLeave(input: { id: string; approve: boolean; note?: string }): Promise<ActionResult> {
+  return apiAction("PUT", `/api/leave/requests/${enc(input.id)}/decision`, { approve: input.approve, note: input.note }, PAGES);
 }
 
 /** Regularization goes to HR, Finance and Admin together (`appr.reg`); the first decision is final. */
-export async function decideRegularization(i: { id: string; approve: boolean; note?: string }): Promise<ActionResult> {
-  return apiAction("PUT", `/api/attendance/regularizations/${enc(i.id)}/decision`, { approve: i.approve, note: i.note }, PAGES);
+export async function decideRegularization(input: { id: string; approve: boolean; note?: string }): Promise<ActionResult> {
+  return apiAction("PUT", `/api/attendance/regularizations/${enc(input.id)}/decision`, { approve: input.approve, note: input.note }, PAGES);
 }

@@ -25,20 +25,20 @@ export default function RoleTemplatesPage() {
               <tr><th>{t("Role")}</th><th>{t("What it can do")}</th><th>{t("Can add people as")}</th><th className="r">{t("Businesses")}</th><th>{t("Status")}</th><th></th></tr>
             </thead>
             <tbody>
-              {data.templates.map((x) => (
-                <tr key={x.key}>
+              {data.templates.map((template) => (
+                <tr key={template.key}>
                   <td>
-                    <b>{x.name}</b>
-                    {x.mandatory && <> <span className="chip gold">{t("Always included")}</span></>}
-                    {x.locked && <> <span className="chip neutral">{t("Locked")}</span></>}
+                    <b>{template.name}</b>
+                    {template.mandatory && <> <span className="chip gold">{t("Always included")}</span></>}
+                    {template.locked && <> <span className="chip neutral">{t("Locked")}</span></>}
                   </td>
-                  <td style={{ maxWidth: 360 }}><small className="muted">{x.permissions.map((p) => t(labels.get(p) ?? p)).join(" · ") || "—"}</small></td>
-                  <td>{x.assignable.length ? x.assignable.map((k) => names.get(k) ?? k).join(", ") : <span className="muted">—</span>}</td>
-                  <td className="r num">{x.businesses}</td>
-                  <td><span className={`chip ${x.active ? "ok" : "neutral"}`}>{x.active ? t("Offered") : t("Retired")}</span></td>
+                  <td style={{ maxWidth: 360 }}><small className="muted">{template.permissions.map((permission) => t(labels.get(permission) ?? permission)).join(" · ") || "—"}</small></td>
+                  <td>{template.assignable.length ? template.assignable.map((roleKey) => names.get(roleKey) ?? roleKey).join(", ") : <span className="muted">—</span>}</td>
+                  <td className="r num">{template.businesses}</td>
+                  <td><span className={`chip ${template.active ? "ok" : "neutral"}`}>{template.active ? t("Offered") : t("Retired")}</span></td>
                   <td className="r" style={{ whiteSpace: "nowrap" }}>
-                    <RoleTemplateButton template={x} groups={data.groups} templates={data.templates} />
-                    <RoleTemplateDeleteButton template={x} />
+                    <RoleTemplateButton template={template} groups={data.groups} templates={data.templates} />
+                    <RoleTemplateDeleteButton template={template} />
                   </td>
                 </tr>
               ))}

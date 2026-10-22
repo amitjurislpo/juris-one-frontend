@@ -6,7 +6,7 @@ import { PageLoading, useData, usePage } from "@/lib/page";
 import { formatDayMonthYear } from "@/lib/format";
 
 
-const describe = (a: AssetAssignment, t: (s: string) => string) => [a.make, a.model].filter(Boolean).join(" ") || (ASSET_TYPES[a.type] ? t(ASSET_TYPES[a.type]) : a.type);
+const describe = (assignment: AssetAssignment, t: (text: string) => string) => [assignment.make, assignment.model].filter(Boolean).join(" ") || (ASSET_TYPES[assignment.type] ? t(ASSET_TYPES[assignment.type]) : assignment.type);
 
 /** The company equipment assigned to the signed-in user, now and before. */
 export default function MyAssetsPage() {
@@ -24,13 +24,13 @@ export default function MyAssetsPage() {
           <table className="t">
             <thead><tr><th>{t("Asset")}</th><th>{t("Tag")}</th><th className="hide-sm">{t("Serial")}</th><th>{t("Since")}</th><th className="hide-sm">{t("Notes")}</th></tr></thead>
             <tbody>
-              {current.map((a) => (
-                <tr key={a.id}>
-                  <td><div className="person"><span className="kpi-ico" style={{ width: 34, height: 34, background: "var(--accentsoft)", color: "var(--accent)" }}><Icon n="layers" s={16} /></span><div><b>{describe(a, t)}</b><small>{ASSET_TYPES[a.type] ? t(ASSET_TYPES[a.type]) : a.type}</small></div></div></td>
-                  <td className="num">{a.tag}</td>
-                  <td className="muted hide-sm">{a.serial ?? "—"}</td>
-                  <td>{formatDayMonthYear(a.assignedOn)}</td>
-                  <td className="muted hide-sm">{a.assignNotes ?? "—"}</td>
+              {current.map((assignment) => (
+                <tr key={assignment.id}>
+                  <td><div className="person"><span className="kpi-ico" style={{ width: 34, height: 34, background: "var(--accentsoft)", color: "var(--accent)" }}><Icon name="layers" size={16} /></span><div><b>{describe(assignment, t)}</b><small>{ASSET_TYPES[assignment.type] ? t(ASSET_TYPES[assignment.type]) : assignment.type}</small></div></div></td>
+                  <td className="num">{assignment.tag}</td>
+                  <td className="muted hide-sm">{assignment.serial ?? "—"}</td>
+                  <td>{formatDayMonthYear(assignment.assignedOn)}</td>
+                  <td className="muted hide-sm">{assignment.assignNotes ?? "—"}</td>
                 </tr>
               ))}
             </tbody>
@@ -45,13 +45,13 @@ export default function MyAssetsPage() {
             <table className="t">
               <thead><tr><th>{t("Asset")}</th><th>{t("Tag")}</th><th>{t("From")}</th><th>{t("Returned")}</th><th>{t("Condition")}</th></tr></thead>
               <tbody>
-                {past.map((a) => (
-                  <tr key={a.id}>
-                    <td><b>{describe(a, t)}</b></td>
-                    <td className="num">{a.tag}</td>
-                    <td>{formatDayMonthYear(a.assignedOn)}</td>
-                    <td>{a.returnedOn ? formatDayMonthYear(a.returnedOn) : "—"}</td>
-                    <td>{a.returnCondition ? t(CONDITIONS[a.returnCondition]) : "—"}</td>
+                {past.map((assignment) => (
+                  <tr key={assignment.id}>
+                    <td><b>{describe(assignment, t)}</b></td>
+                    <td className="num">{assignment.tag}</td>
+                    <td>{formatDayMonthYear(assignment.assignedOn)}</td>
+                    <td>{assignment.returnedOn ? formatDayMonthYear(assignment.returnedOn) : "—"}</td>
+                    <td>{assignment.returnCondition ? t(CONDITIONS[assignment.returnCondition]) : "—"}</td>
                   </tr>
                 ))}
               </tbody>

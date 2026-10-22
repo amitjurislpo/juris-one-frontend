@@ -19,37 +19,37 @@ function AssetForm({ asset, onClose }: { asset?: AssetRow; onClose: () => void }
   const t = useT();
   const toast = useToast();
   const router = useRouter();
-  const [f, setF] = useState<AssetInput>(asset ? {
+  const [form, setForm] = useState<AssetInput>(asset ? {
     tag: asset.tag, type: asset.type, make: asset.make ?? "", model: asset.model ?? "", serial: asset.serial ?? "", purchaseDate: asset.purchaseDate ?? "",
     status: asset.status === "ASSIGNED" ? undefined : asset.status, notes: asset.notes ?? "",
   } : EMPTY);
   const [err, setErr] = useState("");
   const [busy, start] = useTransition();
-  const set = (k: keyof AssetInput, v: string) => { setF({ ...f, [k]: v }); setErr(""); };
+  const set = (fieldName: keyof AssetInput, fieldValue: string) => { setForm({ ...form, [fieldName]: fieldValue }); setErr(""); };
   const save = () => start(async () => {
-    const r = asset ? await updateAsset(asset.id, f) : await createAsset(f);
-    if (r.ok) { toast(r.msg ?? t("Asset saved")); onClose(); router.refresh(); } else setErr(r.error);
+    const result = asset ? await updateAsset(asset.id, form) : await createAsset(form);
+    if (result.ok) { toast(result.message ?? t("Asset saved")); onClose(); router.refresh(); } else setErr(result.error);
   });
   return (
     <Modal title={asset ? t("Edit {tag}", { tag: asset.tag }) : t("Add asset")} eyebrow={t("Asset register")} onClose={onClose}
       footer={<><button className="btn btn-ghost" onClick={onClose}>{t("Cancel")}</button><button className="btn btn-gold" disabled={busy} onClick={save}>{busy ? t("Saving…") : t("Save")}</button></>}>
       <div className="col" style={{ gap: 14 }}>
         <div className="grid2">
-          <label className="field">{t("Asset tag *")}<input value={f.tag} maxLength={40} autoFocus onChange={(e) => set("tag", e.target.value)} placeholder={t("e.g. JC-LT-014")} /></label>
-          <label className="field">{t("Type")}<select value={f.type} onChange={(e) => set("type", e.target.value)}>{Object.entries(ASSET_TYPES).map(([k, v]) => <option key={k} value={k}>{t(v)}</option>)}</select></label>
-          <label className="field">{t("Make")}<input value={f.make} maxLength={80} onChange={(e) => set("make", e.target.value)} placeholder={t("e.g. Dell")} /></label>
-          <label className="field">{t("Model")}<input value={f.model} maxLength={80} onChange={(e) => set("model", e.target.value)} placeholder={t("e.g. Latitude 5440")} /></label>
-          <label className="field">{t("Serial number")}<input value={f.serial} maxLength={80} onChange={(e) => set("serial", e.target.value)} /></label>
-          <label className="field">{t("Purchase date")}<input type="date" value={f.purchaseDate} onChange={(e) => set("purchaseDate", e.target.value)} /></label>
+          <label className="field">{t("Asset tag *")}<input value={form.tag} maxLength={40} autoFocus onChange={(e) => set("tag", e.target.value)} placeholder={t("e.g. JC-LT-014")} /></label>
+          <label className="field">{t("Type")}<select value={form.type} onChange={(e) => set("type", e.target.value)}>{Object.entries(ASSET_TYPES).map(([optionValue, label]) => <option key={optionValue} value={optionValue}>{t(label)}</option>)}</select></label>
+          <label className="field">{t("Make")}<input value={form.make} maxLength={80} onChange={(e) => set("make", e.target.value)} placeholder={t("e.g. Dell")} /></label>
+          <label className="field">{t("Model")}<input value={form.model} maxLength={80} onChange={(e) => set("model", e.target.value)} placeholder={t("e.g. Latitude 5440")} /></label>
+          <label className="field">{t("Serial number")}<input value={form.serial} maxLength={80} onChange={(e) => set("serial", e.target.value)} /></label>
+          <label className="field">{t("Purchase date")}<input type="date" value={form.purchaseDate} onChange={(e) => set("purchaseDate", e.target.value)} /></label>
         </div>
         {asset?.status !== "ASSIGNED" && (
           <label className="field">{t("Status")}
-            <select value={f.status ?? "AVAILABLE"} onChange={(e) => set("status", e.target.value)}>
+            <select value={form.status ?? "AVAILABLE"} onChange={(e) => set("status", e.target.value)}>
               <option value="AVAILABLE">{t("Available")}</option><option value="IN_REPAIR">{t("In repair")}</option><option value="RETIRED">{t("Retired")}</option>
             </select>
           </label>
         )}
-        <label className="field">{t("Notes")}<textarea value={f.notes} rows={3} maxLength={500} onChange={(e) => set("notes", e.target.value)} /></label>
+        <label className="field">{t("Notes")}<textarea value={form.notes} rows={3} maxLength={500} onChange={(e) => set("notes", e.target.value)} /></label>
         {err && <div className="err" role="alert">{err}</div>}
       </div>
     </Modal>
@@ -63,7 +63,7 @@ export function AddAssetButton() {
   if (readOnly) return null;
   return (
     <>
-      <button className="btn btn-gold btn-lg" onClick={() => setOpen(true)}><Icon n="plus" s={16} />{t("Add asset")}</button>
+      <button className="btn btn-gold btn-lg" onClick={() => setOpen(true)}><Icon name="plus" size={16} />{t("Add asset")}</button>
       {open && <AssetForm onClose={() => setOpen(false)} />}
     </>
   );
@@ -73,25 +73,25 @@ function AssignDialog({ asset, people, today, onClose }: { asset: AssetRow; peop
   const t = useT();
   const toast = useToast();
   const router = useRouter();
-  const [f, setF] = useState({ employeeId: "", assignedOn: today, notes: "" });
+  const [form, setForm] = useState({ employeeId: "", assignedOn: today, notes: "" });
   const [err, setErr] = useState("");
   const [busy, start] = useTransition();
   const save = () => start(async () => {
-    const r = await assignAsset(asset.id, f);
-    if (r.ok) { toast(r.msg ?? t("Assigned")); onClose(); router.refresh(); } else setErr(r.error);
+    const result = await assignAsset(asset.id, form);
+    if (result.ok) { toast(result.message ?? t("Assigned")); onClose(); router.refresh(); } else setErr(result.error);
   });
   return (
     <Modal title={t("Assign {tag}", { tag: asset.tag })} eyebrow={t("The employee is notified")} size="sm" onClose={onClose}
-      footer={<><button className="btn btn-ghost" onClick={onClose}>{t("Cancel")}</button><button className="btn btn-gold" disabled={busy || !f.employeeId} onClick={save}>{busy ? t("Assigning…") : t("Assign")}</button></>}>
+      footer={<><button className="btn btn-ghost" onClick={onClose}>{t("Cancel")}</button><button className="btn btn-gold" disabled={busy || !form.employeeId} onClick={save}>{busy ? t("Assigning…") : t("Assign")}</button></>}>
       <div className="col" style={{ gap: 14 }}>
         <label className="field">{t("Employee *")}
-          <select value={f.employeeId} onChange={(e) => { setF({ ...f, employeeId: e.target.value }); setErr(""); }}>
+          <select value={form.employeeId} onChange={(e) => { setForm({ ...form, employeeId: e.target.value }); setErr(""); }}>
             <option value="">{t("Choose…")}</option>
             {people.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.code})</option>)}
           </select>
         </label>
-        <label className="field">{t("Assigned on")}<input type="date" value={f.assignedOn} onChange={(e) => setF({ ...f, assignedOn: e.target.value })} /></label>
-        <label className="field">{t("Notes")} <span className="hint">{t("accessories handed over, condition…")}</span><textarea rows={3} maxLength={500} value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} /></label>
+        <label className="field">{t("Assigned on")}<input type="date" value={form.assignedOn} onChange={(e) => setForm({ ...form, assignedOn: e.target.value })} /></label>
+        <label className="field">{t("Notes")} <span className="hint">{t("accessories handed over, condition…")}</span><textarea rows={3} maxLength={500} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></label>
         {err && <div className="err" role="alert">{err}</div>}
       </div>
     </Modal>
@@ -102,20 +102,20 @@ function ReturnDialog({ asset, today, onClose }: { asset: AssetRow; today: strin
   const t = useT();
   const toast = useToast();
   const router = useRouter();
-  const [f, setF] = useState({ condition: "GOOD", returnedOn: today, notes: "" });
+  const [form, setForm] = useState({ condition: "GOOD", returnedOn: today, notes: "" });
   const [err, setErr] = useState("");
   const [busy, start] = useTransition();
   const save = () => start(async () => {
-    const r = await returnAsset(asset.id, f);
-    if (r.ok) { toast(r.msg ?? t("Returned")); onClose(); router.refresh(); } else setErr(r.error);
+    const result = await returnAsset(asset.id, form);
+    if (result.ok) { toast(result.message ?? t("Returned")); onClose(); router.refresh(); } else setErr(result.error);
   });
   return (
     <Modal title={t("Take back {tag}", { tag: asset.tag })} eyebrow={t("From {name}", { name: asset.holderName ?? t("the employee") })} size="sm" onClose={onClose}
       footer={<><button className="btn btn-ghost" onClick={onClose}>{t("Cancel")}</button><button className="btn btn-gold" disabled={busy} onClick={save}>{busy ? t("Saving…") : t("Mark returned")}</button></>}>
       <div className="col" style={{ gap: 14 }}>
-        <label className="field">{t("Condition")}<select value={f.condition} onChange={(e) => setF({ ...f, condition: e.target.value })}>{Object.entries(CONDITIONS).map(([k, v]) => <option key={k} value={k}>{t(v)}</option>)}</select></label>
-        <label className="field">{t("Returned on")}<input type="date" value={f.returnedOn} onChange={(e) => { setF({ ...f, returnedOn: e.target.value }); setErr(""); }} /></label>
-        <label className="field">{t("Condition notes")}<textarea rows={3} maxLength={500} value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} /></label>
+        <label className="field">{t("Condition")}<select value={form.condition} onChange={(e) => setForm({ ...form, condition: e.target.value })}>{Object.entries(CONDITIONS).map(([optionValue, label]) => <option key={optionValue} value={optionValue}>{t(label)}</option>)}</select></label>
+        <label className="field">{t("Returned on")}<input type="date" value={form.returnedOn} onChange={(e) => { setForm({ ...form, returnedOn: e.target.value }); setErr(""); }} /></label>
+        <label className="field">{t("Condition notes")}<textarea rows={3} maxLength={500} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></label>
         {err && <div className="err" role="alert">{err}</div>}
       </div>
     </Modal>
@@ -127,7 +127,7 @@ function HistoryDialog({ asset, onClose }: { asset: AssetRow; onClose: () => voi
   const [rows, setRows] = useState<AssetAssignment[] | null>(null);
   useEffect(() => {
     let live = true;
-    fetch(`/api/assets/${asset.id}`).then((r) => r.json()).then((j) => { if (live) setRows(j.data?.history ?? []); }).catch(() => { if (live) setRows([]); });
+    fetch(`/api/assets/${asset.id}`).then((response) => response.json()).then((j) => { if (live) setRows(j.data?.history ?? []); }).catch(() => { if (live) setRows([]); });
     return () => { live = false; };
   }, [asset.id]);
   return (
@@ -137,12 +137,12 @@ function HistoryDialog({ asset, onClose }: { asset: AssetRow; onClose: () => voi
           <table className="t">
             <thead><tr><th>{t("Employee")}</th><th>{t("From")}</th><th>{t("Returned")}</th><th>{t("Condition")}</th></tr></thead>
             <tbody>
-              {rows.map((h) => (
-                <tr key={h.id}>
-                  <td><b>{h.employeeName}</b><br /><small className="muted">{h.employeeCode}</small></td>
-                  <td>{formatDayMonthYear(h.assignedOn)}{h.assignNotes && <><br /><small className="muted">{h.assignNotes}</small></>}</td>
-                  <td>{h.returnedOn ? formatDayMonthYear(h.returnedOn) : <span className="chip info">{t("Holding now")}</span>}</td>
-                  <td>{h.returnCondition ? t(CONDITIONS[h.returnCondition]).split(" ")[0] : "—"}{h.returnNotes && <><br /><small className="muted">{h.returnNotes}</small></>}</td>
+              {rows.map((assignment) => (
+                <tr key={assignment.id}>
+                  <td><b>{assignment.employeeName}</b><br /><small className="muted">{assignment.employeeCode}</small></td>
+                  <td>{formatDayMonthYear(assignment.assignedOn)}{assignment.assignNotes && <><br /><small className="muted">{assignment.assignNotes}</small></>}</td>
+                  <td>{assignment.returnedOn ? formatDayMonthYear(assignment.returnedOn) : <span className="chip info">{t("Holding now")}</span>}</td>
+                  <td>{assignment.returnCondition ? t(CONDITIONS[assignment.returnCondition]).split(" ")[0] : "—"}{assignment.returnNotes && <><br /><small className="muted">{assignment.returnNotes}</small></>}</td>
                 </tr>
               ))}
             </tbody>
@@ -162,20 +162,20 @@ export function AssetsTable({ rows, people, today }: { rows: AssetRow[]; people:
   const readOnly = useReadOnly();
   const [dlg, setDlg] = useState<Dialog>(null);
   const [filter, setFilter] = useState("ALL");
-  const [q, setQ] = useState("");
+  const [searchText, setSearchText] = useState("");
   const [busy, start] = useTransition();
   const close = () => setDlg(null);
-  const shown = rows.filter((r) => (filter === "ALL" || r.status === filter)
-    && (!q.trim() || [r.tag, r.make, r.model, r.serial, r.holderName, r.holderCode].some((x) => x?.toLowerCase().includes(q.trim().toLowerCase()))));
+  const shown = rows.filter((asset) => (filter === "ALL" || asset.status === filter)
+    && (!searchText.trim() || [asset.tag, asset.make, asset.model, asset.serial, asset.holderName, asset.holderCode].some((text) => text?.toLowerCase().includes(searchText.trim().toLowerCase()))));
   return (
     <>
       <div className="toolbar enter" style={{ ["--i" as string]: 1 }}>
         <div className="seg" role="tablist" aria-label={t("Status")}>
-          {["ALL", "AVAILABLE", "ASSIGNED", "IN_REPAIR", "RETIRED"].map((s) => (
-            <button key={s} role="tab" aria-selected={filter === s} className={filter === s ? "on" : ""} onClick={() => setFilter(s)}>{s === "ALL" ? t("All") : t(ASSET_STATUS[s].text)}</button>
+          {["ALL", "AVAILABLE", "ASSIGNED", "IN_REPAIR", "RETIRED"].map((status) => (
+            <button key={status} role="tab" aria-selected={filter === status} className={filter === status ? "on" : ""} onClick={() => setFilter(status)}>{status === "ALL" ? t("All") : t(ASSET_STATUS[status].text)}</button>
           ))}
         </div>
-        <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("Search tag, model, person…")} aria-label={t("Search assets")} style={{ maxWidth: 260 }} />
+        <input type="search" value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder={t("Search tag, model, person…")} aria-label={t("Search assets")} style={{ maxWidth: 260 }} />
         <span className="tcount">{shown.length === 1 ? t("1 asset") : t("{n} assets", { n: shown.length })}</span>
       </div>
       <section className="card enter" style={{ ["--i" as string]: 2 }}>
@@ -183,21 +183,21 @@ export function AssetsTable({ rows, people, today }: { rows: AssetRow[]; people:
           <table className="t">
             <thead><tr><th>{t("Asset")}</th><th>{t("Tag")}</th><th>{t("Status")}</th><th>{t("Held by")}</th><th className="hide-sm">{t("Serial")}</th><th className="hide-sm">{t("Purchased")}</th><th></th></tr></thead>
             <tbody>
-              {shown.map((r) => (
-                <tr key={r.id}>
-                  <td><div className="person"><span className="kpi-ico" style={{ width: 34, height: 34, background: "var(--accentsoft)", color: "var(--accent)" }}><Icon n="layers" s={16} /></span>
-                    <div><b>{[r.make, r.model].filter(Boolean).join(" ") || t(ASSET_TYPES[r.type])}</b><small>{ASSET_TYPES[r.type] ? t(ASSET_TYPES[r.type]) : r.type}</small></div></div></td>
-                  <td className="num">{r.tag}</td>
-                  <td><span className={`chip ${ASSET_STATUS[r.status].cls}`}>{t(ASSET_STATUS[r.status].text)}</span></td>
-                  <td>{r.holderName ? <><b>{r.holderName}</b><br /><small className="muted">{t("since {date}", { date: formatDayMonthYear(r.heldSince!) })}</small></> : <span className="muted">—</span>}</td>
-                  <td className="muted hide-sm">{r.serial ?? "—"}</td>
-                  <td className="muted hide-sm">{r.purchaseDate ? formatDayMonthYear(r.purchaseDate) : "—"}</td>
+              {shown.map((asset) => (
+                <tr key={asset.id}>
+                  <td><div className="person"><span className="kpi-ico" style={{ width: 34, height: 34, background: "var(--accentsoft)", color: "var(--accent)" }}><Icon name="layers" size={16} /></span>
+                    <div><b>{[asset.make, asset.model].filter(Boolean).join(" ") || t(ASSET_TYPES[asset.type])}</b><small>{ASSET_TYPES[asset.type] ? t(ASSET_TYPES[asset.type]) : asset.type}</small></div></div></td>
+                  <td className="num">{asset.tag}</td>
+                  <td><span className={`chip ${ASSET_STATUS[asset.status].className}`}>{t(ASSET_STATUS[asset.status].text)}</span></td>
+                  <td>{asset.holderName ? <><b>{asset.holderName}</b><br /><small className="muted">{t("since {date}", { date: formatDayMonthYear(asset.heldSince!) })}</small></> : <span className="muted">—</span>}</td>
+                  <td className="muted hide-sm">{asset.serial ?? "—"}</td>
+                  <td className="muted hide-sm">{asset.purchaseDate ? formatDayMonthYear(asset.purchaseDate) : "—"}</td>
                   <td style={{ whiteSpace: "nowrap", textAlign: "right" }}>
-                    {!readOnly && r.status === "AVAILABLE" && <button className="btn btn-sm btn-gold" onClick={() => setDlg({ kind: "assign", asset: r })}>{t("Assign")}</button>}
-                    {!readOnly && r.status === "ASSIGNED" && <button className="btn btn-sm" onClick={() => setDlg({ kind: "return", asset: r })}>{t("Take back")}</button>}
-                    {" "}<button className="btn btn-sm btn-ghost" onClick={() => setDlg({ kind: "history", asset: r })}>{t("History")}</button>
-                    {!readOnly && <button className="btn btn-sm btn-ghost" aria-label={t("Edit {tag}", { tag: r.tag })} onClick={() => setDlg({ kind: "edit", asset: r })}><Icon n="edit" s={14} /></button>}
-                    {!readOnly && <button className="btn btn-sm btn-ghost" aria-label={t("Delete {tag}", { tag: r.tag })} onClick={() => setDlg({ kind: "delete", asset: r })}><Icon n="trash" s={14} /></button>}
+                    {!readOnly && asset.status === "AVAILABLE" && <button className="btn btn-sm btn-gold" onClick={() => setDlg({ kind: "assign", asset: asset })}>{t("Assign")}</button>}
+                    {!readOnly && asset.status === "ASSIGNED" && <button className="btn btn-sm" onClick={() => setDlg({ kind: "return", asset: asset })}>{t("Take back")}</button>}
+                    {" "}<button className="btn btn-sm btn-ghost" onClick={() => setDlg({ kind: "history", asset: asset })}>{t("History")}</button>
+                    {!readOnly && <button className="btn btn-sm btn-ghost" aria-label={t("Edit {tag}", { tag: asset.tag })} onClick={() => setDlg({ kind: "edit", asset: asset })}><Icon name="edit" size={14} /></button>}
+                    {!readOnly && <button className="btn btn-sm btn-ghost" aria-label={t("Delete {tag}", { tag: asset.tag })} onClick={() => setDlg({ kind: "delete", asset: asset })}><Icon name="trash" size={14} /></button>}
                   </td>
                 </tr>
               ))}
@@ -214,10 +214,10 @@ export function AssetsTable({ rows, people, today }: { rows: AssetRow[]; people:
         <ConfirmDialog title={t("Delete asset")} danger confirm={t("Delete")} busy={busy} onClose={close}
           body={<>{t("Delete")} <b>{dlg.asset.tag}</b>? {t("Only assets that were never assigned can be deleted — mark the others as retired instead.")}</>}
           onConfirm={() => start(async () => {
-            const r = await deleteAsset(dlg.asset.id);
-            toast(r.ok ? r.msg ?? t("Deleted") : r.error, r.ok ? undefined : "bad");
+            const result = await deleteAsset(dlg.asset.id);
+            toast(result.ok ? result.message ?? t("Deleted") : result.error, result.ok ? undefined : "bad");
             close();
-            if (r.ok) router.refresh();
+            if (result.ok) router.refresh();
           })} />
       )}
     </>

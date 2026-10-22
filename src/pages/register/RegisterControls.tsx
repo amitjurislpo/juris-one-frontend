@@ -8,12 +8,12 @@ import { useT } from "@/lib/i18n/client";
 export function DayNav({ day, max }: { day: string; max: string }) {
   const t = useT();
   const { set } = useQuery();
-  const go = (d: string) => set({ date: d === max ? null : d });
+  const goToDate = (dateText: string) => set({ date: dateText === max ? null : dateText });
   return (
     <div className="daynav">
-      <button className="icon-btn" onClick={() => go(addDays(day, -1))} aria-label={t("Previous day")}><Icon n="chevL" s={16} /></button>
-      <input type="date" value={day} max={max} aria-label={t("Date")} onChange={(e) => e.target.value && go(e.target.value > max ? max : e.target.value)} />
-      <button className="icon-btn" onClick={() => go(addDays(day, 1))} disabled={day >= max} aria-label={t("Next day")}><Icon n="chevR" s={16} /></button>
+      <button className="icon-btn" onClick={() => goToDate(addDays(day, -1))} aria-label={t("Previous day")}><Icon name="chevL" size={16} /></button>
+      <input type="date" value={day} max={max} aria-label={t("Date")} onChange={(e) => e.target.value && goToDate(e.target.value > max ? max : e.target.value)} />
+      <button className="icon-btn" onClick={() => goToDate(addDays(day, 1))} disabled={day >= max} aria-label={t("Next day")}><Icon name="chevR" size={16} /></button>
     </div>
   );
 }
@@ -23,9 +23,9 @@ export function ZonePicker({ zones, value }: { zones: readonly { value: string; 
   const { set } = useQuery();
   return (
     <label className="tsel tz">
-      <Icon n="globe" s={15} />
+      <Icon name="globe" size={15} />
       <span>{t("Show times in")}</span>
-      <select value={value} onChange={(e) => set({ timeZone: e.target.value })}>{zones.map((z) => <option key={z.value} value={z.value}>{t(z.label)}</option>)}</select>
+      <select value={value} onChange={(e) => set({ timeZone: e.target.value })}>{zones.map((zone) => <option key={zone.value} value={zone.value}>{t(zone.label)}</option>)}</select>
     </label>
   );
 }
