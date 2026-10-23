@@ -54,6 +54,14 @@ Add new lines at the bottom of the right section. Hindi, Hinglish or English are
 - Files and folders are named after what they hold (`PeopleClient.tsx`, `AuditTable.tsx`); one exported component per file. Hooks start with `use`.
 - API calls live in the page folder's `actions.ts`, one function per endpoint, named after what it does (`confirmEmployee`, `uploadProfilePhoto`); the path and method there must match the backend exactly.
 
+## Documents: FRD and flow diagrams (versioned)
+
+- Each product has a **Functional Requirements Document (FRD)** and a **flow diagram**, and the two together have one **connection flow diagram** (how JurisTrack and JurisOne talk to each other: sign-in token, gateway, roster, roles, audit). Files, in the backend repos' `references/` folder: `FRD-JurisOne.md`, `FLOW-JurisOne.md`, `FRD-JurisTrack.md`, `FLOW-JurisTrack.md`, `FLOW-JurisTrack-JurisOne-Connection.md`. The master copy of the connection diagram is in `juris-track-backend/references/`; the `Juris-one` backend keeps a copy with the same version.
+- Diagrams are Mermaid inside the `.md` (they render on GitHub and in the IDE) and must be readable at a glance: who (role / system) does what, in order, with the decisions and the error paths. A new reader should understand how the flow works from the diagram alone.
+- Every document starts with a **version table** (version, date, what changed, who asked). Whenever a requirement or a flow changes (new or changed endpoint, role, rule, screen flow, integration step), update the affected FRD and diagram **in the same pull request** as the code and raise the document version. Small change = minor (1.1 -> 1.2); a new area or a changed architecture = major (1.x -> 2.0). A pull request that changes behaviour without the document update is not finished.
+- Document version is not the app version; do not mix them. Keep the old versions in the version table, not as extra files.
+- When JurisTrack changes something that crosses over to JurisOne (the integration), update the connection diagram in both repos with the same version number.
+
 ## Requirements (add yours here)
 
 - 
@@ -63,3 +71,4 @@ Add new lines at the bottom of the right section. Hindi, Hinglish or English are
 - Sign-in is by emailed code only (fixed code `000000` only in dev).
 - The identity provider (IAM JCG / Sita) is not to be worked on until the owner says so.
 - Exit / full & final settlement and Form 16 were removed on purpose.
+- The FRD and flow diagrams are written right after the current pull requests are raised (this round of testing, commit and push comes first). When IAM JCG / Sita is connected later, update the FRDs and all three flow diagrams and release a new document version then.

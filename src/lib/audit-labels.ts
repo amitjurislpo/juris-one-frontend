@@ -8,6 +8,7 @@ export const AUDIT_GROUPS = {
   payroll: { label: "Salary & payroll", prefixes: ["salary.", "payroll."] },
   tax: { label: "Tax & proofs", prefixes: ["tax.", "declaration.", "proof."] },
   letters: { label: "HR letters", prefixes: ["letter.", "letter_template."] },
+  tasks: { label: "Tasks & projects", prefixes: ["project.", "task.", "workflow_status.", "task_label."] },
   requests: { label: "API requests", prefixes: ["request."] },
   pages: { label: "Page views", prefixes: ["page."] },
 } as const;

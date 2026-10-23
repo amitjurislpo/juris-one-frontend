@@ -41,6 +41,22 @@ describe("navigation access", () => {
     expect(visibleIds).not.toContain("register");
   });
 
+  it("shows the Tasks group in every business (no module): My tasks and Projects to everyone, Admin included", () => {
+    for (const id of ["my-tasks", "team-tasks", "projects", "task-settings"]) expect(NAV.find((item) => item.id === id)?.module, id).toBeUndefined();
+    for (const perms of [EMPLOYEE, HR_MANAGER, FIN_EXEC, ADMIN]) {
+      expect(visible(perms)).toContain("my-tasks");
+      expect(visible(perms)).toContain("projects");
+    }
+    expect(NAV.filter((item) => item.group === "Tasks").map((item) => item.id)).toEqual(["my-tasks", "team-tasks", "projects", "task-settings"]);
+  });
+
+  it("shows Team tasks only with reports, and Task settings only with tasks.manage", () => {
+    expect(visible(EMPLOYEE, false)).not.toContain("team-tasks");
+    expect(visible(EMPLOYEE, true)).toContain("team-tasks");
+    expect(visible(set(...HR_MANAGER, "projects.create"))).not.toContain("task-settings");
+    expect(visible(set(...EMPLOYEE, "tasks.manage"))).toContain("task-settings");
+  });
+
   it("shows My letters to everyone with self; HR letters only to those who manage them", () => {
     expect(visible(EMPLOYEE)).toContain("my-letters");
     expect(visible(EMPLOYEE)).not.toContain("letters");

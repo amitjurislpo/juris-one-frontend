@@ -57,6 +57,13 @@ export const APP_ROUTES: RouteDef[] = [
   { path: "manage-announcements", title: "Post announcements", nav: "manage-announcements", Page: page(() => import("@/pages/manage-announcements/page")) },
   { path: "my-letters", title: "My letters", nav: "my-letters", Page: page(() => import("@/pages/my-letters/page")) },
   { path: "letters", title: "HR letters", nav: "letters", Page: page(() => import("@/pages/letters/page")) },
+  { path: "my-tasks", title: "My tasks", nav: "my-tasks", Page: page(() => import("@/pages/my-tasks/page")) },
+  { path: "team-tasks", title: "Team tasks", nav: "team-tasks", Page: page(() => import("@/pages/team-tasks/page")) },
+  { path: "projects", title: "Projects", nav: "projects", Page: page(() => import("@/pages/projects/page")) },
+  { path: "projects/:id", title: "Project", nav: "projects", Page: page(() => import("@/pages/projects/[id]/page")) },
+  { path: "projects/:id/settings", title: "Project settings", nav: "projects", Page: page(() => import("@/pages/projects/[id]/settings/page")) },
+  { path: "tasks/:ref", title: "Task", nav: "my-tasks", Page: page(() => import("@/pages/tasks/[ref]/page")) },
+  { path: "task-settings", title: "Task settings", nav: "task-settings", Page: page(() => import("@/pages/task-settings/page")) },
   { path: "acknowledge", title: "Accept company policies", user: true, Page: page(() => import("@/pages/acknowledge/page")) },
   { path: "paused", title: "Subscription ended", user: true, Page: page(() => import("@/pages/paused/page")) },
 ];
