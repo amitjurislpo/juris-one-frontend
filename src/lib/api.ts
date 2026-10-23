@@ -44,11 +44,13 @@ function refreshSession(): Promise<boolean> {
   return refreshing;
 }
 
-async function send<T>(method: string, path: string, body: unknown, file?: Blob): Promise<ApiResponse<T>> {
+async function send<T>(method: string, path: string, body: unknown, file?: Blob | FormData): Promise<ApiResponse<T>> {
   const write = method !== "GET";
+  const isForm = file instanceof FormData;
   const res = await fetch(path, {
     method,
-    headers: file ? { accept: "application/json", "content-type": file.type } : write ? { accept: "application/json", "content-type": "application/json" } : { accept: "application/json" },
+    // a multipart form sets its own content type (with the boundary)
+    headers: isForm ? { accept: "application/json" } : file ? { accept: "application/json", "content-type": file.type } : write ? { accept: "application/json", "content-type": "application/json" } : { accept: "application/json" },
     body: file ?? (write ? JSON.stringify(body ?? {}) : undefined),
     credentials: "same-origin",
     cache: "no-store",
@@ -72,7 +74,7 @@ async function send<T>(method: string, path: string, body: unknown, file?: Blob)
  * One API call. A 401 triggers one silent session refresh and a retry; if that fails the session has ended and the user
  * is sent to the sign-in page (unless `quiet`, used when asking "who am I?" on a public page).
  */
-export async function apiCall<T>(method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", path: string, body?: unknown, opts: { quiet?: boolean; file?: Blob } = {}): Promise<ApiResponse<T>> {
+export async function apiCall<T>(method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", path: string, body?: unknown, opts: { quiet?: boolean; file?: Blob | FormData } = {}): Promise<ApiResponse<T>> {
   let response = await send<T>(method, path, body, opts.file);
   if (response.status === 401 && !path.startsWith("/api/auth/")) {
     if (await refreshSession()) response = await send<T>(method, path, body, opts.file);
@@ -127,6 +129,13 @@ export async function apiAction<T = undefined>(method: "POST" | "PUT" | "PATCH" 
 /** A write whose body is a file (raw bytes, e.g. a photo) or nothing (a DELETE). Like apiAction, every page's data is refetched on success. */
 export async function apiFile(method: "PUT" | "DELETE", path: string, file?: Blob): Promise<ApiResult<undefined>> {
   const response = await apiCall<undefined>(method, path, undefined, { file });
+  if (response.body.ok) await queryClient.invalidateQueries();
+  return response.body;
+}
+
+/** A multipart upload (`POST`, e.g. a task attachment): same envelope, 401 refresh and refetch as apiAction. */
+export async function apiUpload<T = undefined>(path: string, formData: FormData): Promise<ApiResult<T>> {
+  const response = await apiCall<T>("POST", path, undefined, { file: formData });
   if (response.body.ok) await queryClient.invalidateQueries();
   return response.body;
 }

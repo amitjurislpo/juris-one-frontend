@@ -20,6 +20,8 @@ export const PERMISSIONS = [
   ["assets.manage", "Manage the asset register & assign assets"],
   ["announcements.manage", "Post announcements"],
   ["roles.manage", "Roles, permissions & policies"],
+  ["tasks.manage", "Task settings & every project and task"],
+  ["projects.create", "Create task projects"],
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number][0];
@@ -32,6 +34,7 @@ export const PERMISSION_GROUPS: [string, Permission[]][] = [
   ["People operations", ["att.all", "appr.leave", "appr.reg", "people.view", "people.add", "access.toggle", "dept.manage", "holidays.manage", "letters.manage"]],
   ["Finance", ["pay.view", "pay.close", "struct.manage", "tax.view", "proofs.verify"]],
   ["Administration", ["policies.manage", "assets.manage", "announcements.manage", "roles.manage"]],
+  ["Tasks", ["tasks.manage", "projects.create"]],
 ];
 
 /** Permissions that expose salary / tax figures. HR roles must never hold these. */

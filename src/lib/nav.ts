@@ -4,9 +4,10 @@ export type NavId =
   | "platform" | "platform-audit" | "plans" | "juris-track" | "notifications" | "profile" | "home" | "overview" | "attendance" | "leave" | "payslips" | "declare" | "directory" | "team"
   | "register" | "approvals" | "employees" | "onboarding" | "departments" | "holidays"
   | "payroll" | "structures" | "tax" | "proofs" | "roles" | "policies" | "settings" | "audit" | "subscription" | "my-policies"
-  | "my-assets" | "announcements" | "assets" | "manage-announcements" | "my-letters" | "letters";
+  | "my-assets" | "announcements" | "assets" | "manage-announcements" | "my-letters" | "letters"
+  | "my-tasks" | "team-tasks" | "projects" | "task-settings";
 
-export type NavGroup = "Platform" | "My workspace" | "Workspace" | "Team" | "People ops" | "Finance" | "Administration";
+export type NavGroup = "Platform" | "My workspace" | "Workspace" | "Tasks" | "Team" | "People ops" | "Finance" | "Administration";
 
 /** The platform super admin's permission — never part of a business role. */
 const PLATFORM_MANAGE = "platform.manage";
@@ -48,6 +49,11 @@ export const NAV: NavItem[] = [
   { id: "my-assets", label: "My assets", icon: "layers", perm: ["self", "dir", "roles.manage"] },
   { id: "announcements", label: "Announcements", icon: "bell", perm: ["self", "dir", "roles.manage"] },
   { id: "juris-track", label: "Juris Track", icon: "sparkle", perm: ["self", "roles.manage", "dir"], module: JURIS_TRACK },
+  // task management: free for every business (no module); the group shows after "My workspace" and before "Team"
+  { id: "my-tasks", label: "My tasks", icon: "tasks", perm: ["self", "dir", "roles.manage"], group: "Tasks" },
+  { id: "team-tasks", label: "Team tasks", icon: "team", perm: ["self", "dir", "roles.manage"], needsReports: true, group: "Tasks" },
+  { id: "projects", label: "Projects", icon: "folder", perm: ["self", "dir", "roles.manage"], group: "Tasks" },
+  { id: "task-settings", label: "Task settings", icon: "sliders", perm: ["tasks.manage"], group: "Tasks" },
   { id: "team", label: "My team", icon: "team", perm: ["self"], needsReports: true, group: "Team" },
   { id: "register", label: "Attendance register", icon: "grid", perm: ["att.all"], group: "People ops" },
   { id: "approvals", label: "Approvals", icon: "check", perm: ["appr.leave", "appr.reg"], group: "People ops" },
