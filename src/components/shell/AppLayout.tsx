@@ -15,7 +15,7 @@ import { currentTheme } from "./theme";
 interface ShellData {
   currentUser: { code: string; name: string; designation: string; roleName: string; department: string; manager: string; dateOfJoining: string; shift: string | null; isAdminLike: boolean };
   groups: { title: NavGroup; items: { id: string; label: string; icon: string }[] }[];
-  badges: { approvals: number; proofs: number };
+  badges: { approvals: number; proofs: number; myTasks?: number };
   notes: ShellNote[];
   unread: number;
   landing: string;

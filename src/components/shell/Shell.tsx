@@ -27,7 +27,8 @@ export interface ShellProps {
     isAdminLike: boolean;
   };
   groups: { title: string; items: { id: string; label: string; icon: string }[] }[];
-  badges: { approvals: number; proofs: number };
+  /** `myTasks`: my open tasks (direct or accountable) that are overdue or due today; absent = 0. */
+  badges: { approvals: number; proofs: number; myTasks?: number };
   notes: { text: string; meta: string; href?: string; id?: string | null; unread?: boolean; sticky?: boolean }[];
   unread: number;
   landing: string;
@@ -46,7 +47,9 @@ export function Shell(props: ShellProps) {
   const { user } = useCurrentUser();
   const router = useRouter();
   const pathname = usePathname();
-  const page = (pathname.split("/")[1] || "home") as NavId;
+  const firstSegment = pathname.split("/")[1] || "home";
+  // a task page (/tasks/{key}) belongs to "My tasks"
+  const page = (firstSegment === "tasks" ? "my-tasks" : firstSegment) as NavId;
 
   const [sideOpen, setSideOpen] = useState(false);
   const [menu, setMenu] = useState(false);
@@ -177,6 +180,7 @@ export function Shell(props: ShellProps) {
                   {t(navItem.label)}
                   {navItem.id === "approvals" && badges.approvals > 0 && <span className="badge">{badges.approvals}</span>}
                   {navItem.id === "proofs" && badges.proofs > 0 && <span className="badge">{badges.proofs}</span>}
+                  {navItem.id === "my-tasks" && (badges.myTasks ?? 0) > 0 && <span className="badge" title={t("Overdue or due today")}>{badges.myTasks}</span>}
                 </Link>
               ))}
             </div>

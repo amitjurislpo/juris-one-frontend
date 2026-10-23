@@ -242,3 +242,244 @@ export interface RoleTemplates {
   templates: RoleTemplate[];
   groups: { name: string; permissions: { key: string; label: string }[] }[];
 }
+
+// ----- task management (backend plan §12.4: the JSON field names are binding) -----
+
+export type TaskStatusCategory = "TODO" | "IN_PROGRESS" | "DONE";
+export type TaskPriority = "URGENT" | "HIGH" | "MEDIUM" | "LOW" | "NONE";
+export type TaskType = "TASK" | "ISSUE" | "REQUEST" | "MILESTONE";
+export type ProjectRole = "OWNER" | "MEMBER" | "VIEWER";
+export type ProjectVisibility = "PRIVATE" | "BUSINESS";
+
+/** One page of a collection. */
+export interface TaskPage<Row> {
+  page: number;
+  take: number;
+  total: number;
+  rows: Row[];
+}
+
+export interface ProjectRow {
+  id: string;
+  key: string;
+  name: string;
+  description: string | null;
+  visibility: ProjectVisibility;
+  status: "ACTIVE" | "ARCHIVED";
+  color: string | null;
+  departmentId: string | null;
+  departmentName: string | null;
+  ownerNames: string[];
+  myRole: ProjectRole | null;
+  memberCount: number;
+  openTaskCount: number;
+  overdueTaskCount: number;
+  updatedAt: string;
+}
+
+/** A workflow step (status) of a project, or of the business default set. */
+export interface WorkflowStatus {
+  id: string;
+  name: string;
+  category: TaskStatusCategory;
+  color: string | null;
+  position: number;
+  isInitial: boolean;
+  taskCount: number;
+}
+
+export interface TaskLabel {
+  id: string;
+  name: string;
+  color: string | null;
+  projectId: string | null;
+}
+
+export interface ProjectDetail extends ProjectRow {
+  version: number;
+  statuses: WorkflowStatus[];
+  labels: TaskLabel[];
+  canManage: boolean;
+  canCreateTasks: boolean;
+}
+
+export interface ProjectMember {
+  employeeId: string;
+  code: string;
+  name: string;
+  photo: number | null;
+  designation: string | null;
+  role: ProjectRole;
+  isActive: boolean;
+}
+
+export interface TaskRow {
+  id: string;
+  key: string | null;
+  number: number | null;
+  projectId: string | null;
+  projectKey: string | null;
+  projectName: string | null;
+  parentTaskId: string | null;
+  parentKey: string | null;
+  title: string;
+  type: TaskType;
+  statusId: string;
+  statusName: string;
+  statusCategory: TaskStatusCategory;
+  statusColor: string | null;
+  priority: TaskPriority;
+  assigneeId: string | null;
+  assigneeName: string | null;
+  assigneeCode: string | null;
+  assigneePhoto: number | null;
+  isAssigneeActive: boolean | null;
+  indirectAssigneeId: string | null;
+  indirectAssigneeName: string | null;
+  indirectAssigneeCode: string | null;
+  indirectAssigneePhoto: number | null;
+  isIndirectAssigneeActive: boolean | null;
+  myAssignment: "DIRECT" | "INDIRECT" | null;
+  reporterId: string;
+  reporterName: string;
+  startDate: string | null;
+  dueDate: string | null;
+  /** "HH:mm" or null (due at the end of the day). */
+  dueTime: string | null;
+  /** The task time zone (IANA): the direct assignee's. */
+  dueTimeZone: string | null;
+  estimateMinutes: number | null;
+  isOverdue: boolean;
+  labels: { id: string; name: string; color: string | null }[];
+  subtaskCount: number;
+  subtaskDoneCount: number;
+  checklistCount: number;
+  checklistDoneCount: number;
+  commentCount: number;
+  attachmentCount: number;
+  position: number;
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  /** For a PATCH straight from a list (the My tasks checkbox and board); added to the rows by the backend (frontend notes 1). */
+  version: number;
+}
+
+interface TaskPermissions {
+  canEdit: boolean;
+  canComment: boolean;
+  canChangeStatus: boolean;
+  canChangePriority: boolean;
+  canChangeDirectAssignee: boolean;
+  canChangeIndirectAssignee: boolean;
+  canDelete: boolean;
+  canManageProject: boolean;
+}
+
+export interface TaskChecklistItem {
+  id: string;
+  text: string;
+  isDone: boolean;
+  position: number;
+  doneByName: string | null;
+  doneAt: string | null;
+}
+
+export interface TaskAttachment {
+  id: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  uploadedByName: string;
+  uploadedAt: string;
+  canDelete: boolean;
+}
+
+export interface TaskDetail extends TaskRow {
+  description: string | null;
+  version: number;
+  reporterPhoto: number | null;
+  completedByName: string | null;
+  previousKeys: string[];
+  watchers: { employeeId: string; name: string; photo: number | null }[];
+  isWatching: boolean;
+  subtasks: TaskRow[];
+  checklist: TaskChecklistItem[];
+  attachments: TaskAttachment[];
+  /** Names of the people `@{uuid}` tokens in the description refer to. */
+  mentionedPeople: Record<string, string>;
+  statuses: WorkflowStatus[];
+  permissions: TaskPermissions;
+}
+
+export interface TaskComment {
+  id: string;
+  authorId: string;
+  authorName: string;
+  authorPhoto: number | null;
+  body: string | null;
+  mentionedPeople: Record<string, string>;
+  createdAt: string;
+  editedAt: string | null;
+  isDeleted: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+}
+
+export interface TaskActivityEntry {
+  id: string;
+  kind: string;
+  actorName: string | null;
+  before: unknown;
+  after: unknown;
+  occurredAt: string;
+}
+
+/** GET /api/tasks/mine */
+export interface MyTasksPage extends TaskPage<TaskRow> {
+  counts: { overdue: number; today: number; thisWeek: number; later: number; noDate: number };
+}
+
+/** One person in Team tasks. */
+interface TeamPerson {
+  employeeId: string;
+  name: string;
+  code: string;
+  photo: number | null;
+  depth: number;
+  open: number;
+  overdue: number;
+  doneLast7Days: number;
+}
+
+/** GET /api/tasks/team */
+export interface TeamTasksPage extends TaskPage<TaskRow> {
+  people: TeamPerson[];
+}
+
+/** GET /api/projects/{projectId}/board */
+export interface ProjectBoard {
+  columns: { status: WorkflowStatus; taskCount: number; tasks: TaskRow[] }[];
+  hasMoreDone: boolean;
+}
+
+/** GET /api/tasks/assignees (person picker). */
+export interface TaskAssignee {
+  id: string;
+  code: string;
+  name: string;
+  photo: number | null;
+  designation: string | null;
+  isMember: boolean;
+  reportingManagerId: string | null;
+  /** Shown in the "Accountable" suggestion of the create form. */
+  reportingManagerName: string | null;
+}
+
+/** GET /api/task-settings */
+export interface TaskSettings {
+  defaultStatuses: WorkflowStatus[];
+  labels: TaskLabel[];
+  projectCount: number;
+  taskCount: number;
+}
