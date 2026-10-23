@@ -349,6 +349,8 @@ export interface TaskRow {
   /** The task time zone (IANA): the direct assignee's. */
   dueTimeZone: string | null;
   estimateMinutes: number | null;
+  /** Minutes before the due moment for the extra reminder (15, 60, 240 or 1440), or null. */
+  reminderBeforeMinutes: number | null;
   isOverdue: boolean;
   labels: { id: string; name: string; color: string | null }[];
   subtaskCount: number;

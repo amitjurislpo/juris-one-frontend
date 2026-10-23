@@ -31,7 +31,7 @@ export function TaskFormModal({ project, projects, statusId, onClose, onCreated 
   const [assignee, setAssignee] = useState<PickedPerson | null>(null);
   const [accountable, setAccountable] = useState<PickedPerson | null>(null);
   const [startDate, setStartDate] = useState("");
-  const [due, setDue] = useState({ dueDate: "", dueTime: "" });
+  const [due, setDue] = useState({ dueDate: "", dueTime: "", reminder: "" });
   const [estimate, setEstimate] = useState("");
   const [labelIds, setLabelIds] = useState<string[]>([]);
   const [error, setError] = useState("");
@@ -54,6 +54,7 @@ export function TaskFormModal({ project, projects, statusId, onClose, onCreated 
       startDate: startDate || null,
       dueDate: due.dueDate || null,
       dueTime: due.dueDate && due.dueTime ? due.dueTime : null,
+      reminderBeforeMinutes: due.dueDate && due.reminder ? Number(due.reminder) : null,
       estimateMinutes,
       labelIds,
     });
@@ -97,7 +98,9 @@ export function TaskFormModal({ project, projects, statusId, onClose, onCreated 
             )}
           </div>
         </div>
-        <DueInput dueDate={due.dueDate} dueTime={due.dueTime} onChange={(dueDate, dueTime) => setDue({ dueDate, dueTime })} />
+        <DueInput dueDate={due.dueDate} dueTime={due.dueTime} reminder={due.reminder}
+          onChange={(dueDate, dueTime) => setDue({ ...due, dueDate, dueTime, reminder: dueDate ? due.reminder : "" })}
+          onReminderChange={(reminder) => setDue({ ...due, reminder })} />
         <label className="field">{t("Estimate")} <span className="hint">{t("optional")}</span><input value={estimate} onChange={(e) => setEstimate(e.target.value)} placeholder={t("e.g. 4h or 1h 30m")} /></label>
         {project && project.labels.length > 0 && (
           <fieldset className="task-label-pick">

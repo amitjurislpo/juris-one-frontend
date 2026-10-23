@@ -10,7 +10,7 @@ import Link from "@/lib/link";
 import { PageLoading, useData } from "@/lib/page";
 import { useRouter } from "@/lib/router";
 import { useCurrentUser, useReadOnly } from "@/lib/session";
-import { formatEstimate, mentionsToNames, namesToMentions, parseEstimate, statusName, TASK_PRIORITIES, TASK_TYPES } from "@/lib/tasks";
+import { formatEstimate, mentionsToNames, namesToMentions, parseEstimate, statusName, TASK_PRIORITIES, TASK_REMINDER_CHOICES, TASK_TYPES } from "@/lib/tasks";
 import { deleteTask, followTask, unfollowTask, updateTask, type TaskChanges } from "@/pages/tasks/actions";
 import { AttachmentList } from "./AttachmentList";
 import { ChecklistEditor } from "./ChecklistEditor";
@@ -30,21 +30,27 @@ type Save = (changes: Omit<TaskChanges, "version">) => Promise<boolean>;
 
 /** The due box of the panel: a draft saved when focus leaves the box (or on Enter), so typing a date does not save every keystroke. */
 function DueBox({ task, save }: { task: TaskDetailData; save: Save }) {
-  const [draft, setDraft] = useState({ dueDate: task.dueDate ?? "", dueTime: task.dueTime ?? "" });
-  const [lastSaved, setLastSaved] = useState({ dueDate: task.dueDate ?? "", dueTime: task.dueTime ?? "" });
+  const saved = { dueDate: task.dueDate ?? "", dueTime: task.dueTime ?? "", reminder: task.reminderBeforeMinutes ? String(task.reminderBeforeMinutes) : "" };
+  const [draft, setDraft] = useState(saved);
+  const [lastSaved, setLastSaved] = useState(saved);
   // a fresh task (after any save or someone else's change) resets the draft
-  if (lastSaved.dueDate !== (task.dueDate ?? "") || lastSaved.dueTime !== (task.dueTime ?? "")) {
-    const fresh = { dueDate: task.dueDate ?? "", dueTime: task.dueTime ?? "" };
-    setLastSaved(fresh);
-    setDraft(fresh);
+  if (lastSaved.dueDate !== saved.dueDate || lastSaved.dueTime !== saved.dueTime || lastSaved.reminder !== saved.reminder) {
+    setLastSaved(saved);
+    setDraft(saved);
   }
-  const commit = () => {
-    if (draft.dueDate === (task.dueDate ?? "") && draft.dueTime === (task.dueTime ?? "")) return;
-    void save({ dueDate: draft.dueDate || null, dueTime: draft.dueDate && draft.dueTime ? draft.dueTime : null });
+  const commit = (next = draft) => {
+    if (next.dueDate === saved.dueDate && next.dueTime === saved.dueTime && next.reminder === saved.reminder) return;
+    void save({
+      dueDate: next.dueDate || null,
+      dueTime: next.dueDate && next.dueTime ? next.dueTime : null,
+      reminderBeforeMinutes: next.dueDate && next.reminder ? Number(next.reminder) : null,
+    });
   };
   return (
     <div onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) commit(); }} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); commit(); } }}>
-      <DueInput dueDate={draft.dueDate} dueTime={draft.dueTime} onChange={(dueDate, dueTime) => setDraft({ dueDate, dueTime })} />
+      <DueInput dueDate={draft.dueDate} dueTime={draft.dueTime} reminder={draft.reminder}
+        onChange={(dueDate, dueTime) => setDraft({ ...draft, dueDate, dueTime, reminder: dueDate ? draft.reminder : "" })}
+        onReminderChange={(reminder) => { const next = { ...draft, reminder }; setDraft(next); commit(next); }} />
       {task.isOverdue && <DueLabel task={task} />}
     </div>
   );
@@ -204,6 +210,7 @@ export function TaskDetail({ taskRef, onClose }: { taskRef: string; /** set when
     if (!result.ok) toast(result.error, "bad");
   });
   const assignee = task.assigneeId ? { id: task.assigneeId, name: task.assigneeName ?? "", photo: task.assigneePhoto } : null;
+  const reminderLabel = TASK_REMINDER_CHOICES.find((choice) => choice.minutes === task.reminderBeforeMinutes)?.label;
   const accountable = task.indirectAssigneeId ? { id: task.indirectAssigneeId, name: task.indirectAssigneeName ?? "", photo: task.indirectAssigneePhoto } : null;
 
   return (
@@ -248,7 +255,7 @@ export function TaskDetail({ taskRef, onClose }: { taskRef: string; /** set when
         <PersonPicker label={t("Accountable")} hint={t("oversees it")} value={accountable} disabled={!can(permissions.canChangeIndirectAssignee)} projectId={task.projectId} excludeId={task.assigneeId}
           onChange={(person) => void save({ indirectAssigneeId: person?.id ?? null })} />
         <div className="field task-due-field">
-          {can(permissions.canEdit) ? <DueBox task={task} save={save} /> : <>{t("Due date")}<span><DueLabel task={task} empty={t("No date")} /></span></>}
+          {can(permissions.canEdit) ? <DueBox task={task} save={save} /> : <>{t("Due date")}<span><DueLabel task={task} empty={t("No date")} />{reminderLabel && <> · {t("Remind me")}: {t(reminderLabel)}</>}</span></>}
         </div>
       </div>
 

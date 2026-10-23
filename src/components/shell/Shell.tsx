@@ -7,6 +7,7 @@ import { markAllNotifications, markNotification } from "@/pages/notification-act
 import { Icon } from "@/components/Icon";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useT } from "@/lib/i18n/client";
+import { useNotificationText } from "@/lib/notification-text";
 import { Avatar } from "@/components/Avatar";
 import { formatWeekdayDayMonthYear } from "@/lib/format";
 import { useCurrentUser } from "@/lib/session";
@@ -44,6 +45,7 @@ interface PaletteAction { group: string; label: string; icon: string; run: () =>
 export function Shell(props: ShellProps) {
   const { currentUser: signedInUser, groups, badges, notes, landing, canSelf, businessName } = props;
   const t = useT();
+  const translateNotification = useNotificationText();
   const { user } = useCurrentUser();
   const router = useRouter();
   const pathname = usePathname();
@@ -211,7 +213,7 @@ export function Shell(props: ShellProps) {
                   {notes.length === 0 && <div className="n faint">{t("You're all caught up.")}</div>}
                   {notes.map((notification, i) => {
                     const unread = notification.id ? !!notification.unread : true;
-                    const body = (<><i style={unread ? undefined : { background: "transparent", boxShadow: "inset 0 0 0 1px var(--line3)" }}></i><div><div style={{ fontWeight: unread ? 600 : 400 }}>{notification.text}</div><div className="faint" style={{ fontSize: 12, marginTop: 2 }}>{notification.meta}{notification.sticky ? ` · ${t("accept to clear")}` : ""}</div></div></>);
+                    const body = (<><i style={unread ? undefined : { background: "transparent", boxShadow: "inset 0 0 0 1px var(--line3)" }}></i><div><div style={{ fontWeight: unread ? 600 : 400 }}>{translateNotification(notification.text)}</div><div className="faint" style={{ fontSize: 12, marginTop: 2 }}>{translateNotification(notification.meta)}{notification.sticky ? ` · ${t("accept to clear")}` : ""}</div></div></>);
                     // opening a stored notification marks it read (policy ones clear only when the policy is accepted)
                     const onOpen = () => { if (notification.id && notification.unread && !notification.sticky) startTransition(() => { void markNotification(notification.id!, true).then(() => router.refresh()); }); setNotif(false); };
                     return notification.href ? <Link key={notification.id ?? i} href={notification.href} onClick={onOpen} className="n" style={{ color: "inherit", textDecoration: "none" }}>{body}</Link> : <div key={notification.id ?? i} className="n">{body}</div>;

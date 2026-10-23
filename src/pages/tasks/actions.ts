@@ -20,6 +20,7 @@ export interface TaskInput {
   startDate?: string | null;
   dueDate?: string | null;
   dueTime?: string | null;
+  reminderBeforeMinutes?: number | null;
   estimateMinutes?: number | null;
   labelIds?: string[];
   parentTaskId?: string | null;
@@ -39,6 +40,7 @@ export type TaskChanges = { version: number } & Partial<{
   startDate: string | null;
   dueDate: string | null;
   dueTime: string | null;
+  reminderBeforeMinutes: number | null;
   estimateMinutes: number | null;
   labelIds: string[];
   parentTaskId: string | null;

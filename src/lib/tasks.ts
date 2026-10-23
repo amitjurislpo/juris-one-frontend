@@ -21,6 +21,14 @@ const PRIORITY_ORDER = Object.keys(TASK_PRIORITIES) as TaskPriority[];
 /** 0 = most urgent. */
 export const priorityRank = (priority: TaskPriority) => PRIORITY_ORDER.indexOf(priority);
 
+/** The optional extra reminder before the due moment (backend `TaskDueDates.REMINDER_BEFORE_MINUTES`): minutes and the label of each choice. */
+export const TASK_REMINDER_CHOICES: { minutes: number; label: string }[] = [
+  { minutes: 15, label: "15 minutes before" },
+  { minutes: 60, label: "1 hour before" },
+  { minutes: 240, label: "4 hours before" },
+  { minutes: 1440, label: "1 day before" },
+];
+
 export const STATUS_CATEGORIES: Record<TaskStatusCategory, string> = { TODO: "To do", IN_PROGRESS: "In progress", DONE: "Done" };
 
 /** The built-in workflow steps (backend WorkflowRules.DEFAULT_STATUSES): shown translated; names people type stay as typed. */

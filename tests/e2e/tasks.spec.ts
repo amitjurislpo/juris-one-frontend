@@ -339,4 +339,46 @@ test.describe.serial("task management", () => {
     await page.getByLabel("भाषा").selectOption({ label: "English" });
     await expect(sidebar.getByRole("link", { name: /My tasks/ })).toBeVisible();
   });
+
+  test("12. the extra reminder is set next to the due date, kept after a reload, shown in Hindi, and needs a due date", async ({ page }) => {
+    const [assignee] = await sql<{ time_zone: string }>("SELECT time_zone FROM employees WHERE code = 'JC-072' AND business_id IS NOT NULL");
+    await login(page, "JC-035");
+    await expectLanded(page, "/home");
+    await openBoard(page, PROJECT_NAME);
+
+    // the new-task form: the select waits for a due date and says why
+    await page.getByRole("button", { name: "New task" }).click();
+    const form = page.getByRole("dialog", { name: "New task" });
+    await expect(form.getByLabel("Remind me")).toBeDisabled();
+    await expect(form.getByText(/Choose a due date to set a reminder/)).toBeVisible();
+    await form.getByLabel("Due date").fill(dateIn(1, assignee.time_zone));
+    await expect(form.getByLabel("Remind me")).toBeEnabled();
+    await expect(form.getByLabel("Remind me").locator("option")).toHaveText(["No extra reminder", "15 minutes before", "1 hour before", "4 hours before", "1 day before"]);
+    await form.getByRole("button", { name: "Cancel" }).click();
+
+    // the task panel: due tomorrow 18:00 and "1 hour before"
+    await card(column(page, "In progress"), TASK_TITLE).getByRole("link", { name: TASK_TITLE }).click();
+    const panel = page.getByRole("dialog", { name: `Task ${taskKey}` });
+    await expect(panel.getByLabel("Remind me")).toHaveValue("");
+    await panel.getByLabel("Due date").fill(dateIn(1, assignee.time_zone));
+    await panel.getByLabel("Due time").fill("18:00");
+    await panel.getByLabel("Remind me").selectOption("1 hour before");
+    await expect.poll(async () => (await sql<{ reminder_before_minutes: number | null }>("SELECT reminder_before_minutes FROM tasks WHERE title = $1", [TASK_TITLE]))[0]?.reminder_before_minutes).toBe(60);
+    await page.reload();
+    await expect(page.getByRole("dialog", { name: `Task ${taskKey}` }).getByLabel("Remind me")).toHaveValue("60");
+
+    // Hindi
+    await page.getByLabel("Language").selectOption({ label: "हिन्दी" });
+    await expect(page.getByLabel("मुझे याद दिलाएँ")).toHaveValue("60");
+    await expect(page.getByLabel("मुझे याद दिलाएँ").locator("option").first()).toHaveText("कोई अतिरिक्त अनुस्मारक नहीं");
+    await page.getByLabel("भाषा").selectOption({ label: "English" });
+
+    // clearing the due date takes the reminder with it
+    const englishPanel = page.getByRole("dialog", { name: `Task ${taskKey}` });
+    await expect(englishPanel).toBeVisible();
+    await englishPanel.getByLabel("Due date").fill("");
+    await englishPanel.getByLabel("Due date").blur();
+    await expect(englishPanel.getByLabel("Remind me")).toBeDisabled();
+    await expect.poll(async () => (await sql<{ reminder_before_minutes: number | null }>("SELECT reminder_before_minutes FROM tasks WHERE title = $1", [TASK_TITLE]))[0]?.reminder_before_minutes).toBeNull();
+  });
 });

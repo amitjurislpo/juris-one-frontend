@@ -207,6 +207,7 @@ export const hindiApiMessages: Record<string, string> = {
   // tasks and projects (backend task services)
   "Someone else changed this task. Reload to see their changes.": "किसी और ने यह कार्य बदल दिया है। उनके बदलाव देखने के लिए फिर से लोड करें।",
   "The accountable person must be someone other than the assignee.": "जवाबदेह व्यक्ति कार्य करने वाले से अलग होना चाहिए।",
+  "Choose 15 minutes, 1 hour, 4 hours or 1 day before the due time.": "नियत समय से 15 मिनट, 1 घंटा, 4 घंटे या 1 दिन पहले चुनें।",
   "Choose a due date first.": "पहले नियत तिथि चुनें।",
   "This project is archived. Restore it to make changes.": "यह प्रोजेक्ट संग्रहित है। बदलाव करने के लिए इसे पुनः सक्रिय करें।",
   "Keep the title under 200 characters.": "शीर्षक 200 अक्षरों से कम रखें।",
