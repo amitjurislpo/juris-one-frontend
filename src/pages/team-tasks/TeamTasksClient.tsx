@@ -27,7 +27,7 @@ export function TeamTasksClient({ data }: { data: TeamTasksPage }) {
   return (
     <div className="col">
       <PageHeader eyebrow={t("Tasks")} title={t("Team tasks")}
-        sub={t("{people} people · {open} open · {overdue} overdue", { people: data.people.length, open: totals.open, overdue: totals.overdue })}>
+        sub={t(data.people.length === 1 ? "1 person · {open} open · {overdue} overdue" : "{people} people · {open} open · {overdue} overdue", { people: data.people.length, open: totals.open, overdue: totals.overdue })}>
         <label className="task-switch">
           <input type="checkbox" role="switch" checked={isDeep} onChange={(e) => set({ depth: e.target.checked ? "2" : null, employeeId: null })} />
           {t("Include indirect reports")}

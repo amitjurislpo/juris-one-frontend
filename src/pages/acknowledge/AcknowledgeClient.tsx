@@ -4,7 +4,8 @@ import { useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
 import type { PolicyToRead } from "@/lib/api-types";
-import { formatDayMonthYear } from "@/lib/format";
+import { formatDayMonthYear, INDIA_TIME_ZONE, isoDateIn } from "@/lib/format";
+import { useCurrentUser } from "@/lib/session";
 import { useT } from "@/lib/i18n/client";
 import { acknowledgePolicy } from "../policies/actions";
 import { PolicyText } from "../my-policies/PolicyText";
@@ -12,6 +13,7 @@ import { PolicyText } from "../my-policies/PolicyText";
 /** One policy at a time: read it (and its PDF), tick the box, accept. */
 export function AcknowledgeClient({ policy, left, name }: { policy: PolicyToRead; left: number; name: string }) {
   const toast = useToast();
+  const timeZone = useCurrentUser().user?.timeZone ?? INDIA_TIME_ZONE;
   const t = useT();
   const router = useRouter();
   const [agree, setAgree] = useState(false);
@@ -28,7 +30,7 @@ export function AcknowledgeClient({ policy, left, name }: { policy: PolicyToRead
         <header style={{ padding: "20px 24px 12px", borderBottom: "1px solid var(--line)" }}>
           <span className="eyebrow">{t("Before you continue")}{left > 1 ? ` · ${t("{n} policies to accept", { n: left })}` : ""}</span>
           <h1 id="ack-title" className="display" style={{ fontSize: 28, margin: "4px 0 2px" }}>{policy.title}</h1>
-          <small className="muted">{t("Version {v} · published {date}", { v: policy.version, date: formatDayMonthYear(policy.publishedAt.slice(0, 10)) })}</small>
+          <small className="muted">{t("Version {v} · published {date}", { v: policy.version, date: formatDayMonthYear(isoDateIn(policy.publishedAt, timeZone)) })}</small>
         </header>
         <div style={{ padding: "16px 24px", overflowY: "auto", flex: 1 }}>
           {policy.body ? <PolicyText body={policy.body} /> : <p className="muted">{t("This policy is in the attached PDF.")}</p>}

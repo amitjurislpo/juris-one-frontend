@@ -19,27 +19,35 @@ const TIME_ZONES = ["Asia/Kolkata", "America/New_York", "America/Chicago", "Amer
 
 const blankProfile: BusinessInput = { name: "", legalName: "", code: "", employeePrefix: "", timeZone: "Asia/Kolkata", contactEmail: "", contactPhone: "", address: "", gstin: "" };
 
-function ProfileFields({ form, set, lockPrefix }: { form: BusinessInput; set: (updatedProfile: BusinessInput) => void; lockPrefix?: boolean }) {
+type FieldErrors = Partial<Record<string, string>>;
+
+/** The message under a field that failed the check before sending. */
+function FieldError({ message }: { message?: string }) {
+  return message ? <small className="err" role="alert">{message}</small> : null;
+}
+
+function ProfileFields({ form, set, lockPrefix, errors }: { form: BusinessInput; set: (updatedProfile: BusinessInput) => void; lockPrefix?: boolean; errors?: FieldErrors }) {
   const t = useT();
   const fieldValue = (fieldName: keyof BusinessInput) => form[fieldName] ?? "";
   const onFieldChange = (fieldName: keyof BusinessInput) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => set({ ...form, [fieldName]: e.target.value });
   return (
     <>
       <div className="grid2">
-        <label className="field">{t("Business name *")}<input value={fieldValue("name")} onChange={onFieldChange("name")} maxLength={120} placeholder={t("e.g. Acme Advisors")} autoFocus /></label>
+        <label className="field">{t("Business name *")}<input value={fieldValue("name")} onChange={onFieldChange("name")} maxLength={120} placeholder={t("e.g. Acme Advisors")} autoFocus aria-invalid={errors?.name ? true : undefined} /><FieldError message={errors?.name} /></label>
         <label className="field">{t("Legal name")} <span className="hint">{t("optional")}</span><input value={fieldValue("legalName")} onChange={onFieldChange("legalName")} maxLength={160} placeholder="Acme Advisors LLP" /></label>
       </div>
       <div className="grid3">
         <label className="field">{t("Short name")} <span className="hint">{t("auto if empty")}</span><input value={fieldValue("code")} onChange={onFieldChange("code")} maxLength={40} placeholder="acme-advisors" /></label>
         <label className="field">{t("Employee ID prefix")} <span className="hint">{t("2–5 letters")}</span>
-          <input value={fieldValue("employeePrefix")} onChange={onFieldChange("employeePrefix")} maxLength={5} placeholder="AA" disabled={lockPrefix} title={lockPrefix ? t("Fixed once the business has people") : undefined} />
+          <input value={fieldValue("employeePrefix")} onChange={onFieldChange("employeePrefix")} maxLength={5} placeholder="AA" disabled={lockPrefix} title={lockPrefix ? t("Fixed once the business has people") : undefined} aria-invalid={errors?.employeePrefix ? true : undefined} />
+          <FieldError message={errors?.employeePrefix} />
         </label>
         <label className="field">{t("Time zone")}
           <select value={fieldValue("timeZone")} onChange={onFieldChange("timeZone")}>{TIME_ZONES.map((timeZone) => <option key={timeZone}>{timeZone}</option>)}</select>
         </label>
       </div>
       <div className="grid3">
-        <label className="field">{t("Contact email")}<input type="email" value={fieldValue("contactEmail")} onChange={onFieldChange("contactEmail")} maxLength={200} /></label>
+        <label className="field">{t("Contact email")}<input type="email" value={fieldValue("contactEmail")} onChange={onFieldChange("contactEmail")} maxLength={200} aria-invalid={errors?.contactEmail ? true : undefined} /><FieldError message={errors?.contactEmail} /></label>
         <div className="field">{t("Phone")}<PhoneInput {...splitPhone(fieldValue("contactPhone"))} onChange={(countryCode, phoneNumber) => set({ ...form, contactPhone: phoneNumber ? `${countryCode} ${phoneNumber}` : "" })} /></div>
         <label className="field">{t("GSTIN")}<input value={fieldValue("gstin")} onChange={onFieldChange("gstin")} maxLength={15} placeholder="22AAAAA0000A1Z5" /></label>
       </div>
@@ -48,12 +56,12 @@ function ProfileFields({ form, set, lockPrefix }: { form: BusinessInput; set: (u
   );
 }
 
-function OwnerFields({ owner, set }: { owner: OwnerInput; set: (updatedOwner: OwnerInput) => void }) {
+function OwnerFields({ owner, set, optional, errors }: { owner: OwnerInput; set: (updatedOwner: OwnerInput) => void; optional?: boolean; errors?: FieldErrors }) {
   const t = useT();
   return (
     <div className="grid3">
-      <label className="field">{t("Name *")}<input value={owner.name} onChange={(e) => set({ ...owner, name: e.target.value })} maxLength={120} /></label>
-      <label className="field">{t("Email (signs in with it) *")}<input type="email" value={owner.email} onChange={(e) => set({ ...owner, email: e.target.value })} maxLength={200} /></label>
+      <label className="field">{optional ? t("Name") : t("Name *")}<input value={owner.name} onChange={(e) => set({ ...owner, name: e.target.value })} maxLength={120} aria-invalid={errors?.ownerName ? true : undefined} /><FieldError message={errors?.ownerName} /></label>
+      <label className="field">{optional ? t("Email (signs in with it)") : t("Email (signs in with it) *")}<input type="email" value={owner.email} onChange={(e) => set({ ...owner, email: e.target.value })} maxLength={200} aria-invalid={errors?.ownerEmail ? true : undefined} /><FieldError message={errors?.ownerEmail} /></label>
     </div>
   );
 }
@@ -89,6 +97,22 @@ const businessPhoneProblem = (business: BusinessInput) => {
   return number ? phoneProblem(code, number) : null;
 };
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** What is wrong with the new-business form, field by field (empty when it can be sent). The sub admin is optional, but name and email go together. */
+function newBusinessProblems(business: BusinessInput, owner: OwnerInput, t: ReturnType<typeof useT>): FieldErrors {
+  const problems: FieldErrors = {};
+  if (!business.name.trim()) problems.name = t("Enter the business name.");
+  if (business.employeePrefix && !/^[A-Za-z]{2,5}$/.test(business.employeePrefix)) problems.employeePrefix = t("Use 2 to 5 letters.");
+  if (business.contactEmail && !EMAIL_PATTERN.test(business.contactEmail)) problems.contactEmail = t("Enter a valid email address.");
+  if (owner.name.trim() || owner.email.trim()) {
+    if (!owner.name.trim()) problems.ownerName = t("Enter the sub admin's name.");
+    if (!owner.email.trim()) problems.ownerEmail = t("Enter the sub admin's email.");
+    else if (!EMAIL_PATTERN.test(owner.email.trim())) problems.ownerEmail = t("Enter a valid email address.");
+  }
+  return problems;
+}
+
 const clean = <T extends object>(source: T): T => Object.fromEntries(Object.entries(source).filter(([, entryValue]) => entryValue !== "" && entryValue !== null && entryValue !== undefined)) as T;
 
 export function NewBusinessButton({ plans, templates }: { plans: PlanRow[]; templates: RoleTemplate[] }) {
@@ -101,9 +125,13 @@ export function NewBusinessButton({ plans, templates }: { plans: PlanRow[]; temp
   const [ownerInput, setOwnerInput] = useState<OwnerInput>({ name: "", email: "" });
   const [roles, setRoles] = useState<string[]>([]);
   const [err, setErr] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [busy, start] = useTransition();
-  const close = () => { setOpen(false); setErr(""); setBusinessInput(blankProfile); setSubscriptionInput({ planId: "" }); setOwnerInput({ name: "", email: "" }); setRoles([]); };
+  const close = () => { setOpen(false); setErr(""); setFieldErrors({}); setBusinessInput(blankProfile); setSubscriptionInput({ planId: "" }); setOwnerInput({ name: "", email: "" }); setRoles([]); };
   const save = () => start(async () => {
+    const problems = newBusinessProblems(businessInput, ownerInput, t);
+    setFieldErrors(problems);
+    if (Object.keys(problems).length) { setErr(t("Check the highlighted fields.")); return; }
     const bad = businessPhoneProblem(businessInput);
     if (bad) { setErr(bad); return; }
     const createResult = await createBusiness({ business: clean(businessInput), subscription: subscriptionInput.planId ? clean(subscriptionInput) : undefined, owner: ownerInput.name || ownerInput.email ? clean(ownerInput) : undefined, roles });
@@ -116,11 +144,11 @@ export function NewBusinessButton({ plans, templates }: { plans: PlanRow[]; temp
         <Modal title={t("New business")} eyebrow={t("Platform")} maxWidth={760} onClose={close}
           footer={<><button className="btn btn-ghost" onClick={close}>{t("Cancel")}</button><button className="btn btn-gold" disabled={busy} onClick={save}>{busy ? t("Creating…") : t("Create business")}</button></>}>
           <div className="col" style={{ gap: 14 }}>
-            <ProfileFields form={businessInput} set={(x) => { setBusinessInput(x); setErr(""); }} />
+            <ProfileFields form={businessInput} set={(x) => { setBusinessInput(x); setErr(""); setFieldErrors({}); }} errors={fieldErrors} />
             <h4 style={{ margin: "6px 0 0" }}>{t("Subscription")}</h4>
             <SubscriptionFields subscription={subscriptionInput} set={(updatedInput) => { setSubscriptionInput(updatedInput); setErr(""); }} plans={plans} />
-            <h4 style={{ margin: "6px 0 0" }}>{t("Sub admin")} <span className="hint muted">{t("— runs the business; optional, can be added later")}</span></h4>
-            <OwnerFields owner={ownerInput} set={(x) => { setOwnerInput(x); setErr(""); }} />
+            <h4 style={{ margin: "6px 0 0" }}>{t("Sub admin")} <span className="hint muted">{t("— runs the business; optional, can be added later. If you fill one field, fill both.")}</span></h4>
+            <OwnerFields owner={ownerInput} set={(x) => { setOwnerInput(x); setErr(""); setFieldErrors({}); }} errors={fieldErrors} optional />
             <h4 style={{ margin: "6px 0 0" }}>{t("Roles for this business")} <span className="hint muted">{t("— the business admin can't create roles, so pick what it needs")}</span></h4>
             <RolePicker templates={templates} chosen={roles} set={(x) => { setRoles(x); setErr(""); }} />
             {err && <div className="err" role="alert">{err}</div>}
@@ -252,7 +280,7 @@ export function BusinessStatusButton({ id, name, status }: { id: string; name: s
     <>
       <button className={`btn ${suspend ? "btn-ghost" : "btn-gold"}`} onClick={() => setAsk(true)}><Icon name={suspend ? "lock" : "ok"} size={14} />{suspend ? t("Suspend") : t("Reactivate")}</button>
       {ask && (
-        <ConfirmDialog title={suspend ? t("Suspend business") : t("Reactivate business")} danger={suspend} confirm={suspend ? t("Suspend") : t("Reactivate")} busy={busy} onClose={() => setAsk(false)}
+        <ConfirmDialog title={suspend ? t("Suspend business") : t("Reactivate business")} danger={suspend} confirm={suspend ? t("Suspend") : t("Reactivate")} dismiss={t("Close")} busy={busy} onClose={() => setAsk(false)}
           body={suspend ? <>{t("Suspend {name}? Everyone in it is signed out at once and can't sign in until you reactivate it. Its data is kept.", { name })}</> : <>{t("Let people in {name} sign in again?", { name })}</>}
           onConfirm={() => start(async () => { const statusResult = await setBusinessStatus(id, suspend ? "SUSPENDED" : "ACTIVE"); toast(statusResult.ok ? statusResult.message! : statusResult.error, statusResult.ok ? undefined : "bad"); setAsk(false); })} />
       )}
@@ -336,8 +364,8 @@ export function CancelSubscriptionButton({ businessId, subscriptionId, label }: 
     <>
       <button className="btn btn-sm btn-ghost" onClick={() => setAsk(true)} aria-label={t("Cancel {label}", { label })}><Icon name="x" size={14} /></button>
       {ask && (
-        <ConfirmDialog title={t("Cancel subscription")} danger confirm={t("Cancel subscription")} busy={busy} onClose={() => setAsk(false)}
-          body={<>{t("Cancel {label}? If it covers today, the business loses access straight away (the owner can still sign in and export employees).", { label })}</>}
+        <ConfirmDialog title={t("Cancel subscription")} danger confirm={t("Cancel subscription")} dismiss={t("Keep it")} busy={busy} onClose={() => setAsk(false)}
+          body={<>{t("Cancel {label}? If it covers today, the business loses access straight away and nobody in it can sign in until a new subscription starts. (An expired subscription is different: people can still sign in to view and export.)", { label })}</>}
           onConfirm={() => start(async () => { const cancelResult = await cancelSubscription(businessId, subscriptionId); toast(cancelResult.ok ? cancelResult.message! : cancelResult.error, cancelResult.ok ? undefined : "bad"); setAsk(false); })} />
       )}
     </>

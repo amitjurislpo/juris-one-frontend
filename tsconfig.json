@@ -14,7 +14,7 @@
     "allowImportingTsExtensions": false,
     "types": ["vite/client", "node"],
     "baseUrl": ".",
-    "paths": { "@/*": ["./src/*"] }
+    "paths": { "@/track": ["../juris-track-frontend/src/track/index.ts"], "@/track/*": ["../juris-track-frontend/src/track/*"], "@/*": ["./src/*"] }
   },
   "include": ["src", "tests", "vite.config.ts", "vitest.config.ts"]
 }

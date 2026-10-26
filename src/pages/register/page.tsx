@@ -111,7 +111,7 @@ function Monthly({ register, departmentOptions, teamOptions, months }: { registe
         <SearchBox placeholder={t("Search employee")} label={t("Search employee")} />
         <SelectFilter name="region" label={t("Team")} dflt="All" options={teamOptions} />
         <SelectFilter name="departmentId" label={t("Department")} dflt="All" options={departmentOptions} />
-        <span className="tcount">{t("{n} people", { n: register.total })}</span>
+        <span className="tcount">{register.total === 1 ? t("1 person") : t("{n} people", { n: register.total })}</span>
       </div>
       <section className="card enter" style={{ ["--i" as string]: 2 }}>
         <Pending>

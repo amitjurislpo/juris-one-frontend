@@ -4,9 +4,11 @@ import { HomeCards, type HomeCardsData } from "@/components/home/HomeCards";
 import { AnnouncementsCard } from "@/components/home/AnnouncementsCard";
 import { NotificationsCard } from "@/components/home/NotificationList";
 import type { Announcement, InboxPage } from "@/lib/api-types";
+import { HomeTrackTimer } from "@/components/home/HomeTrackTimer";
 import { TimeCard } from "@/components/home/TimeCard";
 import { Icon } from "@/components/Icon";
 import { addDays, weekdayOf, type Status } from "@/lib/attendance/engine";
+import { JURIS_TRACK } from "@/lib/nav";
 import { PageLoading, useData, usePage } from "@/lib/page";
 import { daysBetween, WEEKDAY_ABBREVIATIONS, formatDayMonth, formatWeekdayDayMonthYear, formatHours, MONTH_ABBREVIATIONS, MONTH_NAMES } from "@/lib/format";
 
@@ -73,6 +75,10 @@ export default function HomePage() {
   });
   const heatPresent = heat.filter((c) => /l\d/.test(c.className)).length;
 
+  // a business with JurisTrack has one clock, JurisTrack's (the API mirrors its start/end into attendance punches); read-only mode keeps the punch card, which has no buttons then
+  const punchCard = <TimeCard checkedIn={checkedIn} openSince={home.openSince} closedMinutes={closed} shiftText={shiftText} ticks={ticks} targetHours={policy.shiftTargetHours} log={log} />;
+  const timer = user.modules.includes(JURIS_TRACK) ? <HomeTrackTimer fallback={punchCard} /> : punchCard;
+
   return (
     <div className="col" style={{ gap: 20 }}>
       <div className="page-h enter">
@@ -84,7 +90,7 @@ export default function HomePage() {
       </div>
 
       <div className="bento">
-        <TimeCard checkedIn={checkedIn} openSince={home.openSince} closedMinutes={closed} shiftText={shiftText} ticks={ticks} targetHours={policy.shiftTargetHours} log={log} />
+        {timer}
 
         <div className="span-5" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 16 }}>
           <div className="card kpi lift enter" style={{ ["--i" as string]: 2 }}><span className="spot"></span><span className="ico" style={{ background: "var(--okbg)", color: "var(--ok)" }}><Icon name="check" size={16} /></span><span className="l">{t("Present in")} {MONTH_NAMES[Number(workDate.slice(5, 7)) - 1]}</span><span className="v"><span className="num">{present}</span><span className="faint" style={{ fontSize: 16, fontWeight: 500 }}> / {working.length}</span></span><span className="s">{t("working days so far")}</span></div>
@@ -100,8 +106,8 @@ export default function HomePage() {
             <div className="legend">{t("Less")}<i style={{ background: "var(--heat0)" }}></i><i style={{ background: "var(--heat1)" }}></i><i style={{ background: "var(--heat2)" }}></i><i style={{ background: "var(--heat3)" }}></i><i style={{ background: "var(--heat4)" }}></i>{t("More")}</div>
           </div>
           <div className="heat-wrap">
-            <div className="heat-days"><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span><span></span></div>
-            <div className="heat" role="img" aria-label={`Attendance heatmap, ${heatPresent} days present in the last 16 weeks`}>
+            <div className="heat-days"><span>{t("Mon")}</span><span></span><span>{t("Wed")}</span><span></span><span>{t("Fri")}</span><span></span><span></span></div>
+            <div className="heat" role="img" aria-label={t("Attendance heatmap, {days} days present in the last 16 weeks", { days: heatPresent })}>
               {heat.map((cell, i) => <i key={cell.date} className={cell.className} title={cell.title} style={{ animationDelay: `${i * 4}ms` }}></i>)}
             </div>
           </div>
@@ -121,13 +127,13 @@ export default function HomePage() {
 
         <section className="card pad span-8 enter" style={{ ["--i" as string]: 8 }}>
           <span className="spot"></span>
-          <div className="card-h"><h3>Last seven shifts</h3><span className="faint" style={{ fontSize: 12.5 }}>dashed line = {policy.shiftTargetHours}h target</span></div>
+          <div className="card-h"><h3>{t("Last seven shifts")}</h3><span className="faint" style={{ fontSize: 12.5 }}>{t("dashed line = {hours}h target", { hours: policy.shiftTargetHours })}</span></div>
           <div className="bars">
             <div className="target" style={{ bottom: 140 }}></div>
             {lastShifts.map((shift, i) => {
               const workedHours = shift.workedMinutes / 60;
               return (
-                <div className="b" key={shift.date} title={`${workedHours.toFixed(1)} hours`}>
+                <div className="b" key={shift.date} title={t("{hours} hours", { hours: workedHours.toFixed(1) })}>
                   <span className="num" style={{ fontSize: 11.5, color: "var(--muted)" }}>{workedHours.toFixed(1)}</span>
                   <i className={shift.date === workDate ? "today" : undefined} style={{ height: Math.max(6, (workedHours / policy.shiftTargetHours) * 140), animationDelay: `${0.25 + i * 0.06}s` }}></i>
                 </div>
@@ -135,12 +141,12 @@ export default function HomePage() {
             })}
           </div>
           <div className="bars-x">
-            {lastShifts.map((shift) => <span key={shift.date}><b style={{ color: "var(--text)", fontWeight: 500 }}>{shift.date === workDate ? "Today" : WEEKDAY_ABBREVIATIONS[weekdayOf(shift.date)]}</b><br />{formatDayMonth(shift.date)}</span>)}
+            {lastShifts.map((shift) => <span key={shift.date}><b style={{ color: "var(--text)", fontWeight: 500 }}>{shift.date === workDate ? t("Today") : t(WEEKDAY_ABBREVIATIONS[weekdayOf(shift.date)])}</b><br />{formatDayMonth(shift.date)}</span>)}
           </div>
         </section>
         <section className="card pad span-4 enter" style={{ ["--i" as string]: 9 }}>
           <span className="spot"></span>
-          <div className="card-h"><h3>Upcoming holidays</h3><Link className="btn btn-sm btn-ghost" href="/leave">All</Link></div>
+          <div className="card-h"><h3>{t("Upcoming holidays")}</h3><Link className="btn btn-sm btn-ghost" href="/leave">{t("All")}</Link></div>
           <div className="list">
             {holidays.map((holiday) => (
               <div className="it" key={holiday.id}>
@@ -148,7 +154,7 @@ export default function HomePage() {
                 <div><b style={{ fontSize: 13.5, fontWeight: 600 }}>{holiday.name}</b><div className="faint" style={{ fontSize: 12.5 }}>{formatWeekdayDayMonthYear(holiday.date)}</div></div>
               </div>
             ))}
-            {!holidays.length && <div className="faint" style={{ fontSize: 13 }}>No more holidays this year.</div>}
+            {!holidays.length && <div className="faint" style={{ fontSize: 13 }}>{t("No more holidays this year.")}</div>}
           </div>
         </section>
       </div>

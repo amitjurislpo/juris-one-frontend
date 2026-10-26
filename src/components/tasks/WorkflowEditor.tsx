@@ -61,7 +61,7 @@ export function WorkflowEditor({ statuses, canEdit, onCreate, onUpdate, onReorde
                   <input type="radio" name="initial-status" checked={status.isInitial} disabled={status.category !== "TODO"} onChange={() => update(status, { isInitial: true })} />
                   <span>{t("Start")}</span>
                 </label>
-                <span className="muted workflow-count">{t("{n} tasks", { n: status.taskCount })}</span>
+                <span className="muted workflow-count">{status.taskCount === 1 ? t("1 task") : t("{n} tasks", { n: status.taskCount })}</span>
                 <span className="workflow-buttons">
                   <button type="button" className="btn btn-sm btn-ghost" disabled={busy || index === 0} aria-label={t("Move {name} up", { name: status.name })} onClick={() => swap(index, -1)}>↑</button>
                   <button type="button" className="btn btn-sm btn-ghost" disabled={busy || index === ordered.length - 1} aria-label={t("Move {name} down", { name: status.name })} onClick={() => swap(index, 1)}>↓</button>
@@ -72,7 +72,7 @@ export function WorkflowEditor({ statuses, canEdit, onCreate, onUpdate, onReorde
               <>
                 <b>{statusName(status.name, t)}</b>
                 <span className="muted">{t(STATUS_CATEGORIES[status.category])}{status.isInitial ? ` · ${t("new tasks start here")}` : ""}</span>
-                <span className="muted workflow-count">{t("{n} tasks", { n: status.taskCount })}</span>
+                <span className="muted workflow-count">{status.taskCount === 1 ? t("1 task") : t("{n} tasks", { n: status.taskCount })}</span>
               </>
             )}
           </li>
@@ -89,7 +89,7 @@ export function WorkflowEditor({ statuses, canEdit, onCreate, onUpdate, onReorde
       )}
       {removing && (
         <ConfirmDialog title={t("Remove step")} danger confirm={t("Remove")} busy={busy || (removing.taskCount > 0 && !moveTo)} onClose={() => setRemoving(null)}
-          body={removing.taskCount > 0 ? t("{name} still has {n} tasks. Choose the step they move to.", { name: removing.name, n: removing.taskCount }) : t("Remove the step {name}?", { name: removing.name })}
+          body={removing.taskCount > 0 ? (removing.taskCount === 1 ? t("{name} still has 1 task. Choose the step it moves to.", { name: removing.name }) : t("{name} still has {n} tasks. Choose the step they move to.", { name: removing.name, n: removing.taskCount })) : t("Remove the step {name}?", { name: removing.name })}
           onConfirm={() => run(() => onDelete(removing.id, moveTo || undefined), t("Step removed"), () => setRemoving(null))}>
           {removing.taskCount > 0 && (
             <label className="field" style={{ marginTop: 12 }}>{t("Move its tasks to:")}

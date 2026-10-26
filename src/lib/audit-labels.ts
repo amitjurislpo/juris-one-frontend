@@ -1,3 +1,5 @@
+import type { T } from "./i18n/translate";
+
 /** Event groups for the audit filter (the API applies them); each matches action prefixes. */
 export const AUDIT_GROUPS = {
   auth: { label: "Sign-in & accounts", prefixes: ["auth."] },
@@ -37,7 +39,8 @@ export interface AuditRow {
 }
 
 /** "employee.access_toggle" → "Employee · access toggle" */
-export const actionLabel = (action: string) => {
+export const actionLabel = (action: string, t: T = (text) => text) => {
   const [head, ...rest] = action.split(".");
-  return `${head.charAt(0).toUpperCase()}${head.slice(1)} · ${rest.join(" ").replace(/_/g, " ")}`;
+  const detail = rest.join(" ").replace(/_/g, " ");
+  return `${t(`${head.charAt(0).toUpperCase()}${head.slice(1)}`)} · ${rest[0] === rest[0]?.toUpperCase() ? detail : t(detail)}`; // an HTTP method (GET) stays as it is
 };

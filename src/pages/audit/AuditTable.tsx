@@ -56,7 +56,7 @@ export function AuditTable({ platform }: { platform?: boolean }) {
                   const occurredAt = new Date(row.occurredAt);
                   const when = formatDateTimeSeconds(occurredAt, user.timeZone);
                   const whenExact = formatDateTimeSeconds(occurredAt, user.timeZone, true);
-                  const label = actionLabel(row.action);
+                  const label = actionLabel(row.action, t);
                   return (
                     <AuditRow key={row.id} row={row} animationIndex={i} when={when} whenExact={whenExact} label={label}>
                       <td className="num" style={{ whiteSpace: "nowrap" }} title={whenExact}>{when}</td>

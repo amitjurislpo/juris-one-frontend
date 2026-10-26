@@ -1,14 +1,14 @@
+import { Navigate, Route, Routes } from "react-router";
 import { Icon } from "@/components/Icon";
 import { PageHeader } from "@/components/PageHeader";
 import { PageLoading, useData, usePage } from "@/lib/page";
+import { homeFor, RequireRole, type TrackUser } from "@/track";
+import { EMBEDDED_ROUTES } from "./embeddedRoutes";
+import { TrackLayout } from "./TrackLayout";
 
-
-/** Juris Track — only for businesses with the module (plan or grant); everyone else gets a 404. */
-export default function JurisTrackPage() {
+/** What the user sees until the Juris Track service is switched on for this installation. */
+function ComingSoon() {
   const { t } = usePage();
-  const jurisTrack = useData<{ module: string; status: string }>("/api/juris-track");
-  if (!jurisTrack) return <PageLoading />;
-
   return (
     <div className="col">
       <PageHeader eyebrow={t("Juris Track")} title={<>{t("Juris Track")}</>} sub={t("Included in your JurisOne subscription.")} />
@@ -24,4 +24,31 @@ export default function JurisTrackPage() {
       </section>
     </div>
   );
+}
+
+/** The JurisTrack pages, once its user is known (the role decides which of them open). */
+function ActiveModule() {
+  const trackUser = useData<TrackUser>("/api/juris-track/me");
+  if (!trackUser) return <PageLoading />;
+  return (
+    <Routes>
+      <Route element={<TrackLayout trackUser={trackUser} />}>
+        <Route index element={<Navigate to={homeFor(trackUser.role) === "/team" ? "team" : "dashboard"} replace />} />
+        {EMBEDDED_ROUTES.map(({ path, roles, Page }) => (
+          <Route key={path} path={path} element={<RequireRole roles={roles}><Page /></RequireRole>} />
+        ))}
+        <Route path="*" element={<Navigate to="dashboard" replace />} />
+      </Route>
+    </Routes>
+  );
+}
+
+/**
+ * Juris Track inside JurisOne (`/juris-track/*`): only for businesses with the module (plan or grant), everyone else gets a 404
+ * (see RequirePage). The pages are JurisTrack's own, talking to it through the JurisOne gateway (`/api/juris-track`).
+ */
+export default function JurisTrackPage() {
+  const jurisTrack = useData<{ module: string; status: string }>("/api/juris-track");
+  if (!jurisTrack) return <PageLoading />;
+  return jurisTrack.status === "ACTIVE" ? <ActiveModule /> : <ComingSoon />;
 }

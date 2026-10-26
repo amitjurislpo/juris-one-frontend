@@ -63,12 +63,12 @@ export function Drawer({ label, onClose, children, width = 440 }: { label: strin
   );
 }
 
-export function ConfirmDialog({ title, body, confirm, danger, busy, onConfirm, onClose, children }: { title: string; body: React.ReactNode; confirm: string; danger?: boolean; busy?: boolean; onConfirm: () => void; onClose: () => void; children?: React.ReactNode }) {
+export function ConfirmDialog({ title, body, confirm, dismiss, danger, busy, onConfirm, onClose, children }: { title: string; body: React.ReactNode; confirm: string; dismiss?: string; danger?: boolean; busy?: boolean; onConfirm: () => void; onClose: () => void; children?: React.ReactNode }) {
   const t = useT();
   return (
     <Modal title={title} onClose={onClose} size="sm" stacked
       footer={<>
-        <button className="btn btn-ghost" onClick={onClose}>{t("Cancel")}</button>
+        <button className="btn btn-ghost" onClick={onClose}>{dismiss ?? t("Cancel")}</button>
         <button className={danger ? "btn btn-danger" : "btn btn-gold"} disabled={busy} onClick={onConfirm}>{confirm}</button>
       </>}>
       <p className="muted" style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{body}</p>

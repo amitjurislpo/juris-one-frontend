@@ -197,7 +197,7 @@ export function EmployeeForm({ editId, photo, onClose }: { editId?: string; phot
                 <div className="ltypes" role="radiogroup" aria-label={t("Role")}>
                   {opt.roles.map((role) => (
                     <button key={role.id} type="button" role="radio" aria-checked={form.roleId === role.id} className={`ltype${form.roleId === role.id ? " on" : ""}`} onClick={() => set("roleId", role.id)}>
-                      <span className="tick"><Icon name="ok" size={12} /></span><b>{role.name}</b><small>{t("{n} permissions", { n: role.perms })}</small>
+                      <span className="tick"><Icon name="ok" size={12} /></span><b>{role.name}</b><small>{role.perms === 1 ? t("1 permission") : t("{n} permissions", { n: role.perms })}</small>
                     </button>
                   ))}
                 </div>

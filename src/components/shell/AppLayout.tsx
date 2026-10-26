@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, type ReactNode } from "react";
 import { Navigate, Outlet, useLocation } from "react-router";
 import Link from "@/lib/link";
 import { Shell } from "@/components/shell/Shell";
@@ -24,8 +24,8 @@ interface ShellData {
   subscription: SubscriptionCurrent | null;
 }
 
-/** Layout of every signed-in page: the shell (sidebar, top bar, notifications) around the page. */
-export function AppLayout() {
+/** Layout of every signed-in page: the shell (sidebar, top bar, notifications) around the page (or around `children`, for pages outside the route table). */
+export function AppLayout({ children }: { children?: ReactNode }) {
   const { user, loading } = useCurrentUser();
   const loc = useLocation();
   const t = useT();
@@ -44,7 +44,7 @@ export function AppLayout() {
       currentUser={data.currentUser}
       groups={data.groups}
       badges={data.badges}
-      notes={data.notes}
+      notes={data.notes.filter((note) => note.id || !/^0 /.test(note.text))} // "0 requests waiting for approval" is not news
       unread={data.unread}
       landing={data.landing}
       canSelf={data.canSelf}
@@ -68,7 +68,7 @@ export function AppLayout() {
       )}
       <PageErrorBoundary key={loc.pathname} onRetry={refreshData}>
         <Suspense fallback={<PageLoading />}>
-          <Outlet />
+          {children ?? <Outlet />}
         </Suspense>
       </PageErrorBoundary>
     </Shell>
