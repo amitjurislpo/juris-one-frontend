@@ -2,13 +2,13 @@ import { Icon } from "@/components/Icon";
 import { PageHeader } from "@/components/PageHeader";
 import type { PolicyToRead } from "@/lib/api-types";
 import { PageLoading, useData, usePage } from "@/lib/page";
-import { formatDayMonthYear } from "@/lib/format";
+import { formatDayMonthYear, isoDateIn } from "@/lib/format";
 import { PolicyText } from "./PolicyText";
 
 
 /** Every current company policy, and when the signed-in user accepted it. */
 export default function MyPoliciesPage() {
-  const { t } = usePage();
+  const { user, t } = usePage();
   const rows = useData<PolicyToRead[]>("/api/policies/mine");
   if (!rows) return <PageLoading />;
 
@@ -21,9 +21,9 @@ export default function MyPoliciesPage() {
             <span style={{ width: 34, height: 34, borderRadius: 9, background: "var(--accentsoft)", color: "var(--accent)", display: "grid", placeItems: "center", flex: "none" }}><Icon name="book" size={16} /></span>
             <span style={{ flex: 1, minWidth: 0 }}>
               <b>{policy.title}</b><br />
-              <small className="muted">{t("Version {v} · published {date}", { v: policy.version, date: formatDayMonthYear(policy.publishedAt.slice(0, 10)) })}</small>
+              <small className="muted">{t("Version {v} · published {date}", { v: policy.version, date: formatDayMonthYear(isoDateIn(policy.publishedAt, user.timeZone)) })}</small>
             </span>
-            {policy.acknowledgedAt ? <span className="chip ok">{t("Accepted {date}", { date: formatDayMonthYear(policy.acknowledgedAt.slice(0, 10)) })}</span>
+            {policy.acknowledgedAt ? <span className="chip ok">{t("Accepted {date}", { date: formatDayMonthYear(isoDateIn(policy.acknowledgedAt, user.timeZone)) })}</span>
               : policy.requiresAcknowledgement ? <span className="chip warn">{t("To accept")}</span> : <span className="chip neutral">{t("For information")}</span>}
             <Icon name="chevD" size={14} />
           </summary>

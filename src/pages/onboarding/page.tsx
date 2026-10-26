@@ -2,7 +2,7 @@ import Link from "@/lib/link";
 import { Icon } from "@/components/Icon";
 import { PageHeader } from "@/components/PageHeader";
 import { PageLoading, useData, usePage } from "@/lib/page";
-import { formatDayMonthYear } from "@/lib/format";
+import { formatDayMonthYear, isoDateIn } from "@/lib/format";
 import { DefaultDocumentsButton, StartOnboardingButton } from "./OnboardingClient";
 import { ONBOARDING_STATUS } from "./status";
 
@@ -14,7 +14,7 @@ interface Row {
 
 /** HR: candidates being onboarded by link, open ones first. */
 export default function OnboardingPage() {
-  const { t } = usePage();
+  const { user, t } = usePage();
   const rows = useData<Row[]>("/api/onboardings");
   if (!rows) return <PageLoading />;
 
@@ -42,7 +42,7 @@ export default function OnboardingPage() {
                   <td>{onboarding.joiningDate ? formatDayMonthYear(onboarding.joiningDate) : <span className="muted">—</span>}</td>
                   <td className="num">{t("{verified}/{total} verified", { verified: onboarding.verified, total: onboarding.documents })}</td>
                   <td><span className={`chip ${ONBOARDING_STATUS[onboarding.status].className}`}>{t(ONBOARDING_STATUS[onboarding.status].text)}</span>{onboarding.employeeCode && <small className="muted mono"> {onboarding.employeeCode}</small>}</td>
-                  <td className="muted hide-sm">{formatDayMonthYear(onboarding.updatedAt.slice(0, 10))}</td>
+                  <td className="muted hide-sm">{formatDayMonthYear(isoDateIn(onboarding.updatedAt, user.timeZone))}</td>
                 </tr>
               ))}
             </tbody>

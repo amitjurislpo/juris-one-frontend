@@ -1,6 +1,7 @@
 import { PageHeader } from "@/components/PageHeader";
 import { PageLoading, useData, usePage } from "@/lib/page";
 import { formatDayMonthYear } from "@/lib/format";
+import { shiftLabel } from "@/lib/shifts";
 import { PhotoCard } from "./PhotoCard";
 import { ProfileForm, type MyProfile } from "./ProfileForm";
 
@@ -13,7 +14,7 @@ export default function ProfilePage() {
   const readOnlyRows: [string, string | null][] = [
     [t("Employee ID"), profile.code], [t("Work email"), profile.email], [t("Phone"), profile.phone], [t("Designation"), profile.designation], [t("Department"), profile.department], [t("Role"), profile.role],
     [t("Reporting manager"), profile.manager], [t("Date of joining"), formatDayMonthYear(profile.dateOfJoining)], [t("Joining office"), profile.joiningOffice], [t("Work location"), profile.location],
-    [t("Shift"), profile.shift], [t("PAN"), profile.pan], [t("Aadhaar"), profile.aadhaar], [t("Bank account"), profile.bank],
+    [t("Shift"), profile.shift ? shiftLabel(profile.shift, t) : profile.shift], [t("PAN"), profile.pan], [t("Aadhaar"), profile.aadhaar], [t("Bank account"), profile.bank],
   ];
 
   return (

@@ -2,7 +2,7 @@ import Link from "@/lib/link";
 import { PageHeader } from "@/components/PageHeader";
 import type { PolicyDetail } from "@/lib/api-types";
 import { PageLoading, useData, usePage } from "@/lib/page";
-import { formatDateTime, formatDayMonthYear } from "@/lib/format";
+import { formatDateTime, formatDayMonthYear, isoDateIn } from "@/lib/format";
 import { PolicyActions, PolicyEditor } from "../PoliciesClient";
 
 
@@ -57,7 +57,7 @@ export default function PolicyPage() {
                 {policy.versions.map((version) => (
                   <tr key={version.versionId}>
                     <td><b>v{version.version}</b> <span className="muted">{version.title !== policy.title ? version.title : ""}</span></td>
-                    <td>{formatDayMonthYear(version.publishedAt.slice(0, 10))}</td>
+                    <td>{formatDayMonthYear(isoDateIn(version.publishedAt, user.timeZone))}</td>
                     <td className="muted hide-sm">{version.publishedBy ?? "—"}</td>
                     <td className="r num">{version.requiresAcknowledgement ? version.acknowledgements : "—"}</td>
                     <td className="mono muted hide-sm" style={{ fontSize: 11.5 }} title={version.bodySha256}>{version.bodySha256.slice(0, 16)}…</td>

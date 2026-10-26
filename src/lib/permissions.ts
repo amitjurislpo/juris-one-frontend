@@ -39,3 +39,13 @@ export const PERMISSION_GROUPS: [string, Permission[]][] = [
 
 /** Permissions that expose salary / tax figures. HR roles must never hold these. */
 export const SALARY_PERMISSIONS: Permission[] = ["pay.view", "pay.close", "struct.manage", "tax.view", "proofs.verify"];
+
+/** Permissions that are not in the role editor's catalogue (they belong to the Owner and the platform team) but can still be listed on a role. */
+const SYSTEM_PERMISSION_LABEL: Record<string, string> = {
+  "business.manage": "Manage the business, its owners and its subscription",
+  "platform.manage": "Run the JurisOne platform (businesses, plans, role templates)",
+};
+
+/** A readable name for a permission key wherever one is listed; an unknown key is shown as it is. */
+export const permissionLabel = (permissionKey: string, catalogue?: ReadonlyMap<string, string>): string =>
+  catalogue?.get(permissionKey) ?? (PERMISSION_LABEL as Record<string, string | undefined>)[permissionKey] ?? SYSTEM_PERMISSION_LABEL[permissionKey] ?? permissionKey;

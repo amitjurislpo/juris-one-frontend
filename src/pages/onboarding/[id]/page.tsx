@@ -1,7 +1,7 @@
 import Link from "@/lib/link";
 import { PageHeader } from "@/components/PageHeader";
 import { PageLoading, useData, usePage } from "@/lib/page";
-import { formatDateTime, formatDayMonthYear } from "@/lib/format";
+import { formatDateTime, formatDayMonthYear, isoDateIn } from "@/lib/format";
 import { AddEmployeeButton, DocumentDecision, EditPlanButton, OnboardingActions } from "../OnboardingClient";
 import { ONBOARDING_STATUS, type OnboardingStatus } from "../status";
 
@@ -42,7 +42,7 @@ export default function OnboardingReviewPage() {
       <PageHeader back="/onboarding" eyebrow={<><Link href="/onboarding" className="linkish">{t("Onboarding")}</Link> / {data.personalEmail}</>} title={data.candidateName}
         sub={<><span className={`chip ${statusChip.className}`}>{t(statusChip.text)}</span>{" "}
           {data.designation ?? t("No designation yet")}{data.joiningDate ? ` · ${t("joining {date}", { date: formatDayMonthYear(data.joiningDate) })}` : ""}
-          {data.linkExpiresAt && !closed ? ` · ${t("link valid until {date}", { date: formatDayMonthYear(data.linkExpiresAt.slice(0, 10)) })}` : ""}
+          {data.linkExpiresAt && !closed ? ` · ${t("link valid until {date}", { date: formatDayMonthYear(isoDateIn(data.linkExpiresAt, user.timeZone)) })}` : ""}
           {data.employeeCode && data.employeeId ? <> · {t("added as")} <Link className="linkish" href={`/employees?search=${data.employeeCode}`}>{data.employeeCode}</Link> — {t("turn on portal access in Employees so they can sign in")}</> : null}</>}>
         {!closed && <EditPlanButton id={data.id} plan={plan} />}
         <OnboardingActions id={data.id} status={data.status} name={data.candidateName} />

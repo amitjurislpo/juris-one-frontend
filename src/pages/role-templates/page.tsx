@@ -1,6 +1,7 @@
 import Link from "@/lib/link";
 import { PageHeader } from "@/components/PageHeader";
 import type { RoleTemplates } from "@/lib/api-types";
+import { permissionLabel } from "@/lib/permissions";
 import { PageLoading, useData, usePage } from "@/lib/page";
 import { RoleTemplateButton, RoleTemplateDeleteButton } from "./RoleTemplatesClient";
 
@@ -32,7 +33,7 @@ export default function RoleTemplatesPage() {
                     {template.mandatory && <> <span className="chip gold">{t("Always included")}</span></>}
                     {template.locked && <> <span className="chip neutral">{t("Locked")}</span></>}
                   </td>
-                  <td style={{ maxWidth: 360 }}><small className="muted">{template.permissions.map((permission) => t(labels.get(permission) ?? permission)).join(" · ") || "—"}</small></td>
+                  <td style={{ maxWidth: 360 }}><small className="muted">{template.permissions.map((permission) => t(permissionLabel(permission, labels))).join(" · ") || "—"}</small></td>
                   <td>{template.assignable.length ? template.assignable.map((roleKey) => names.get(roleKey) ?? roleKey).join(", ") : <span className="muted">—</span>}</td>
                   <td className="r num">{template.businesses}</td>
                   <td><span className={`chip ${template.active ? "ok" : "neutral"}`}>{template.active ? t("Offered") : t("Retired")}</span></td>

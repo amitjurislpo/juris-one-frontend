@@ -32,7 +32,7 @@ export default function TaxPage() {
       <div className="toolbar enter" style={{ ["--i" as string]: 4 }}>
         <SearchBox placeholder={t("Search name or ID")} label={t("Search tax")} />
         <SegmentedFilter name="regime" dflt="All" label={t("Regime")} options={[{ value: "All", label: t("All regimes") }, { value: "NEW", label: t("New") }, { value: "OLD", label: t("Old") }]} />
-        <span className="tcount">{t("{n} employees", { n: rows.length })}</span>
+        <span className="tcount">{rows.length === 1 ? t("1 employee") : t("{n} employees", { n: rows.length })}</span>
       </div>
       <section className="card enter" style={{ ["--i" as string]: 4 }}>
         <Pending>

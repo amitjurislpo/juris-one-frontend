@@ -5,8 +5,9 @@ import { useToast } from "@/components/shell/Toasts";
 import { ClearFilters, SortableHeader } from "@/components/table/Table";
 import { ConfirmDialog, Drawer } from "@/components/ui/Modal";
 import { useT } from "@/lib/i18n/client";
-import { useReadOnly } from "@/lib/session";
-import { formatDayMonthYear, formatRupees } from "@/lib/format";
+import { useCurrentUser, useReadOnly } from "@/lib/session";
+import { formatDayMonthYear, formatRupees, INDIA_TIME_ZONE, todayIn } from "@/lib/format";
+import { shiftLabel } from "@/lib/shifts";
 import { EmployeeForm } from "./EmployeeForm";
 import { getProfile, confirmEmployee, markExited, revealContact, toggleAccess, type Profile } from "./actions";
 import { Avatar } from "@/components/Avatar";
@@ -125,7 +126,8 @@ function ProfileDrawer({ id, onClose, onEdit }: { id: string; onClose: () => voi
   const [err, setErr] = useState("");
   const [contact, setContact] = useState<{ phone: string; address: string } | null>(null);
   const [exitOpen, setExitOpen] = useState(false);
-  const [exitDate, setExitDate] = useState(() => new Date().toLocaleDateString("en-CA"));
+  const timeZone = useCurrentUser().user?.timeZone ?? INDIA_TIME_ZONE;
+  const [exitDate, setExitDate] = useState(() => todayIn(timeZone));
   const [busy, start] = useTransition();
 
   useEffect(() => {
@@ -193,7 +195,7 @@ function ProfileDrawer({ id, onClose, onEdit }: { id: string; onClose: () => voi
             {keyValueRow(t("Direct reports"), profile.reports.length ? profile.reports.join(", ") : "—")}
             {keyValueRow(t("Date of joining"), formatDayMonthYear(profile.dateOfJoining))}
             {profile.exitDate && keyValueRow(t("Last working day"), formatDayMonthYear(profile.exitDate))}
-            {keyValueRow(t("Location · shift"), `${profile.location} · ${profile.shift}`)}
+            {keyValueRow(t("Location · shift"), `${profile.location} · ${shiftLabel(profile.shift, t)}`)}
             {profile.gross !== null && keyValueRow(t("Monthly gross"), profile.gross ? formatRupees(profile.gross) : t("Not set"), true)}
           </div>
           {profile.gross === null && (

@@ -3,7 +3,8 @@ import { useRouter } from "@/lib/router";
 import { useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
-import { formatRupees } from "@/lib/format";
+import { formatRupees, localizedDateTime } from "@/lib/format";
+import type { T } from "@/lib/i18n/translate";
 import { useT } from "@/lib/i18n/client";
 import { useReadOnly } from "@/lib/session";
 import { DECLARATION_SECTIONS } from "@/lib/tax/catalogue";
@@ -14,6 +15,12 @@ export interface ItemView { id: string; key: string; amount: number; status: str
 const CHIP: Record<string, string> = { DRAFT: "neutral", PENDING: "warn", APPROVED: "ok", REJECTED: "bad" };
 const LABEL: Record<string, string> = { DRAFT: "Draft", PENDING: "Pending", APPROVED: "Approved", REJECTED: "Rejected" };
 const formatWholeRupees = (rupees: number) => formatRupees(rupees * 100);
+
+/** The API sends "Declarations and proofs are open until 31 Jan 2027; the regime can be changed until 31 Dec 2026."; this shows it in the chosen language. */
+function windowSentence(text: string, t: T): string {
+  const match = /^Declarations and proofs are open until (.+); the regime can be changed until (.+).$/.exec(text);
+  return match ? t("Declarations and proofs are open until {proofDate}; the regime can be changed until {regimeDate}.", { proofDate: localizedDateTime(match[1]), regimeDate: localizedDateTime(match[2]) }) : text;
+}
 
 export function DeclareClient(props: {
   regime: "NEW" | "OLD"; overridden: boolean; canChangeRegime: boolean; windowOpen: boolean; windowText: string;
@@ -73,7 +80,7 @@ export function DeclareClient(props: {
         {regimeCard("OLD", t("Old regime"), t("Claim HRA, 80C, 80D, home loan and more — proofs required."), props.oldTax)}
       </div>
       <p className="faint" style={{ margin: 0, fontSize: 12.5 }}>
-        {props.overridden ? `${t("Finance has set your regime.")} ` : ""}{t("TDS this month:")} <b className="num">{formatWholeRupees(props.monthlyTds)}</b> {t("(approved proofs only).")} {props.windowText}
+        {props.overridden ? `${t("Finance has set your regime.")} ` : ""}{t("TDS this month:")} <b className="num">{formatWholeRupees(props.monthlyTds)}</b> {t("(approved proofs only).")} {windowSentence(props.windowText, t)}
       </p>
 
       {props.regime === "NEW" ? (

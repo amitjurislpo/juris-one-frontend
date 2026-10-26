@@ -17,7 +17,7 @@ export default function DirectoryPage() {
 
   return (
     <div className="col">
-      <PageHeader eyebrow={t("Directory")} title={t("Find")} emphasis={t("anyone")} sub={t("{n} people at Juris Consultants. Search by name, email or designation.", { n: activeCount })} />
+      <PageHeader eyebrow={t("Directory")} title={t("Find")} emphasis={t("anyone")} sub={activeCount === 1 ? t("1 person at Juris Consultants. Search by name, email or designation.") : t("{n} people at Juris Consultants. Search by name, email or designation.", { n: activeCount })} />
       <div className="toolbar enter" style={{ ["--i" as string]: 1 }}>
         <SearchBox isLarge placeholder={t("Search name, email or designation")} label={t("Search directory")} />
         <SelectFilter name="departmentId" label={t("Department")} dflt="All" options={[{ value: "All", label: t("All") }, ...departments.map((department) => ({ value: department.id, label: department.name }))]} />

@@ -2,7 +2,8 @@ import Link from "@/lib/link";
 import { PageHeader } from "@/components/PageHeader";
 import { SegmentedFilter } from "@/components/table/Table";
 import { PageLoading, useData, usePage } from "@/lib/page";
-import { formatWeekdayDayMonthYear, MONTH_ABBREVIATIONS } from "@/lib/format";
+import { formatWeekdayDayMonthYear, INDIA_TIME_ZONE, MONTH_ABBREVIATIONS, todayIn } from "@/lib/format";
+import { useCurrentUser } from "@/lib/session";
 import { useT } from "@/lib/i18n/client";
 import { pick } from "@/lib/list";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -97,7 +98,7 @@ function LeavePolicy() {
 
 function HolidayList() {
   const t = useT();
-  const year = new Date().getUTCFullYear();
+  const year = Number(todayIn(useCurrentUser().user?.timeZone ?? INDIA_TIME_ZONE).slice(0, 4));
   const hol = useData<{ id: string; date: string; name: string; region: "IN" | "US" | "ALL" }[]>(`/api/settings/holidays?year=${year}`);
   if (!hol) return <PageLoading />;
   return (
