@@ -66,7 +66,7 @@ export function CloseButton({ month, closed, locked, count }: { month: string; c
       <button className="btn btn-gold" disabled={!locked || busy} title={locked ? undefined : t("Attendance isn't locked yet")} onClick={() => setAsk(true)}>{busy ? t("Closing…") : t("Approve & close")}</button>
       {ask && (
         <ConfirmDialog title={t("Close {month} payroll", { month: formatMonthLabel(month) })} confirm={t("Approve & close")} busy={busy} onClose={() => setAsk(false)}
-          body={<>{t("This publishes {count} payslips and freezes them. Later changes to salary, regime or attendance won't change them — corrections go into the next month as arrears.", { count })}</>}
+          body={<>{count === 1 ? t("This publishes 1 payslip and freezes it. Later changes to salary, regime or attendance won't change it — corrections go into the next month as arrears.") : t("This publishes {count} payslips and freezes them. Later changes to salary, regime or attendance won't change them — corrections go into the next month as arrears.", { count })}</>}
           onConfirm={() => start(async () => { const approveResult = await approveAndClose(month); toast(approveResult.ok ? approveResult.message! : approveResult.error, approveResult.ok ? "ok" : "bad"); setAsk(false); if (approveResult.ok) set({ month }) /* stay on the month just closed */; })} />
       )}
     </>

@@ -1,9 +1,10 @@
+import { useState } from "react";
 import Link from "@/lib/link";
 import { Icon } from "@/components/Icon";
 import { PageHeader } from "@/components/PageHeader";
 import type { PlanRow, RoleTemplates, SubscriptionCurrent } from "@/lib/api-types";
 import { PageLoading, useData, usePage } from "@/lib/page";
-import { formatDayMonthYear } from "@/lib/format";
+import { formatDayMonthYear, isoDateIn } from "@/lib/format";
 import { subscriptionChip } from "@/lib/subscription";
 import { NewBusinessButton } from "./PlatformClient";
 
@@ -15,12 +16,15 @@ interface BusinessRow {
 
 /** The super admin's console: every business on the platform. */
 export default function PlatformPage() {
-  const { t } = usePage();
+  const { user, t } = usePage();
   const rows = useData<BusinessRow[]>("/api/platform/businesses");
   const plans = useData<PlanRow[]>("/api/platform/plans");
   const catalogue = useData<RoleTemplates>("/api/platform/role-templates");
+  const [searchText, setSearchText] = useState("");
   if (!rows || !plans || !catalogue) return <PageLoading />;
   const chipText = (subscriptionState: SubscriptionCurrent) => !subscriptionState || subscriptionState.state === "NONE" ? t("No plan") : subscriptionState.state === "UPCOMING" ? t("Starts {date}", { date: formatDayMonthYear(subscriptionState.startsOn!) }) : subscriptionState.state === "EXPIRED" ? t("Ended {date}", { date: formatDayMonthYear(subscriptionState.endsOn!) }) : subscriptionState.daysLeft !== null && subscriptionState.daysLeft <= 7 ? (subscriptionState.daysLeft === 0 ? t("Ends today") : t(subscriptionState.daysLeft === 1 ? "{n} day left" : "{n} days left", { n: subscriptionState.daysLeft })) : t("Until {date}", { date: formatDayMonthYear(subscriptionState.endsOn!) });
+  const needle = searchText.trim().toLowerCase();
+  const shownRows = needle ? rows.filter((row) => row.name.toLowerCase().includes(needle) || row.code.toLowerCase().includes(needle)) : rows;
   const ending = rows.filter((r) => r.subscription.state === "ACTIVE" && (r.subscription.daysLeft ?? 99) <= 7).length;
   const lapsed = rows.filter((r) => !r.subscription.active).length;
 
@@ -37,6 +41,7 @@ export default function PlatformPage() {
         <div className="card kpi"><span className="l">{t("Without an active plan")}</span><span className="v num">{lapsed}</span></div>
       </div>
       <section className="card enter" style={{ ["--i" as string]: 2 }}>
+        {rows.length > 1 && <div style={{ padding: "12px 16px 0" }}><input type="search" value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder={t("Search by name or short name…")} aria-label={t("Search businesses")} style={{ maxWidth: 300 }} /></div>}
         <div className="table-wrap">
           <table className="t">
             <thead>
@@ -51,7 +56,7 @@ export default function PlatformPage() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((row, i) => {
+              {shownRows.map((row, i) => {
                 const chip = subscriptionChip(row.subscription);
                 return (
                   <tr key={row.id} style={{ animationDelay: `${i * 30}ms` }}>
@@ -66,15 +71,16 @@ export default function PlatformPage() {
                     <td className="r num">{row.employees}{row.subscription.maxEmployees ? <span className="muted"> / {row.subscription.maxEmployees}</span> : null}</td>
                     <td className="r num hide-sm">{row.owners}</td>
                     <td><span className={`chip ${row.status === "ACTIVE" ? "ok" : "bad"}`}>{row.status === "ACTIVE" ? t("Active") : t("Suspended")}</span></td>
-                    <td className="muted hide-sm">{formatDayMonthYear(row.createdAt.slice(0, 10))}</td>
+                    <td className="muted hide-sm">{formatDayMonthYear(isoDateIn(row.createdAt, user.timeZone))}</td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
         </div>
+        {rows.length > 0 && !shownRows.length && <div className="empty"><span className="muted">{t("No business matches your search.")}</span></div>}
         {!rows.length && (
-          <div className="empty"><b className="display">{t("No businesses yet")}</b><span className="muted">{t("Create a business and its sub admin with “New business”.")}</span></div>
+          <div className="empty"><b className="display">{t("Welcome to JurisOne")}</b><span className="muted">{t("No businesses yet. Add your first one with “New business”, together with its sub admin, and you are ready to go.")}</span></div>
         )}
       </section>
     </div>

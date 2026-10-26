@@ -77,7 +77,7 @@ export function HistoryButton({ name, revs, today }: { name: string; revs: Salar
   const current = revs.find((r) => r.from <= today);
   return (
     <>
-      <button className="btn btn-sm btn-ghost" style={{ marginLeft: 6 }} onClick={() => setOpen(true)}>{t("{n} revisions", { n: revs.length })}</button>
+      <button className="btn btn-sm btn-ghost" style={{ marginLeft: 6 }} onClick={() => setOpen(true)}>{revs.length === 1 ? t("1 revision") : t("{n} revisions", { n: revs.length })}</button>
       {open && (
         <Drawer label={t("Revision history")} onClose={() => setOpen(false)}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>

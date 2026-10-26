@@ -815,3 +815,210 @@ a.task-key:hover{color:var(--accenttext);text-decoration:underline}
 /* a long segmented filter (My tasks "Show") never widens the page: it scrolls inside the toolbar, and wraps onto two rows on a phone */
 .toolbar .seg{max-width:100%;overflow-x:auto}
 @media (max-width:700px){.toolbar .seg{display:flex;flex-wrap:wrap;overflow:visible}.toolbar .seg a,.toolbar .seg button{flex:1 1 auto}}
+
+/* ===== Juris Track pages embedded in JurisOne (time tracking, team, reports, audit, roster): copied from the JurisTrack stylesheet ===== */
+/* time tracking: work and break colours, the timer card, the day's timeline bar, notices and the daily chart */
+:root{--work:var(--accent);--break:var(--warn)}
+.timer-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:relative}
+.timer-hint{font-size:12.5px;color:var(--faint);margin:0;position:relative}
+.bigtime[data-status="NOT_STARTED"]{color:var(--faint)}
+.notice{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border-radius:14px;border:1px solid var(--line2);font-size:13.5px;line-height:1.5}
+.notice b{font-weight:600}
+.notice.warn{background:var(--warnbg);border-color:color-mix(in srgb,var(--warn) 30%,transparent);color:var(--text)}
+.notice.bad{background:var(--badbg);border-color:color-mix(in srgb,var(--bad) 30%,transparent);color:var(--text)}
+.notice.info{background:var(--infobg);border-color:color-mix(in srgb,var(--info) 30%,transparent);color:var(--text)}
+.daybar{position:relative;height:28px;border-radius:8px;background:var(--hover)}
+.daybar.sm{height:10px;border-radius:999px}
+.daybar i{position:absolute;top:0;bottom:0;border-radius:5px;outline-offset:2px}
+.daybar i.work{background:var(--work)}.daybar i.break{background:var(--break)}
+.daybar i.running{opacity:.75}
+.daybar-ticks{position:relative;height:16px;margin-top:6px;font-size:11px;color:var(--faint);font-family:var(--font-geist-mono),monospace}
+.daybar-ticks span{position:absolute;top:0;white-space:nowrap}
+.legend i.work{background:var(--work)}.legend i.break{background:var(--break)}
+.timeline .t i{width:4px;align-self:stretch;border-radius:4px;flex:none}
+.timeline .t i.work{background:var(--work)}.timeline .t i.break{background:var(--break)}
+.daychart{display:flex;gap:8px}
+.daychart-axis{position:relative;width:34px;flex:none;font-size:11px;color:var(--faint);text-align:right;font-family:var(--font-geist-mono),monospace}
+.daychart-axis span{position:absolute;right:0;transform:translateY(50%)}
+.daychart svg{display:block;overflow:visible}
+.daychart .grid{stroke:var(--line);stroke-width:1}
+.daychart .work{fill:var(--work)}.daychart .break{fill:var(--break)}
+.daychart g:focus{outline:none}.daychart g:focus-visible .hit,.daychart g:hover .hit{fill:var(--hover)}
+.daychart .hit{fill:transparent}
+.daychart-x{display:flex;margin-top:6px;font-size:11px;color:var(--faint);line-height:1.3}
+.daychart-x span{flex:1 1 0;min-width:0;display:flex;justify-content:center;white-space:nowrap;overflow:visible}
+.daychart-x-few span{flex-direction:column;align-items:center;text-align:center}.daychart-x-few em{font-style:normal;display:block;white-space:nowrap}
+.tz-switch{max-width:150px}
+.seg-scroll{max-width:100%;overflow-x:auto;scrollbar-width:none}.seg-scroll::-webkit-scrollbar{display:none}.seg-scroll button{white-space:nowrap}
+@media (max-width:400px){.tz-switch{max-width:126px}.top .lang-switch{max-width:84px}}
+@media (max-width:360px){.tz-switch{max-width:104px}.top .lang-switch{max-width:72px}}
+/* the Team board's eight tiles: two per row on a phone, four on a laptop */
+.kpis.kpis-compact{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.kpis-compact .kpi{padding:12px 14px;gap:4px;min-width:0}
+.kpis-compact .kpi .v{font-size:28px}
+@media (max-width:420px){.kpis.kpis-compact{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.kpis-compact .kpi .v{font-size:22px}}
+
+/* reports: filters, the active-filter chips, the employee picker, the CSV export note, the view tabs and the refused-report message */
+.report-filters{display:flex;flex-direction:column;gap:10px;min-width:0}
+.report-filters .seg{max-width:100%;overflow-x:auto;scrollbar-width:none}.report-filters .seg::-webkit-scrollbar{display:none}
+.report-statuses{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.report-filter-label{font-size:12.5px;color:var(--faint);margin-right:4px}
+.range-problem{flex-basis:100%;font-size:12.5px;color:var(--bad)}
+.filter-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0}
+.filter-chips{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none;min-width:0;max-width:100%}
+.filter-chip{display:inline-flex;align-items:center;gap:2px;max-width:100%;height:28px;padding:0 3px 0 11px;border-radius:999px;background:var(--accentsoft);color:var(--accenttext);font-size:12.5px;font-weight:500}
+.filter-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.filter-chip button{display:inline-grid;place-items:center;width:22px;height:22px;border:0;border-radius:50%;background:transparent;color:inherit;cursor:pointer;flex:none}
+.filter-chip button:hover{background:var(--hover)}
+.picker{position:relative;display:flex;align-items:center;gap:4px;flex:0 1 280px;min-width:0;max-width:100%}
+.picker-field{flex:1;min-width:0}
+.picker-field input{flex:1;min-width:0;width:100%;border:0;outline:0;background:transparent;color:var(--text);font:inherit;font-size:13.5px;font-weight:500;height:100%;text-overflow:ellipsis}
+.picker-clear{display:inline-grid;place-items:center;width:32px;height:40px;border:1px solid var(--line2);border-radius:10px;background:var(--input);color:var(--muted);cursor:pointer;flex:none}
+.picker-menu{left:0;right:auto;width:max(100%,260px);min-width:0;max-width:calc(100vw - 32px);max-height:320px;overflow-y:auto;list-style:none;margin:0;transform-origin:top left}
+.picker-menu li[role=option]{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:36px;padding:0 10px;border-radius:8px;cursor:pointer;font-size:13.5px}
+.picker-menu li.active{background:var(--hover)}
+.picker-menu li[aria-selected=true]{font-weight:600}
+.picker-note{padding:8px 10px;font-size:12.5px;color:var(--faint)}
+.export-csv{display:flex;flex-direction:column;align-items:flex-end;gap:4px;max-width:100%}
+.export-note{font-size:12px;color:var(--faint);text-align:right;overflow-wrap:anywhere}
+.report-range{margin:0;font-size:13.5px}
+.report-card{padding:0;overflow:hidden}
+.report-card-h{padding:12px 16px;margin-bottom:0;flex-wrap:wrap;gap:10px;border-bottom:1px solid var(--line)}
+.report-card-h .tcount{margin-left:auto}
+.report-error-list{margin:0;padding:0;list-style:none;color:var(--bad);font-size:13.5px}
+@media(max-width:560px){.export-csv{align-items:flex-start}.export-note{text-align:left}.picker{flex-basis:100%}.report-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.report-kpis .kpi .v{font-size:28px}}
+/* audit log: the append-only note, filters (search pickers, active-filter chips), the table, the entry's side panel and its before/after view */
+.audit-note{display:flex;align-items:flex-start;gap:8px;margin:0;font-size:12.5px;color:var(--muted);line-height:1.5}
+.audit-note svg{flex:none;margin-top:2px}
+.audit-dates{display:flex;flex-wrap:wrap;align-items:center;gap:8px;max-width:100%}
+/* the filter bar (an animated, so stacking, block) sits above the table card below it, so an open picker list is not covered by it */
+.audit-filters{position:relative;z-index:5}
+.audit-picker{position:relative;min-width:0}
+.audit-picker-field input{border:0;outline:0;background:transparent;color:var(--text);font:inherit;font-size:13.5px;font-weight:500;height:100%;width:150px;min-width:0;padding-right:6px}
+.audit-picker-field:focus-within{border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 16%,transparent)}
+.audit-picker-list{position:absolute;z-index:40;top:calc(100% + 4px);left:0;min-width:100%;width:max-content;max-width:min(340px,calc(100vw - 32px));max-height:300px;overflow:auto;margin:0;padding:4px;list-style:none;border-radius:12px;border:1px solid var(--line);background:var(--elev);box-shadow:var(--shadow2)}
+.audit-picker-list li{display:flex;flex-direction:column;gap:1px;padding:7px 10px;border-radius:8px;font-size:13.5px;cursor:pointer}
+.audit-picker-list li small{color:var(--faint);font-size:12px;overflow:hidden;text-overflow:ellipsis}
+.audit-picker-list li.on{background:var(--hover)}
+.audit-picker-list li.audit-picker-note{cursor:default;color:var(--faint);font-size:12.5px}
+.active-filters{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.filter-chip{display:inline-flex;align-items:center;gap:6px;max-width:100%;min-height:28px;padding:0 8px 0 11px;border-radius:999px;border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line));background:var(--accentsoft);color:var(--accenttext);font:inherit;font-size:12.5px;font-weight:500;cursor:pointer}
+.filter-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.filter-chip:hover{border-color:var(--accent)}
+.audit-table .nowrap{white-space:nowrap}
+.audit-table .person small:not(.show-sm){display:block}
+.audit-table td .chip+.chip{margin-left:4px}
+.request-id{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.icon-btn.copy-btn{width:26px;height:26px;border-radius:7px}
+.audit-loading{opacity:.6;transition:opacity .2s}
+@media(max-width:1180px){.hide-lg{display:none}}
+@media(max-width:960px){.hide-md{display:none}}
+@media(max-width:700px){table.t.audit-table{min-width:0}table.t.audit-table td,table.t.audit-table th{padding-left:12px;padding-right:12px}.audit-picker,.audit-picker-field,.audit-filters .tsel{flex:1 1 100%;min-width:0;max-width:100%}.audit-picker-field input{flex:1;width:auto}.audit-filters .tsel select{flex:1;min-width:0}}
+.export-wrap{display:inline-flex;flex-direction:column;align-items:flex-end;gap:8px;max-width:100%}
+.export-refused{max-width:360px;text-align:left}
+.panel-scrim{position:fixed;inset:0;z-index:80;background:rgba(10,10,20,.38);animation:fadein .2s ease}
+.side-panel{width:min(560px,calc(100% - 16px))}
+.side-panel h2{margin:4px 0 0;font-size:20px;font-weight:600;letter-spacing:-.03em;line-height:1.2;overflow-wrap:anywhere}
+.side-panel:focus{outline:none}
+.audit-kv{display:grid;grid-template-columns:120px minmax(0,1fr);align-items:start}
+.audit-kv>b{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;overflow-wrap:anywhere}
+.audit-kv small{font-size:12px;font-weight:400}
+.audit-break{overflow-wrap:anywhere;word-break:break-word;font-weight:400;font-size:12.5px}
+.audit-link{font-size:12.5px}
+.audit-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+@media(max-width:420px){.audit-kv{grid-template-columns:1fr;gap:2px}}
+.diff-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.diff-row{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);min-width:0}
+.diff-row.changed{border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
+.diff-row.added{border-color:color-mix(in srgb,var(--ok) 40%,var(--line))}
+.diff-row.removed{border-color:color-mix(in srgb,var(--bad) 40%,var(--line))}
+.diff-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.diff-field{font-size:12.5px;font-weight:600;overflow-wrap:anywhere}
+.diff-change{display:flex;flex-wrap:wrap;align-items:flex-start;gap:6px;min-width:0}
+.diff-value{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:12.5px;padding:2px 6px;border-radius:6px;background:var(--hover);white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;max-width:100%;margin:0}
+pre.diff-value{padding:8px 10px;max-height:320px;overflow:auto}
+.diff-value.old{background:var(--badbg);color:var(--bad);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--bad) 60%,transparent)}
+.diff-value.new{background:var(--okbg);color:var(--ok)}
+.diff-long summary{cursor:pointer;font-size:12.5px;color:var(--muted)}
+.diff-long summary .diff-value{text-decoration:none}
+
+/* a second line under a cell that only phones show (the wide table has its own column for it) */
+.sub-sm{display:none}
+@media(max-width:700px){.sub-sm{display:block}}
+
+/* roster: the person column stays while the dates scroll inside their own container; phones get the agenda list instead of the grid */
+.roster{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%}
+.roster th:first-child,.roster td:first-child{position:sticky;left:0;z-index:2;background:var(--surface);min-width:150px;max-width:190px;border-right:1px solid var(--line)}
+.roster th.roster-day,.roster td.roster-day{padding:4px 2px;text-align:center;min-width:44px}
+.roster th.roster-day small{display:block;font-weight:400;color:var(--faint)}
+.roster .today{background:var(--accentsoft)}
+.roster-cell{display:inline-grid;place-items:center;min-width:38px;height:30px;padding:0 4px;border-radius:8px;border:1px solid transparent;font:inherit;font-size:12px;font-weight:600;color:var(--text);background:var(--hover);cursor:default}
+button.roster-cell{cursor:pointer}
+.roster-cell.off{background:transparent;border:1px dashed var(--line2);color:var(--faint);font-weight:500}
+.roster-cell.slot-0{background:var(--infobg);color:var(--info)}.roster-cell.slot-1{background:var(--okbg);color:var(--ok)}.roster-cell.slot-2{background:var(--warnbg);color:var(--warn)}
+.roster-cell.slot-3{background:var(--accentsoft);color:var(--accenttext)}.roster-cell.slot-4{background:var(--badbg);color:var(--bad)}.roster-cell.slot-5{background:var(--sunken);color:var(--text);border-color:var(--line2)}
+.roster-cell.entry{box-shadow:inset 0 -2px 0 currentColor}
+.roster-cell.selected{outline:2px solid var(--accent);outline-offset:1px}
+.roster-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;position:sticky;top:8px;z-index:5}
+.roster-actions select{min-height:34px;max-width:100%}
+.roster-weekdays{display:flex;flex-wrap:wrap;gap:6px;border:0;padding:0;margin:0}.roster-weekdays legend{font-size:13px;margin-bottom:6px}
+.roster-weekdays input{margin-right:6px}
+.roster-agenda{display:none}
+.roster-person{border-top:1px solid var(--line);padding:10px 14px}.roster-person summary{cursor:pointer}
+.roster-person ul{list-style:none;margin:8px 0 0;padding:0}.roster-person li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.roster-person li .roster-cell{min-width:96px;justify-content:center}
+.roster-person li.today{font-weight:600}
+@media(max-width:700px){.roster-grid{display:none}.roster-agenda{display:block}}
+.schedule-list{list-style:none;margin:0;padding:0}.schedule-list li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)}.schedule-list li.today{background:var(--accentsoft)}
+
+/* in a page column the timer card takes the height of its content (the prototype's min-height:100% stretched it over the whole screen and squeezed the cards below it to their headings) */
+.col>.timecard{min-height:0}
+
+/* a name cell keeps its lines apart (email / code / last break), the phone-only line stays hidden on wide screens, and a duration never breaks across lines */
+.show-sm{display:none}
+@media(max-width:700px){.person small.show-sm{display:block}}
+.person small:not(.show-sm):not(.sub-sm){display:block}
+table.t td.num{white-space:nowrap}
+
+/* very narrow phones: the language picker and the profile button shrink so the page title keeps its room in the top bar */
+@media(max-width:430px){.top select{max-width:88px;padding-left:8px;padding-right:20px;background-position:right 6px center}.top .profile>svg{display:none}}
+
+/* the Juris Track tabs: scroll inside their own bar on tablets, wrap onto rows on a phone so none is cut off */
+.track-tabs{max-width:100%;overflow-x:auto}
+@media(max-width:560px){.track-tabs{display:flex;flex-wrap:wrap;overflow:visible}.track-tabs a{flex:1 1 auto;text-align:center}}
+
+/* QA polish: a time or duration never breaks across lines (long names and emails may); summary figures share one size and stay on one line */
+table.t td.num,table.t td.num small,table.t td.nowrap{white-space:nowrap}
+table.t td .person{min-width:130px}
+small.figure{font-size:inherit}
+.summary{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+.summary dd{min-width:0}
+.summary b{display:block;font-size:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.summary b small{font-size:inherit;font-weight:inherit}
+/* the fields of a grid row keep their content at the top (a taller neighbour with an error or a hint must not push this one down) */
+.field{align-content:flex-start}
+/* an open employee list of the reports page sits above the tiles under it */
+.report-filters{position:relative;z-index:6}
+/* the roster's legend, the owner's overview shortcuts and the language switcher of the "access is paused" screen */
+.roster-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin:0;padding:10px 14px;list-style:none;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+.roster-legend li{display:inline-flex;align-items:center;gap:6px}
+.roster-legend .roster-cell{min-width:32px;height:24px;font-size:11.5px}
+.overview-link{display:flex;align-items:flex-start;gap:12px;color:var(--text);text-decoration:none}
+.overview-link small{display:block;margin-top:2px;font-size:12.5px}
+.overview-link:hover{border-color:var(--line3)}
+.paused{position:relative}
+.paused-language{position:absolute;top:16px;right:16px}
+/* top bar: the time zone select keeps its whole "12:14 AM IST" (the language select is the one that shrinks on a phone) */
+.top .lang-switch.tz-switch{max-width:150px}
+@media(max-width:400px){.top .lang-switch{padding:0 4px;font-size:12.5px;max-width:76px}.top .lang-switch.tz-switch{max-width:116px}}
+small.figure,.summary b small{color:inherit}
+/* a running interval reaches "Now" at full strength (the old 75% opacity read as a bar that stops short); stripes mark it as still counting */
+.daybar i.running{opacity:1;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.25) 0 6px,transparent 6px 12px)}
+/* tighter cell padding so the wide time tables fit next to the sidebar on a laptop without scrolling sideways */
+table.t th,table.t td{padding-left:12px;padding-right:12px}
+/* an unknown address: centered in the page (full height when there is no app shell around it) */
+.empty.not-found{min-height:60vh;justify-content:center;border-style:solid}
+.empty.not-found.standalone{min-height:100vh;border:0;border-radius:0}
+/* a card header whose title and buttons do not fit on a phone wraps instead of clipping the last button */
+.card-h-wrap{flex-wrap:wrap}
+@media(max-width:480px){.timecard .aur{right:-60px;width:300px}}

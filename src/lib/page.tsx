@@ -1,6 +1,8 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Component, createContext, useContext, useMemo, type ErrorInfo, type ReactNode } from "react";
+import { Component, createContext, useContext, useEffect, useMemo, type ErrorInfo, type ReactNode } from "react";
 import { Navigate, useLocation, useParams } from "react-router";
+import { useToast } from "@/components/shell/Toasts";
+import Link from "./link";
 import { ApiError, apiData } from "./api";
 import { useT } from "./i18n/client";
 import type { T } from "./i18n/translate";
@@ -48,14 +50,25 @@ export function PageLoading() {
   return <div className="empty" role="status" aria-busy="true"><span className="muted">…</span></div>;
 }
 
+/** A page that doesn't exist (or isn't available to this business): centered, with a way home (to sign-in when nobody is signed in). */
 export function NotFound() {
   const t = useT();
+  const { user } = useCurrentUser();
   return (
-    <div className="empty">
+    <div className={`empty not-found${user ? "" : " standalone"}`}>
       <b className="display">{t("Page not found")}</b>
       <span className="muted">{t("This page doesn't exist, or isn't available for your business.")}</span>
+      {user ? <Link className="btn btn-sm" href="/">{t("Go to home")}</Link> : <Link className="btn btn-sm" href="/login">{t("Go to sign in")}</Link>}
     </div>
   );
+}
+
+/** Sends a signed-in user who opened a page they have no permission for to their landing page, saying why (not for a normal landing redirect). */
+function DeniedRedirect({ to }: { to: string }) {
+  const t = useT();
+  const toast = useToast();
+  useEffect(() => { toast(t("You don't have access to that page."), "bad"); }, [toast, t]);
+  return <Navigate to={to} replace />;
 }
 
 /** Pages that stay open when the business's subscription isn't active (the API allows the same). */
@@ -78,14 +91,14 @@ export function RequirePage({ id, children }: { id?: NavId; children: ReactNode 
   if (id) {
     const item = NAV.find((n) => n.id === id)!;
     if (item.module && !user.modules.includes(item.module)) return <NotFound />;
-    if (!navAllowed(item, user.perms, user.hasReports)) return <Navigate to={landingPath(user)} replace />;
+    if (!navAllowed(item, user.perms, user.hasReports)) return <DeniedRedirect to={landingPath(user)} />;
     if (user.subscriptionActive === false && !OPEN_WITHOUT_SUBSCRIPTION.includes(id)) return <Navigate to="/paused" replace />;
     if (user.pendingPolicies > 0 && !user.readOnly) return <Navigate to="/acknowledge" replace />;
   }
   return <Ctx.Provider value={ctx}>{children}</Ctx.Provider>;
 }
 
-/** Catches a page's failed data load (403/404 included) and offers a retry. Reset by navigation (key on the path). */
+/** Catches a page's failed data load (403/404 included) and offers a retry (403/404: a way home instead, a retry would give the same answer). Reset by navigation (key on the path). */
 export class PageErrorBoundary extends Component<{ children: ReactNode; onRetry: () => void }, { error: Error | null }> {
   state = { error: null as Error | null };
   static getDerivedStateFromError(error: Error) { return { error }; }
@@ -94,12 +107,19 @@ export class PageErrorBoundary extends Component<{ children: ReactNode; onRetry:
     const { error } = this.state;
     if (!error) return this.props.children;
     const status = error instanceof ApiError ? error.status : 0;
-    return (
-      <div className="empty">
-        <b className="display">{status === 403 ? "You don't have access to this" : status === 404 ? "Not found" : "Something went wrong"}</b>
-        <span className="muted">{error.message}</span>
-        <button className="btn btn-sm" onClick={() => { this.setState({ error: null }); this.props.onRetry(); }}>Retry</button>
-      </div>
-    );
+    return <PageError error={error} status={status} onRetry={() => { this.setState({ error: null }); this.props.onRetry(); }} />;
   }
+}
+
+function PageError({ error, status, onRetry }: { error: Error; status: number; onRetry: () => void }) {
+  const t = useT();
+  return (
+    <div className="empty">
+      <b className="display">{status === 403 ? t("You don't have access to this") : status === 404 ? t("Not found") : t("Something went wrong")}</b>
+      <span className="muted">{error.message}</span>
+      {status === 403 || status === 404
+        ? <Link className="btn btn-sm" href="/">{t("Go to home")}</Link> // trying again cannot change the answer: a missing or forbidden page stays so
+        : <button className="btn btn-sm" onClick={onRetry}>{t("Retry")}</button>}
+    </div>
+  );
 }

@@ -1,7 +1,7 @@
 import type { Permission } from "./permissions";
 
 export type NavId =
-  | "platform" | "platform-audit" | "plans" | "juris-track" | "notifications" | "profile" | "home" | "overview" | "attendance" | "leave" | "payslips" | "declare" | "directory" | "team"
+  | "platform" | "platform-audit" | "plans" | "juris-track" | "lead-intelligence" | "notifications" | "profile" | "home" | "overview" | "attendance" | "leave" | "payslips" | "declare" | "directory" | "team"
   | "register" | "approvals" | "employees" | "onboarding" | "departments" | "holidays"
   | "payroll" | "structures" | "tax" | "proofs" | "roles" | "policies" | "settings" | "audit" | "subscription" | "my-policies"
   | "my-assets" | "announcements" | "assets" | "manage-announcements" | "my-letters" | "letters"
@@ -28,7 +28,7 @@ export interface NavItem {
 }
 
 /** Juris Track: a module of the plan, or granted on its own by the super admin. */
-const JURIS_TRACK = "JURIS_TRACK";
+export const JURIS_TRACK = "JURIS_TRACK";
 
 /** Sidebar + route access table (prototype NAV). Every page checks this on the server. */
 export const NAV: NavItem[] = [
@@ -49,6 +49,7 @@ export const NAV: NavItem[] = [
   { id: "my-assets", label: "My assets", icon: "layers", perm: ["self", "dir", "roles.manage"] },
   { id: "announcements", label: "Announcements", icon: "bell", perm: ["self", "dir", "roles.manage"] },
   { id: "juris-track", label: "Juris Track", icon: "sparkle", perm: ["self", "roles.manage", "dir"], module: JURIS_TRACK },
+  { id: "lead-intelligence", label: "Lead Intelligence Engine", icon: "search", perm: ["self", "roles.manage", "dir", PLATFORM_MANAGE] },
   // task management: free for every business (no module); the group shows after "My workspace" and before "Team"
   { id: "my-tasks", label: "My tasks", icon: "tasks", perm: ["self", "dir", "roles.manage"], group: "Tasks" },
   { id: "team-tasks", label: "Team tasks", icon: "team", perm: ["self", "dir", "roles.manage"], needsReports: true, group: "Tasks" },
@@ -77,7 +78,11 @@ export const NAV: NavItem[] = [
 
 export const PAGE_TITLES = Object.fromEntries(NAV.map((n) => [n.id, n.label])) as Record<NavId, string>;
 
+/** Business pages the platform super admin never sees: the platform audit log covers every business, and JurisTrack refuses the super admin's token. */
+const PLATFORM_HIDDEN: readonly NavId[] = ["audit", "juris-track"];
+
 export function navAllowed(item: NavItem, perms: ReadonlySet<string>, hasReports: boolean) {
+  if (perms.has(PLATFORM_MANAGE) && PLATFORM_HIDDEN.includes(item.id)) return false;
   return item.perm.some((p) => perms.has(p)) && (!item.needsReports || hasReports);
 }
 

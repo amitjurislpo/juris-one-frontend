@@ -15,7 +15,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const push = useCallback((message: string, kind: Kind = "ok") => {
     const id = ++seq;
-    setToasts((previousToasts) => [...previousToasts, { id, message, kind }]);
+    // the same message twice at once (a stale page firing several requests) shows once
+    setToasts((previousToasts) => (previousToasts.some((toast) => toast.message === message) ? previousToasts : [...previousToasts, { id, message, kind }]));
     setTimeout(() => setToasts((currentToasts) => currentToasts.filter((x) => x.id !== id)), 3800);
   }, []);
   return (

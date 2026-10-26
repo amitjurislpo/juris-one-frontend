@@ -3,7 +3,7 @@ import { useRouter } from "@/lib/router";
 import { useState, useTransition } from "react";
 import { Icon } from "@/components/Icon";
 import { PhoneInput } from "@/components/ui/PhoneInput";
-import { formatDayMonthYear } from "@/lib/format";
+import { formatDayMonthYear, INDIA_TIME_ZONE, isoDateIn } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import { removeCandidateDocument, saveCandidateForm, submitOnboarding, type CandidateForm } from "../actions";
 
@@ -70,7 +70,7 @@ export function CandidateClient({ token, view }: { token: string; view: Candidat
           {view.designation
             ? (view.joiningDate ? t("You're joining as {role} on {date}.", { role: view.designation, date: formatDayMonthYear(view.joiningDate) }) : t("You're joining as {role}.", { role: view.designation }))
             : (view.joiningDate ? t("You're joining the team on {date}.", { date: formatDayMonthYear(view.joiningDate) }) : t("You're joining the team."))}
-          {" "}{t("Fill in your details and upload your documents; HR will review them. Your link works until {date}.", { date: formatDayMonthYear(view.linkExpiresAt.slice(0, 10)) })}
+          {" "}{t("Fill in your details and upload your documents; HR will review them. Your link works until {date}.", { date: formatDayMonthYear(isoDateIn(view.linkExpiresAt, INDIA_TIME_ZONE)) })}
         </p>
       </header>
 

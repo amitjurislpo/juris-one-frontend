@@ -65,7 +65,7 @@ export default function LeavePage() {
         <>
           <div className="toolbar enter" style={{ ["--i" as string]: 6 }}>
             <SegmentedFilter name="status" dflt="All" label={t("Status")} options={STATUS.map((option) => ({ value: option, label: option === "All" ? t("All") : t(SLABEL[option]) }))} />
-            <span className="tcount">{t("{n} requests", { n: requests.length })}</span>
+            <span className="tcount">{requests.length === 1 ? t("1 request") : t("{n} requests", { n: requests.length })}</span>
           </div>
           <section className="card enter" style={{ ["--i" as string]: 6 }}>
             <Pending>

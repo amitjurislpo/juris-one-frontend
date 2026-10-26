@@ -29,6 +29,13 @@ function NavigatorBridge() {
   return null;
 }
 
+/** An unknown address: inside the app shell when signed in, on its own (with a link to sign-in) when not. */
+function UnknownPage() {
+  const { user, loading } = useCurrentUser();
+  if (loading) return <PageLoading />;
+  return user ? <AppLayout><NotFound /></AppLayout> : <NotFound />;
+}
+
 /** Old links: the People pages were renamed Employees. */
 function Legacy() {
   const loc = useLocation();
@@ -53,7 +60,7 @@ export default function App() {
                 ))}
               </Route>
               <Route path="/people/*" element={<Legacy />} />
-              <Route path="*" element={<NotFound />} />
+              <Route path="*" element={<UnknownPage />} />
             </Routes>
           </Suspense>
         </BrowserRouter>

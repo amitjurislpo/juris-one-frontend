@@ -1,7 +1,7 @@
 import { PageHeader } from "@/components/PageHeader";
 import type { BusinessProfile, SubscriptionCurrent, SubscriptionRow } from "@/lib/api-types";
 import { PageLoading, useData, usePage } from "@/lib/page";
-import { formatDayMonthYear, formatRupees } from "@/lib/format";
+import { formatDayMonthYear, formatRupees, todayIn } from "@/lib/format";
 import { MODULE_LABELS, subscriptionChip } from "@/lib/subscription";
 import { ExportButtons } from "./ExportButtons";
 
@@ -10,13 +10,13 @@ interface Data { business: BusinessProfile; subscription: SubscriptionCurrent; h
 
 /** The business owner's plan, its dates and the employee export (available even after the subscription ends). */
 export default function SubscriptionPage() {
-  const { t } = usePage();
+  const { user, t } = usePage();
   const data = useData<Data>("/api/business/subscription");
   if (!data) return <PageLoading />;
   const subscription = data.subscription;
   const chip = subscriptionChip(subscription);
   const chipText = subscription.state === "NONE" || !subscription ? t("No plan") : subscription.state === "UPCOMING" ? t("Starts {date}", { date: formatDayMonthYear(subscription.startsOn!) }) : subscription.state === "EXPIRED" ? t("Ended {date}", { date: formatDayMonthYear(subscription.endsOn!) }) : subscription.daysLeft !== null && subscription.daysLeft <= 7 ? (subscription.daysLeft === 0 ? t("Ends today") : t(subscription.daysLeft === 1 ? "{n} day left" : "{n} days left", { n: subscription.daysLeft })) : t("Until {date}", { date: formatDayMonthYear(subscription.endsOn!) });
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIn(user.timeZone);
 
   return (
     <div className="col">

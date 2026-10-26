@@ -88,6 +88,7 @@ function LabelField({ task, canEdit, save }: { task: TaskDetailData; canEdit: bo
   if (!canEdit) return task.labels.length ? <LabelChips labels={task.labels} /> : <span className="muted">—</span>;
   return (
     <span className="task-labels">
+      {!task.labels.length && <span className="muted">{t("No labels")}</span>}
       {task.labels.map((label) => (
         <span key={label.id} className="chip nodot task-label neutral">
           {label.name}
@@ -242,7 +243,7 @@ export function TaskDetail({ taskRef, onClose }: { taskRef: string; /** set when
       <div className="task-fields">
         <label className="field">{t("Status")}
           {can(permissions.canChangeStatus)
-            ? <select value={task.statusId} onChange={(e) => void save({ statusId: e.target.value })}>{task.statuses.map((status) => <option key={status.id} value={status.id}>{statusName(status.name, t)}</option>)}</select>
+            ? <select value={task.statusId} onChange={(e) => { const next = task.statuses.find((status) => status.id === e.target.value); void save({ statusId: e.target.value }).then((saved) => { if (saved && next) toast(t("Status changed to {status}", { status: statusName(next.name, t) })); }); }}>{task.statuses.map((status) => <option key={status.id} value={status.id}>{statusName(status.name, t)}</option>)}</select>
             : <span><StatusChip name={task.statusName} category={task.statusCategory} color={task.statusColor} /></span>}
         </label>
         <label className="field">{t("Priority")}

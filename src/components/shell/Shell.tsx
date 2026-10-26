@@ -7,6 +7,7 @@ import { markAllNotifications, markNotification } from "@/pages/notification-act
 import { Icon } from "@/components/Icon";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useT } from "@/lib/i18n/client";
+import { shiftLabel } from "@/lib/shifts";
 import { useNotificationText } from "@/lib/notification-text";
 import { Avatar } from "@/components/Avatar";
 import { formatWeekdayDayMonthYear } from "@/lib/format";
@@ -192,7 +193,7 @@ export function Shell(props: ShellProps) {
         <div className="main">
           <header className="top">
             <button className="icon-btn burger" onClick={() => setSideOpen(true)} aria-label={t("Open menu")} aria-controls="side" aria-expanded={sideOpen}><Icon name="menu" /></button>
-            <div className="crumbs"><span>Juris</span><Icon name="chevR" size={14} /><b>{t(PAGE_TITLES[page] ?? "JurisOne")}</b></div>
+            <div className="crumbs"><span>{t("Juris")}</span><Icon name="chevR" size={14} /><b>{t(PAGE_TITLES[page] ?? "JurisOne")}</b></div>
             <div className="grow"></div>
             <button className="top-search" type="button" onClick={openPal}><Icon name="search" size={15} />{t("Search or jump to…")}<kbd>⌘K</kbd></button>
             <button className="icon-btn" onClick={toggleTheme} aria-label={theme === "dark" ? t("Switch to light theme") : t("Switch to dark theme")}>
@@ -266,7 +267,7 @@ export function Shell(props: ShellProps) {
                 <div className="kv"><span className="muted">{t("Department")}</span><b>{signedInUser.department}</b></div>
                 <div className="kv"><span className="muted">{t("Reporting manager")}</span><b>{signedInUser.manager}</b></div>
                 <div className="kv"><span className="muted">{t("Date of joining")}</span><b>{formatWeekdayDayMonthYear(signedInUser.dateOfJoining)}</b></div>
-                {!signedInUser.isAdminLike && signedInUser.shift && <div className="kv"><span className="muted">{t("Shift")}</span><b>{signedInUser.shift}</b></div>}
+                {!signedInUser.isAdminLike && signedInUser.shift && <div className="kv"><span className="muted">{t("Shift")}</span><b>{shiftLabel(signedInUser.shift, t)}</b></div>}
               </div>
               <div className="modal-f">
                 <span className="faint" style={{ fontSize: 12.5 }}>{t("To change details, contact HR.")}</span>

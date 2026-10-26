@@ -2,7 +2,7 @@ import Link from "@/lib/link";
 import { Icon } from "@/components/Icon";
 import { PageHeader } from "@/components/PageHeader";
 import { PageLoading, useData, usePage } from "@/lib/page";
-import { formatDayMonthYear } from "@/lib/format";
+import { formatDayMonthYear, isoDateIn } from "@/lib/format";
 import { NewPolicyButton } from "./PoliciesClient";
 
 
@@ -17,7 +17,7 @@ const STATUS: Record<Row["status"], { cls: string; text: string }> = {
 
 /** HR / the owner: write and publish policies; see how many people have accepted each one. */
 export default function PoliciesPage() {
-  const { t } = usePage();
+  const { user, t } = usePage();
   const rows = useData<Row[]>("/api/policies");
   if (!rows) return <PageLoading />;
 
@@ -46,7 +46,7 @@ export default function PoliciesPage() {
                   </td>
                   <td className="num">{row.version ? `v${row.version}` : "—"}</td>
                   <td>{row.status === "PUBLISHED" && row.requiresAcknowledgement ? <span className="num">{row.acknowledged} / {row.required}</span> : <span className="muted">—</span>}</td>
-                  <td className="muted hide-sm">{formatDayMonthYear(row.updatedAt.slice(0, 10))}</td>
+                  <td className="muted hide-sm">{formatDayMonthYear(isoDateIn(row.updatedAt, user.timeZone))}</td>
                 </tr>
               ))}
             </tbody>

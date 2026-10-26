@@ -1,8 +1,14 @@
 import { DEFAULT_LANG, type Lang } from "./config";
+import { trackHindiMessages } from "@/track/messages/hi";
+import { trackHindiApiMessages } from "@/track/messages/hi-api";
 import { hindiMessages } from "./messages/hi";
 import { hindiApiMessages } from "./messages/hi-api";
 
-const DICTIONARIES: Record<Lang, Record<string, string>> = { en: {}, hi: { ...hindiApiMessages, ...hindiMessages } };
+// the JurisTrack pages bring their own Hindi; JurisOne's wins where both have the same text
+const DICTIONARIES: Record<Lang, Record<string, string>> = {
+  en: {},
+  hi: { ...trackHindiApiMessages, ...trackHindiMessages, ...hindiApiMessages, ...hindiMessages },
+};
 
 export type Vars = Record<string, string | number>;
 

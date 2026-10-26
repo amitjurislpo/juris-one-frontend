@@ -3,7 +3,7 @@ import { Icon } from "@/components/Icon";
 import { PageHeader } from "@/components/PageHeader";
 import type { BusinessProfile, ModuleGrant, PlanRow, RoleTemplates, SubscriptionCurrent, SubscriptionRow } from "@/lib/api-types";
 import { PageLoading, useData, usePage } from "@/lib/page";
-import { formatDayMonthYear, formatRupees } from "@/lib/format";
+import { formatDayMonthYear, formatRupees, isoDateIn, todayIn } from "@/lib/format";
 import { MODULE_LABELS, subscriptionChip } from "@/lib/subscription";
 import {
   AddBusinessRoleButton, AddOwnerButton, AddSubscriptionButton, BusinessRoleActions, BusinessStatusButton, CancelSubscriptionButton, EditBusinessButton, GrantJurisTrackButton, OwnerAccessSwitch,
@@ -37,7 +37,7 @@ export default function BusinessPage() {
   const chip = subscriptionChip(subscription);
   const chipText = (subscriptionState: SubscriptionCurrent) => !subscriptionState || subscriptionState.state === "NONE" ? t("No plan") : subscriptionState.state === "UPCOMING" ? t("Starts {date}", { date: formatDayMonthYear(subscriptionState.startsOn!) }) : subscriptionState.state === "EXPIRED" ? t("Ended {date}", { date: formatDayMonthYear(subscriptionState.endsOn!) }) : subscriptionState.daysLeft !== null && subscriptionState.daysLeft <= 7 ? (subscriptionState.daysLeft === 0 ? t("Ends today") : t(subscriptionState.daysLeft === 1 ? "{n} day left" : "{n} days left", { n: subscriptionState.daysLeft })) : t("Until {date}", { date: formatDayMonthYear(subscriptionState.endsOn!) });
   const planHasTrack = !!subscription.planName && (plans.find((candidatePlan) => candidatePlan.name === subscription.planName)?.modules.includes("JURIS_TRACK") ?? false);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIn(business.timeZone);
   const profile: BusinessProfile = {
     name: business.name, legalName: business.legalName, code: business.code, employeePrefix: business.employeePrefix, gstin: business.gstin, address: business.address,
     contactEmail: business.contactEmail, contactPhone: business.contactPhone, timeZone: business.timeZone,
@@ -46,7 +46,7 @@ export default function BusinessPage() {
   return (
     <div className="col">
       <PageHeader back="/platform" eyebrow={<><Link href="/platform" className="linkish">{t("Businesses")}</Link> / {business.code}</>} title={business.name}
-        sub={<>{t("Created {date} · employee IDs {prefix}-001 · {tz}", { date: formatDayMonthYear(business.createdAt.slice(0, 10)), prefix: business.employeePrefix, tz: business.timeZone })}</>}>
+        sub={<>{t("Created {date} · employee IDs {prefix}-001 · {tz}", { date: formatDayMonthYear(isoDateIn(business.createdAt, business.timeZone)), prefix: business.employeePrefix, tz: business.timeZone })}</>}>
         <EditBusinessButton id={business.id} profile={profile} hasPeople={subscription.employees > 0} />
         <BusinessStatusButton id={business.id} name={business.name} status={business.status} />
       </PageHeader>
@@ -89,7 +89,7 @@ export default function BusinessPage() {
         </div>
         {data.roles.map((role) => (
           <div key={role.id} className="kv" style={{ alignItems: "center" }}>
-            <span><b>{role.name}</b>{role.mandatory && <> <span className="chip neutral">{t("Always included")}</span></>}<br /><small className="muted">{t("{n} people", { n: role.employees })}</small></span>
+            <span><b>{role.name}</b>{role.mandatory && <> <span className="chip neutral">{t("Always included")}</span></>}<br /><small className="muted">{role.employees === 1 ? t("1 person") : t("{n} people", { n: role.employees })}</small></span>
             <span style={{ display: "flex", gap: 6 }}><BusinessRoleActions businessId={business.id} role={role} /></span>
           </div>
         ))}
@@ -152,7 +152,7 @@ export default function BusinessPage() {
             </tbody>
           </table>
         </div>
-        {!data.subscriptions.length && <div className="empty"><Icon name="receipt" size={20} /><span className="muted">{t("No subscription yet. Until one starts, people can sign in but can't use JurisOne.")}</span></div>}
+        {!data.subscriptions.length && <div className="empty"><Icon name="receipt" size={20} /><span className="muted">{t("No subscription yet. Until one starts, nobody in this business can sign in.")}</span></div>}
       </section>
     </div>
   );

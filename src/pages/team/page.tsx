@@ -3,6 +3,7 @@ import { ClearFilters, Pending, SearchBox, SortableHeader } from "@/components/t
 import { PageLoading, useData, usePage } from "@/lib/page";
 import { toQueryString } from "@/lib/api";
 import { WEEKDAY_ABBREVIATIONS, formatDayMonth, isoToDate } from "@/lib/format";
+import { shiftLabel } from "@/lib/shifts";
 import { Avatar } from "@/components/Avatar";
 
 
@@ -52,7 +53,7 @@ export default function TeamPage() {
                     <td><div className="person"><Avatar id={member.id} name={member.fullName} photo={member.photo} /><div><b>{member.fullName}</b><small>{member.designation}</small></div></div></td>
                     <td className="muted num">{member.code}</td>
                     <td className="muted">{member.designation}</td>
-                    <td className="muted">{member.shift}</td>
+                    <td className="muted">{member.shift ? shiftLabel(member.shift, t) : member.shift}</td>
                     <td><span className={`chip ${member.status.tone}`}>{t(member.status.label)}</span></td>
                   </tr>
                 ))}

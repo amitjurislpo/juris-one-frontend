@@ -24,7 +24,7 @@ export default function HolidaysPage() {
       <div className="toolbar enter" style={{ ["--i" as string]: 3 }}>
         <SearchBox placeholder={t("Search holidays")} label={t("Search holidays")} />
         <SegmentedFilter name="region" dflt="All" label={t("Team")} options={[{ value: "All", label: t("All teams") }, { value: "IN", label: t("India") }, { value: "US", label: t("US") }]} />
-        <span className="tcount">{t("{n} holidays", { n: rows.length })}</span>
+        <span className="tcount">{rows.length === 1 ? t("1 holiday") : t("{n} holidays", { n: rows.length })}</span>
       </div>
       <section className="card enter" style={{ ["--i" as string]: 4 }}>
         <Pending>

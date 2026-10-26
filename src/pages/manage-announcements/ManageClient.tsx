@@ -6,7 +6,8 @@ import { useToast } from "@/components/shell/Toasts";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
 import type { Announcement } from "@/lib/api-types";
 import { AUDIENCES } from "@/lib/assets";
-import { formatDayMonthYear } from "@/lib/format";
+import { formatDayMonthYear, INDIA_TIME_ZONE, isoDateIn } from "@/lib/format";
+import { useCurrentUser } from "@/lib/session";
 import { useT } from "@/lib/i18n/client";
 import { useReadOnly } from "@/lib/session";
 import { createAnnouncement, setAnnouncementStatus, updateAnnouncement, type AnnouncementInput } from "./actions";
@@ -67,6 +68,7 @@ function state(announcement: Announcement): { className: string; text: string } 
 
 export function ManageTable({ rows }: { rows: Announcement[] }) {
   const t = useT();
+  const timeZone = useCurrentUser().user?.timeZone ?? INDIA_TIME_ZONE;
   const readOnly = useReadOnly();
   const toast = useToast();
   const router = useRouter();
@@ -91,7 +93,7 @@ export function ManageTable({ rows }: { rows: Announcement[] }) {
                   <td><b>{announcement.title}</b>{announcement.pinned && <span className="chip gold nodot" style={{ marginLeft: 8 }}>{t("Pinned")}</span>}<br /><small className="muted">{announcement.body.length > 80 ? `${announcement.body.slice(0, 80)}…` : announcement.body}</small></td>
                   <td><span className={`chip ${state(announcement).className}`}>{t(state(announcement).text)}</span></td>
                   <td>{t(AUDIENCES[announcement.audience])}</td>
-                  <td className="muted hide-sm">{formatDayMonthYear(announcement.createdAt.slice(0, 10))}</td>
+                  <td className="muted hide-sm">{formatDayMonthYear(isoDateIn(announcement.createdAt, timeZone))}</td>
                   <td className="muted hide-sm">{announcement.expiresOn ? formatDayMonthYear(announcement.expiresOn) : "—"}</td>
                   <td style={{ whiteSpace: "nowrap", textAlign: "right" }}>
                     {!readOnly && <><button className="btn btn-sm btn-ghost" aria-label={t("Edit {title}", { title: announcement.title })} onClick={() => setEdit(announcement)}><Icon name="edit" size={14} /></button>
