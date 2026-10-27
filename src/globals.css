@@ -1022,3 +1022,4 @@ table.t th,table.t td{padding-left:12px;padding-right:12px}
 /* a card header whose title and buttons do not fit on a phone wraps instead of clipping the last button */
 .card-h-wrap{flex-wrap:wrap}
 @media(max-width:480px){.timecard .aur{right:-60px;width:300px}}
+@media(max-width:360px){.top{padding-left:12px;padding-right:12px}.top .lang-switch{max-width:56px}.top .lang-switch.tz-switch{max-width:84px}}
