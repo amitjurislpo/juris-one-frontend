@@ -129,6 +129,7 @@ test.describe.serial("a business on JurisOne, end to end", () => {
     await ctx.close();
 
     // HR sees who accepted
+    await asOwner(page);
     await page.goto("/policies");
     await expect(page.locator("tr", { hasText: "Code of conduct" })).toContainText("1 / 1");
   });
