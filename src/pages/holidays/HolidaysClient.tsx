@@ -1,5 +1,6 @@
 
 import { useRef, useState, useTransition } from "react";
+import { useDismissOnEdit } from "@/lib/useDismissOnEdit";
 import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
 import { ConfirmDialog } from "@/components/ui/Modal";
@@ -25,6 +26,7 @@ export function HolidayPlanner({ holidays, today }: { holidays: HolidayEntry[]; 
   const [err, setErr] = useState("");
   const [busy, start] = useTransition();
   const nameRef = useRef<HTMLInputElement>(null);
+  useDismissOnEdit(err, () => setErr(""), form);
 
   const move = (monthOffset: number) => setMonth(new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5)) - 1 + monthOffset, 1)).toISOString().slice(0, 7));
   const first = `${month}-01`;

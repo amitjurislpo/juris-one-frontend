@@ -3,7 +3,8 @@ import { readLang } from "./i18n/lang";
 import { translate } from "./i18n/translate";
 
 /** Client for the Spring Boot API. The browser talks to its own origin; `/api/*` is proxied to the API (vite.config.ts). */
-export type ApiResult<T = undefined> = { ok: true; message?: string; data?: T } | { ok: false; error: string };
+/** `errors` (field path → message) comes with a 422 on a form save. */
+export type ApiResult<T = undefined> = { ok: true; message?: string; data?: T } | { ok: false; error: string; errors?: Record<string, string> };
 
 export interface ApiResponse<T> {
   status: number;
@@ -25,7 +26,14 @@ export const setNavigator = (fn: (destination: string) => void) => { navigateTo 
 /** Client-side navigation from outside React (after sign-in / sign-out). */
 export const navigate = (to: string) => navigateTo(to);
 
-const PUBLIC = ["/login", "/onboard/"];
+/** Reloads "who am I?" (so the locked state is known) and opens the onboarding page, unless the user is already on one. */
+function sendToOnboarding() {
+  if (location.pathname.startsWith("/onboarding")) return;
+  void queryClient.invalidateQueries();
+  navigateTo("/onboarding");
+}
+
+const PUBLIC = ["/login"];
 const onPublicPage = () => PUBLIC.some((p) => location.pathname === p || location.pathname.startsWith(p));
 
 let refreshing: Promise<boolean> | null = null;
@@ -58,10 +66,13 @@ async function send<T>(method: string, path: string, body: unknown, file?: Blob 
   let parsed: ApiResult<T>;
   try {
     const json = await res.json();
+    // the API refuses everything but onboarding to an employee whose onboarding is not approved yet (403 problem "onboarding-pending")
+    if (res.status === 403 && /onboarding-pending/.test(`${json?.code ?? ""} ${json?.type ?? ""} ${json?.detail ?? ""}`)) sendToOnboarding();
     // errors arrive as RFC 7807 problem details: { status, code, detail, ... }
-    parsed = typeof json?.ok === "boolean" ? (json as ApiResult<T>) : { ok: false, error: String(json?.detail ?? "Something went wrong. Please try again.") };
+    // a 2xx answer without the envelope (the onboarding endpoints may answer with the bare payload) is the data itself
+    parsed = typeof json?.ok === "boolean" ? (json as ApiResult<T>) : res.ok ? { ok: true, data: json as T } : { ok: false, error: String(json?.detail ?? "Something went wrong. Please try again."), errors: json?.errors && typeof json.errors === "object" ? (json.errors as Record<string, string>) : undefined };
   } catch {
-    parsed = { ok: false, error: "Something went wrong. Please try again." };
+    parsed = res.ok ? { ok: true } : { ok: false, error: "Something went wrong. Please try again." };
   }
   // the API speaks English; show its fixed messages in the reader's language (unknown or dynamic ones stay English)
   const lang = readLang();

@@ -28,8 +28,6 @@ export const APP_ROUTES: RouteDef[] = [
   { path: "register", title: "Attendance register", nav: "register", Page: page(() => import("@/pages/register/page")) },
   { path: "approvals", title: "Approvals", nav: "approvals", Page: page(() => import("@/pages/approvals/page")) },
   { path: "employees", title: "Employees", nav: "employees", Page: page(() => import("@/pages/employees/page")) },
-  { path: "onboarding", title: "Onboarding", nav: "onboarding", Page: page(() => import("@/pages/onboarding/page")) },
-  { path: "onboarding/:id", title: "Onboarding", nav: "onboarding", Page: page(() => import("@/pages/onboarding/[id]/page")) },
   { path: "departments", title: "Departments", nav: "departments", Page: page(() => import("@/pages/departments/page")) },
   { path: "holidays", title: "Holiday calendar", nav: "holidays", Page: page(() => import("@/pages/holidays/page")) },
   { path: "payroll", title: "Payroll", nav: "payroll", Page: page(() => import("@/pages/payroll/page")) },
@@ -65,12 +63,17 @@ export const APP_ROUTES: RouteDef[] = [
   { path: "projects/:id/settings", title: "Project settings", nav: "projects", Page: page(() => import("@/pages/projects/[id]/settings/page")) },
   { path: "tasks/:ref", title: "Task", nav: "my-tasks", Page: page(() => import("@/pages/tasks/[ref]/page")) },
   { path: "task-settings", title: "Task settings", nav: "task-settings", Page: page(() => import("@/pages/task-settings/page")) },
+  { path: "onboarding/hires", title: "Onboard employee", nav: "onboard-employee", Page: page(() => import("@/pages/onboarding/hr/page")) },
+  { path: "onboarding/hires/:employeeId", title: "Employee onboarding", nav: "onboard-employee", Page: page(() => import("@/pages/onboarding/hr/[employeeId]/page")) },
+  { path: "onboarding/hires/:employeeId/summary", title: "Employee onboarding summary", nav: "onboard-employee", Page: page(() => import("@/pages/onboarding/hr/[employeeId]/summary/page")) },
+  { path: "onboarding", title: "Your onboarding", user: true, Page: page(() => import("@/pages/onboarding/page")) },
+  { path: "onboarding/summary", title: "Onboarding summary", user: true, Page: page(() => import("@/pages/onboarding/summary/page")) },
+  { path: "onboarding/success", title: "Onboarding submitted", user: true, Page: page(() => import("@/pages/onboarding/success/page")) },
   { path: "acknowledge", title: "Accept company policies", user: true, Page: page(() => import("@/pages/acknowledge/page")) },
   { path: "paused", title: "Subscription ended", user: true, Page: page(() => import("@/pages/paused/page")) },
 ];
 
-/** Public pages (no session): sign-in and the candidate's onboarding. */
+/** Public pages (no session): sign-in. */
 export const PUBLIC_ROUTES: { path: string; title: string; Page: ComponentType }[] = [
   { path: "login", title: "Sign in", Page: page(() => import("@/pages/auth/login/page")) },
-  { path: "onboard/:token", title: "Your onboarding", Page: page(() => import("@/pages/auth/onboard/[token]/page")) },
 ];

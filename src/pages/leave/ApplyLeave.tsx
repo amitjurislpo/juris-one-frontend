@@ -1,5 +1,6 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { useDismissOnEdit } from "@/lib/useDismissOnEdit";
 import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
 import { Modal } from "@/components/ui/Modal";
@@ -66,6 +67,7 @@ export function ApplyLeave({ types, today, holidays, weeklyOffs, onClose }: { ty
   const [tried, setTried] = useState(false);
   const [err, setErr] = useState("");
   const [busy, start] = useTransition();
+  useDismissOnEdit(err, () => setErr(""), type, range, part, reason);
   const rangeStart = range.from && range.to ? [range.from, range.to].sort()[0] : range.from;
   const rangeEnd = range.from && range.to ? [range.from, range.to].sort()[1] : range.from;
   const single = !!rangeStart && rangeStart === rangeEnd;
@@ -99,7 +101,7 @@ export function ApplyLeave({ types, today, holidays, weeklyOffs, onClose }: { ty
           <button className="btn btn-gold" onClick={submit} disabled={!rangeStart || busy || !!visiblePreview?.error}><Icon name="ok" size={16} />{busy ? t("Sending…") : t("Apply leave")}</button>
         </div>
       </>}>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 26 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(320px, 100%), 1fr))", gap: 26 }}>
         <div className="col" style={{ gap: 20 }}>
           <div>
             <div className="field" style={{ marginBottom: 10 }}>{t("1 · Leave type")}</div>

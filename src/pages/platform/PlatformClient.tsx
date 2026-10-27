@@ -125,13 +125,14 @@ export function NewBusinessButton({ plans, templates }: { plans: PlanRow[]; temp
   const [ownerInput, setOwnerInput] = useState<OwnerInput>({ name: "", email: "" });
   const [roles, setRoles] = useState<string[]>([]);
   const [err, setErr] = useState("");
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [isTried, setIsTried] = useState(false);
+  // once Create was pressed the fields are checked on every edit, so each message goes as soon as its own field is right
+  const fieldErrors = isTried ? newBusinessProblems(businessInput, ownerInput, t) : {};
   const [busy, start] = useTransition();
-  const close = () => { setOpen(false); setErr(""); setFieldErrors({}); setBusinessInput(blankProfile); setSubscriptionInput({ planId: "" }); setOwnerInput({ name: "", email: "" }); setRoles([]); };
+  const close = () => { setOpen(false); setErr(""); setIsTried(false); setBusinessInput(blankProfile); setSubscriptionInput({ planId: "" }); setOwnerInput({ name: "", email: "" }); setRoles([]); };
   const save = () => start(async () => {
-    const problems = newBusinessProblems(businessInput, ownerInput, t);
-    setFieldErrors(problems);
-    if (Object.keys(problems).length) { setErr(t("Check the highlighted fields.")); return; }
+    setIsTried(true);
+    if (Object.keys(newBusinessProblems(businessInput, ownerInput, t)).length) { setErr(t("Check the highlighted fields.")); return; }
     const bad = businessPhoneProblem(businessInput);
     if (bad) { setErr(bad); return; }
     const createResult = await createBusiness({ business: clean(businessInput), subscription: subscriptionInput.planId ? clean(subscriptionInput) : undefined, owner: ownerInput.name || ownerInput.email ? clean(ownerInput) : undefined, roles });
@@ -144,11 +145,11 @@ export function NewBusinessButton({ plans, templates }: { plans: PlanRow[]; temp
         <Modal title={t("New business")} eyebrow={t("Platform")} maxWidth={760} onClose={close}
           footer={<><button className="btn btn-ghost" onClick={close}>{t("Cancel")}</button><button className="btn btn-gold" disabled={busy} onClick={save}>{busy ? t("Creating…") : t("Create business")}</button></>}>
           <div className="col" style={{ gap: 14 }}>
-            <ProfileFields form={businessInput} set={(x) => { setBusinessInput(x); setErr(""); setFieldErrors({}); }} errors={fieldErrors} />
+            <ProfileFields form={businessInput} set={(x) => { setBusinessInput(x); setErr(""); }} errors={fieldErrors} />
             <h4 style={{ margin: "6px 0 0" }}>{t("Subscription")}</h4>
             <SubscriptionFields subscription={subscriptionInput} set={(updatedInput) => { setSubscriptionInput(updatedInput); setErr(""); }} plans={plans} />
             <h4 style={{ margin: "6px 0 0" }}>{t("Sub admin")} <span className="hint muted">{t("— runs the business; optional, can be added later. If you fill one field, fill both.")}</span></h4>
-            <OwnerFields owner={ownerInput} set={(x) => { setOwnerInput(x); setErr(""); setFieldErrors({}); }} errors={fieldErrors} optional />
+            <OwnerFields owner={ownerInput} set={(x) => { setOwnerInput(x); setErr(""); }} errors={fieldErrors} optional />
             <h4 style={{ margin: "6px 0 0" }}>{t("Roles for this business")} <span className="hint muted">{t("— the business admin can't create roles, so pick what it needs")}</span></h4>
             <RolePicker templates={templates} chosen={roles} set={(x) => { setRoles(x); setErr(""); }} />
             {err && <div className="err" role="alert">{err}</div>}

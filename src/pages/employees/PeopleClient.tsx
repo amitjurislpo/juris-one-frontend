@@ -1,14 +1,17 @@
 
 import { useEffect, useState, useTransition } from "react";
+import { useDismissOnEdit } from "@/lib/useDismissOnEdit";
 import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
 import { ClearFilters, SortableHeader } from "@/components/table/Table";
 import { ConfirmDialog, Drawer } from "@/components/ui/Modal";
 import { useT } from "@/lib/i18n/client";
+import Link from "@/lib/link";
 import { useCurrentUser, useReadOnly } from "@/lib/session";
 import { formatDayMonthYear, formatRupees, INDIA_TIME_ZONE, todayIn } from "@/lib/format";
 import { shiftLabel } from "@/lib/shifts";
 import { EmployeeForm } from "./EmployeeForm";
+import { OnboardingStatusChip } from "./OnboardingStatusChip";
 import { getProfile, confirmEmployee, markExited, revealContact, toggleAccess, type Profile } from "./actions";
 import { Avatar } from "@/components/Avatar";
 
@@ -27,6 +30,8 @@ export interface PersonRow {
   access: boolean;
   dateOfJoining: string;
   canToggle: boolean;
+  /** NOT_REQUIRED, NOT_STARTED, IN_PROGRESS, SUBMITTED, CHANGES_REQUESTED or APPROVED */
+  onboardingStatus?: string | null;
 }
 
 const STATUS_LABEL: Record<string, string> = { ACTIVE: "Active", PROBATION: "Probation", ONBOARDING: "Onboarding", EXITED: "Past employee" };
@@ -73,6 +78,7 @@ export function PeopleTable({ rows }: { rows: PersonRow[] }) {
               <SortableHeader sortKey="role" dflt="name">{t("Role")}</SortableHeader>
               <SortableHeader sortKey="status" dflt="name">{t("Status")}</SortableHeader>
               <SortableHeader sortKey="access" dflt="name">{t("Portal access")}</SortableHeader>
+              <th>{t("Onboarding")}</th>
             </tr>
           </thead>
           <tbody>
@@ -93,13 +99,14 @@ export function PeopleTable({ rows }: { rows: PersonRow[] }) {
                 <td className="muted">{person.role}</td>
                 <td><span className={`chip ${stChip(person.status)}`}>{t(STATUS_LABEL[person.status])}</span></td>
                 <td onClick={(event) => event.stopPropagation()}><AccessSwitch id={person.id} name={person.name} isEnabled={person.access} disabled={!person.canToggle} /></td>
+                <td onClick={(event) => event.stopPropagation()}>{person.onboardingStatus && person.onboardingStatus !== "NOT_REQUIRED" ? <Link href={`/onboarding/hires/${person.id}`} title={t("Open onboarding")}><OnboardingStatusChip status={person.onboardingStatus} /></Link> : <OnboardingStatusChip status={person.onboardingStatus} />}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
       {!rows.length && <div className="empty"><b>{t("No one matches")}</b><span className="muted">{t("Try a different search or filter.")}</span><ClearFilters /></div>}
-      {open && <ProfileDrawer id={open} onClose={() => setOpen(null)} onEdit={(id) => { setOpen(null); setEditId(id); }} />}
+      {open && <ProfileDrawer id={open} onboardingStatus={rows.find((person) => person.id === open)?.onboardingStatus} onClose={() => setOpen(null)} onEdit={(id) => { setOpen(null); setEditId(id); }} />}
       {editId && <EmployeeForm editId={editId} photo={rows.find((person) => person.id === editId)?.photo} onClose={() => setEditId(null)} />}
     </>
   );
@@ -118,7 +125,7 @@ export function AddEmployeeButton() {
   );
 }
 
-function ProfileDrawer({ id, onClose, onEdit }: { id: string; onClose: () => void; onEdit: (id: string) => void }) {
+function ProfileDrawer({ id, onboardingStatus, onClose, onEdit }: { id: string; onboardingStatus?: string | null; onClose: () => void; onEdit: (id: string) => void }) {
   const readOnly = useReadOnly();
   const toast = useToast();
   const t = useT();
@@ -129,6 +136,7 @@ function ProfileDrawer({ id, onClose, onEdit }: { id: string; onClose: () => voi
   const timeZone = useCurrentUser().user?.timeZone ?? INDIA_TIME_ZONE;
   const [exitDate, setExitDate] = useState(() => todayIn(timeZone));
   const [busy, start] = useTransition();
+  useDismissOnEdit(err, () => setErr(""), exitDate);
 
   useEffect(() => {
     let alive = true;
@@ -168,6 +176,12 @@ function ProfileDrawer({ id, onClose, onEdit }: { id: string; onClose: () => voi
                 const result = await confirmEmployee(profile.id);
                 if (result.ok) { toast(result.message!, "ok"); setProfile({ ...profile, status: "ACTIVE", canConfirm: false }); } else toast(result.error, "bad");
               })}>{t("Make permanent")}</button>
+            </div>
+          )}
+          {onboardingStatus && onboardingStatus !== "NOT_REQUIRED" && (
+            <div className="access-row">
+              <div><b>{t("Onboarding")}</b><div style={{ marginTop: 4 }}><OnboardingStatusChip status={onboardingStatus} /></div></div>
+              <Link className="btn" href={`/onboarding/hires/${encodeURIComponent(profile.id)}`}>{t("View onboarding")}</Link>
             </div>
           )}
           <div>
