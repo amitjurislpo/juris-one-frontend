@@ -1,4 +1,5 @@
 import { useState, useTransition } from "react";
+import { useDismissOnEdit } from "@/lib/useDismissOnEdit";
 import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
 import { Modal } from "@/components/ui/Modal";
@@ -36,6 +37,7 @@ export function TaskFormModal({ project, projects, statusId, onClose, onCreated 
   const [labelIds, setLabelIds] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [busy, start] = useTransition();
+  useDismissOnEdit(error, () => setError(""), projectId, title, description, type, priority, chosenStatusId, assignee, accountable, startDate, due, estimate, labelIds);
 
   const managerId = assignee?.reportingManagerId;
   const isSuggestionShown = !!managerId && managerId !== assignee?.id && accountable?.id !== managerId;

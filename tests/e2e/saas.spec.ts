@@ -1,27 +1,17 @@
-import { expect, test, type Browser, type Page } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { ADMIN_EMAIL, expectLanded, login, loginWithCode, OTP, sql } from "./helpers";
 
 /**
  * The multi-business journey: the super admin creates a business and its sub admin, grants Juris Track; the sub
- * admin publishes a policy and onboards a new hire by link; the hire accepts the policy before anything else; and the
+ * admin publishes a policy and adds a new hire; the hire accepts the policy before anything else; and the
  * subscription decides access: not started or cancelled = no sign-in, expired = read-only (view and export only).
  */
 const run = Math.random().toString(36).slice(2, 8);
 const BUSINESS = `E2E Advisors ${run}`;
 const OWNER_EMAIL = `owner.${run}@e2e-advisors.test`;
-const CANDIDATE = `cand.${run}@gmail.test`;
 const WORK_EMAIL = `riya.${run}@e2e-advisors.test`;
-const PDF = { name: "doc.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4\n%e2e\n") };
 
 const toast = (page: Page) => page.locator(".toast").last();
-
-async function lastLink(recipient: string) {
-  await expect.poll(async () => (await sql("SELECT 1 FROM email_outbox WHERE \"to\" = $1", [recipient])).length, { timeout: 10_000 }).toBeGreaterThan(0);
-  const [email] = await sql<{ text: string }>("SELECT text FROM email_outbox WHERE \"to\" = $1 ORDER BY created_at DESC LIMIT 1", [recipient]);
-  const link = /\/onboard\/[A-Za-z0-9_-]+/.exec(email.text);
-  expect(link).not.toBeNull();
-  return link![0];
-}
 
 /** Moves the e2e business's only subscription (SQL date expressions) to test what each state allows. */
 async function setSubscriptionDates(starts: string, ends: string) {
@@ -46,14 +36,14 @@ test.describe.serial("a business on JurisOne, end to end", () => {
     await dialog.getByLabel("Employee ID prefix").fill("EA");
     const [plan] = await sql<{ id: string }>("SELECT id::text FROM subscription_plans WHERE name = 'Standard'");
     await dialog.getByRole("combobox", { name: /^Plan/ }).selectOption(plan.id);
-    await dialog.getByLabel("Name *", { exact: true }).fill("Esha Owner");
+    await dialog.getByLabel("Name", { exact: true }).fill("Esha Owner");
+    await dialog.getByLabel(/Email \(signs in with it\)/).fill(OWNER_EMAIL);
     // the phone takes the country's digits only, and must be complete
     await dialog.getByLabel("Phone number", { exact: true }).fill("12345");
     await dialog.getByRole("button", { name: "Create business" }).click();
     await expect(dialog.getByText("India numbers have 10 digits")).toBeVisible();
     await dialog.getByLabel("Phone number", { exact: true }).fill("98765432109999");
     await expect(dialog.getByLabel("Phone number", { exact: true })).toHaveValue("9876543210");
-    await dialog.getByLabel(/Email \(signs in with it\)/).fill(OWNER_EMAIL);
     await dialog.getByRole("button", { name: "Create business" }).click();
     await expect(page).toHaveURL(/\/platform\/[0-9a-f-]{36}$/);
     businessPath = new URL(page.url()).pathname;
@@ -73,7 +63,10 @@ test.describe.serial("a business on JurisOne, end to end", () => {
     await asOwner(page);
     await expect(page.locator(".side")).toContainText(BUSINESS);
     await page.getByRole("link", { name: "Juris Track" }).click();
-    await expect(page.getByText("Coming soon")).toBeVisible();
+    // the business has the module (granted): the page opens (no 404). The e2e
+    // environment runs no JurisTrack service, so the module's own screens cannot load here: the gateway error is expected.
+    await expect(page).toHaveURL(/\/juris-track/);
+    await expect(page.getByText("Page not found")).toHaveCount(0);
     await page.goto("/subscription");
     await expect(page.getByText("Standard", { exact: true }).first()).toBeVisible();
     await expect(page.getByRole("link", { name: "Export employees (Excel)" })).toBeVisible();
@@ -91,50 +84,30 @@ test.describe.serial("a business on JurisOne, end to end", () => {
     await expect(toast(page)).toContainText("Version 1 published");
   });
 
-  test("the sub admin onboards a new hire by link; the candidate fills in details and documents", async ({ page, browser }) => {
-    await asOwner(page);
-    await page.goto("/onboarding");
-    await page.getByRole("button", { name: "New onboarding" }).click();
-    const dialog = page.getByRole("dialog", { name: "New onboarding" });
-    await dialog.getByLabel(/Candidate name/).fill("Riya Sen");
-    await dialog.getByLabel(/Personal email/).fill(CANDIDATE);
-    await dialog.getByLabel("Designation").fill("Associate");
-    await dialog.getByRole("button", { name: "Send link" }).click();
-    await expect(page).toHaveURL(/\/onboarding\/[0-9a-f-]{36}$/);
-    await expect(page.locator(".chip", { hasText: "Link sent" })).toBeVisible();
-
-    await candidateFillsIn(browser, await lastLink(CANDIDATE));
-
-    // HR verifies every document, marks the onboarding verified and adds the employee
-    await page.reload();
-    await expect(page.locator(".chip", { hasText: "To review" }).first()).toBeVisible();
-    const verify = page.getByRole("button", { name: "Verify" });
-    for (let left = await verify.count(); left > 0; left--) {
-      await verify.first().click();
-      // wait for this document to leave the list (the earlier toast may still be on screen)
-      await expect(verify).toHaveCount(left - 1);
-    }
-    await expect(toast(page)).toContainText("Document verified");
-    await page.getByRole("button", { name: "Mark verified" }).click();
-    await expect(toast(page)).toContainText("Onboarding verified");
-    await page.getByRole("button", { name: "Add employee" }).click();
-    const employeeDialog = page.getByRole("dialog", { name: "Add employee" });
-    await employeeDialog.getByLabel(/Work email/).fill(WORK_EMAIL);
-    await employeeDialog.getByLabel(/Department/).selectOption({ label: "Human Resources" });
-    await employeeDialog.getByLabel(/Role/).selectOption({ label: "Employee" });
-    await employeeDialog.getByLabel(/Reporting manager/).selectOption({ index: 1 });
-    await employeeDialog.getByLabel(/Joining date/).fill("2026-10-01");
-    await employeeDialog.getByRole("button", { name: "Add employee" }).click();
-    await expect(toast(page)).toContainText("portal access is off until you turn it on");
-    await expect(page.locator(".chip", { hasText: "Employee added" })).toBeVisible();
-  });
-
-  test("access on → the new hire signs in with an emailed code → must accept the policy first", async ({ page, browser }) => {
+  test("the sub admin adds a new hire (onboarding wizard switched off for this one)", async ({ page }) => {
     await asOwner(page);
     await page.goto("/employees");
-    await page.getByRole("switch", { name: "Enable portal access for Riya Sen" }).click();
-    await expect(toast(page)).toContainText("sign in with the code emailed to their work email");
+    await page.getByRole("button", { name: "Add employee" }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel("First name *").fill("Riya");
+    await dialog.getByLabel("Last name *").fill("Sen");
+    await dialog.getByLabel("Father’s name *").fill("Amit Sen");
+    await dialog.getByLabel("Work email *").fill(WORK_EMAIL);
+    await dialog.getByLabel("Phone number", { exact: true }).fill("9810011223");
+    await dialog.getByRole("button", { name: "Continue" }).click();
+    await dialog.getByLabel(/PAN/).fill("ABCPS1234K");
+    await dialog.getByLabel(/Aadhaar/).fill("2345 6789 0124");
+    await dialog.getByRole("button", { name: "Continue" }).click();
+    await dialog.getByLabel("Designation *").fill("Associate");
+    await dialog.getByLabel("Department *").selectOption({ label: "Human Resources" });
+    await dialog.getByLabel(/Reporting manager/).selectOption({ index: 1 });
+    await dialog.getByLabel("Date of joining *").fill("2026-10-01");
+    await dialog.getByRole("button", { name: "Create employee" }).click();
+    await expect(toast(page)).toContainText("Riya Sen added as");
+  });
 
+  test("the new hire signs in with an emailed code → must accept the policy first", async ({ page, browser }) => {
+    // Add employee gives portal access straight away (no switch to turn on), so the hire can sign in with the emailed code
     const ctx = await browser.newContext();
     const hire = await ctx.newPage();
     await login(hire, WORK_EMAIL);
@@ -150,10 +123,9 @@ test.describe.serial("a business on JurisOne, end to end", () => {
     const [ack] = await sql<{ employee_email: string; version: number }>(
       "SELECT employee_email, version FROM policy_acknowledgements WHERE employee_email = $1", [WORK_EMAIL]);
     expect(ack.version).toBe(1);
-    // My profile: personal details from onboarding, email locked
+    // My profile: the work email is shown and locked
     await hire.goto("/profile");
     await expect(hire.getByText(WORK_EMAIL)).toBeVisible();
-    await expect(hire.getByLabel("Emergency contact", { exact: true })).toHaveValue("Amit Sen");
     await ctx.close();
 
     // HR sees who accepted
@@ -203,31 +175,3 @@ test.describe.serial("a business on JurisOne, end to end", () => {
   });
 
 });
-
-async function candidateFillsIn(browser: Browser, link: string) {
-  const ctx = await browser.newContext(); // signed out: the link is the only credential
-  const candidatePage = await ctx.newPage();
-  await candidatePage.goto(link);
-  await expect(candidatePage.getByRole("heading", { name: /Welcome, Riya/ })).toBeVisible();
-  await candidatePage.getByLabel("Father's name *").fill("Amit Sen");
-  await candidatePage.getByLabel("Date of birth *").fill("1996-04-02");
-  await candidatePage.getByLabel("Mobile number", { exact: true }).fill("9810011223");
-  await candidatePage.getByLabel("Current address *").fill("14 Park Street, Kolkata 700016");
-  await candidatePage.getByLabel("Bank *").fill("HDFC Bank");
-  await candidatePage.getByLabel("Account number *").fill("50100123456789");
-  await candidatePage.getByLabel("IFSC *").fill("HDFC0001234");
-  await candidatePage.getByLabel("Emergency contact *").fill("Amit Sen");
-  await candidatePage.getByLabel("Emergency contact phone", { exact: true }).fill("9810044556");
-  await candidatePage.getByRole("button", { name: "Save for later" }).click();
-  await expect(candidatePage.getByText("Saved. You can come back")).toBeVisible();
-  const kinds = ["ID_PROOF", "ADDRESS_PROOF", "PAN", "AADHAAR", "SALARY_SLIP", "SALARY_SLIP", "SALARY_SLIP"];
-  for (const [i, kind] of kinds.entries()) {
-    await candidatePage.getByLabel("Document type").selectOption(kind);
-    await candidatePage.locator('input[type="file"]').setInputFiles(PDF);
-    await expect(candidatePage.locator("table.t tbody tr")).toHaveCount(i + 1); // wait for this upload before the next
-  }
-  await candidatePage.getByRole("button", { name: "Submit to HR" }).click();
-  await expect(candidatePage.getByText("Thank you — your details were sent to HR")).toBeVisible();
-  await expect(candidatePage.getByText("Submitted.")).toBeVisible();
-  await ctx.close();
-}

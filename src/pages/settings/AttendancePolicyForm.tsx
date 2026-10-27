@@ -1,5 +1,6 @@
 
 import { useState, useTransition } from "react";
+import { useDismissOnEdit } from "@/lib/useDismissOnEdit";
 import { useToast } from "@/components/shell/Toasts";
 import { useT } from "@/lib/i18n/client";
 import { useReadOnly } from "@/lib/session";
@@ -15,6 +16,7 @@ export function AttendancePolicyForm({ initial, locked: lockedByRules }: { initi
   const [policyForm, setF] = useState(initial);
   const [err, setErr] = useState("");
   const [busy, start] = useTransition();
+  useDismissOnEdit(err, () => setErr(""), policyForm);
   const num = (fieldName: keyof AttendancePolicyInput, step = 1) => ({
     type: "number" as const, step, value: policyForm[fieldName] as number,
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...policyForm, [fieldName]: e.target.value === "" ? 0 : Number(e.target.value) }),

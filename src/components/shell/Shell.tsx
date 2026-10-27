@@ -12,7 +12,7 @@ import { useNotificationText } from "@/lib/notification-text";
 import { Avatar } from "@/components/Avatar";
 import { formatWeekdayDayMonthYear } from "@/lib/format";
 import { useCurrentUser } from "@/lib/session";
-import { PAGE_TITLES, type NavId } from "@/lib/nav";
+import { navIdForPath, navPath, PAGE_TITLES, type NavId } from "@/lib/nav";
 import { ToastProvider } from "./Toasts";
 import { currentTheme, setTheme, type Theme } from "./theme";
 
@@ -52,7 +52,7 @@ export function Shell(props: ShellProps) {
   const pathname = usePathname();
   const firstSegment = pathname.split("/")[1] || "home";
   // a task page (/tasks/{key}) belongs to "My tasks"
-  const page = (firstSegment === "tasks" ? "my-tasks" : firstSegment) as NavId;
+  const page = (navIdForPath(pathname) ?? (firstSegment === "tasks" ? "my-tasks" : firstSegment)) as NavId;
 
   const [sideOpen, setSideOpen] = useState(false);
   const [menu, setMenu] = useState(false);
@@ -105,7 +105,7 @@ export function Shell(props: ShellProps) {
       add(t("Actions"), t("Apply for leave"), "plus", () => router.push("/leave?apply=1"));
     }
     add(t("Actions"), theme === "dark" ? t("Switch to light theme") : t("Switch to dark theme"), theme === "dark" ? "sun" : "moon", toggleTheme);
-    groups.forEach((bucket) => bucket.items.forEach((n) => add(t("Go to"), t(n.label), n.icon, () => goToPage(n.id))));
+    groups.forEach((bucket) => bucket.items.forEach((n) => add(t("Go to"), t(n.label), n.icon, () => router.push(navPath(n)))));
     add(t("Account"), t("My profile"), "user", openProfile);
     add(t("Account"), t("Sign out"), "logout", logout);
     return out;
@@ -171,14 +171,13 @@ export function Shell(props: ShellProps) {
           <Link className="ws" href={landing}>
             <span className="monogram">{(businessName ?? "J").charAt(0).toUpperCase()}</span>
             <span style={{ flex: 1, minWidth: 0 }}><b>{businessName ?? "JurisOne"}</b><small>{businessName ? t("JurisOne workspace") : t("Platform console")}</small></span>
-            <Icon name="chevD" size={14} />
           </Link>
           <button className="side-search" type="button" onClick={openPal}><Icon name="search" size={15} />{t("Search")}<kbd>⌘K</kbd></button>
           {groups.map((navGroup) => (
             <div key={navGroup.title} style={{ display: "contents" }}>
               <div className="group">{t(navGroup.title)}</div>
               {navGroup.items.map((navItem) => (
-                <Link key={navItem.id} href={`/${navItem.id}`} className={`nav-item${page === navItem.id ? " on" : ""}`} aria-current={page === navItem.id ? "page" : undefined}>
+                <Link key={navItem.id} href={navPath(navItem)} className={`nav-item${page === navItem.id ? " on" : ""}`} aria-current={page === navItem.id ? "page" : undefined}>
                   <span className="ic"><Icon name={navItem.icon} size={17} /></span>
                   {t(navItem.label)}
                   {navItem.id === "approvals" && badges.approvals > 0 && <span className="badge">{badges.approvals}</span>}
@@ -196,7 +195,7 @@ export function Shell(props: ShellProps) {
             <div className="crumbs"><span>{t("Juris")}</span><Icon name="chevR" size={14} /><b>{t(PAGE_TITLES[page] ?? "JurisOne")}</b></div>
             <div className="grow"></div>
             <button className="top-search" type="button" onClick={openPal}><Icon name="search" size={15} />{t("Search or jump to…")}<kbd>⌘K</kbd></button>
-            <button className="icon-btn" onClick={toggleTheme} aria-label={theme === "dark" ? t("Switch to light theme") : t("Switch to dark theme")}>
+            <button className="icon-btn top-theme" onClick={toggleTheme} aria-label={theme === "dark" ? t("Switch to light theme") : t("Switch to dark theme")}>
               <Icon name={theme === "dark" ? "sun" : "moon"} size={17} />
             </button>
             <LanguageSwitcher />

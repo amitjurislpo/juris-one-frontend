@@ -1,4 +1,5 @@
 import { useState, useTransition } from "react";
+import { useDismissOnEdit } from "@/lib/useDismissOnEdit";
 import { Modal } from "@/components/ui/Modal";
 import type { ProjectVisibility } from "@/lib/api-types";
 import { useT } from "@/lib/i18n/client";
@@ -12,6 +13,7 @@ export function ProjectFormModal({ departments, onClose, onCreated }: { departme
   const [isKeyTouched, setIsKeyTouched] = useState(false);
   const [error, setError] = useState("");
   const [busy, start] = useTransition();
+  useDismissOnEdit(error, () => setError(""), form);
   const save = () => start(async () => {
     if (!form.name.trim()) { setError(t("Enter a project name.")); return; }
     if (!/^[A-Z][A-Z0-9]{1,5}$/.test(form.key)) { setError(t("The key is 2 to 6 capital letters or digits and starts with a letter, e.g. WEB.")); return; }

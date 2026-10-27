@@ -60,9 +60,6 @@ server {
 }
 ```
 
-The one-time link pages (`/onboard/…`) should also be served with `Referrer-Policy: no-referrer`
-and `Cache-Control: no-store`.
-
 ## How a page works
 
 - `src/routes.tsx` lists every page (path, tab title, the nav entry that grants access). `RequirePage` (`src/lib/page.tsx`)

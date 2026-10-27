@@ -1,5 +1,6 @@
 
 import { useState, useTransition } from "react";
+import { useDismissOnEdit } from "@/lib/useDismissOnEdit";
 import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
 import { Drawer, Modal } from "@/components/ui/Modal";
@@ -27,6 +28,7 @@ export function StructureButton({ emp, current, minFrom }: { emp: { id: string; 
   const [salaryForm, setSalaryForm] = useState(init);
   const [err, setErr] = useState("");
   const [busy, start] = useTransition();
+  useDismissOnEdit(err, () => setErr(""), salaryForm);
   const parseRupees = (s: string) => Math.max(0, Math.round(Number(s) || 0));
   const monthlyGross = parseRupees(salaryForm.basic) + parseRupees(salaryForm.hra) + parseRupees(salaryForm.lta) + parseRupees(salaryForm.special);
   const pf = Math.round(0.12 * Math.min(parseRupees(salaryForm.basic), 15000));
