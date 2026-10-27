@@ -63,7 +63,10 @@ test.describe.serial("a business on JurisOne, end to end", () => {
     await asOwner(page);
     await expect(page.locator(".side")).toContainText(BUSINESS);
     await page.getByRole("link", { name: "Juris Track" }).click();
-    await expect(page.getByText("Coming soon")).toBeVisible();
+    // the business has the module (granted): the page opens (no 404). The e2e
+    // environment runs no JurisTrack service, so the module's own screens cannot load here: the gateway error is expected.
+    await expect(page).toHaveURL(/\/juris-track/);
+    await expect(page.getByText("Page not found")).toHaveCount(0);
     await page.goto("/subscription");
     await expect(page.getByText("Standard", { exact: true }).first()).toBeVisible();
     await expect(page.getByRole("link", { name: "Export employees (Excel)" })).toBeVisible();
@@ -103,12 +106,8 @@ test.describe.serial("a business on JurisOne, end to end", () => {
     await expect(toast(page)).toContainText("Riya Sen added as");
   });
 
-  test("access on → the new hire signs in with an emailed code → must accept the policy first", async ({ page, browser }) => {
-    await asOwner(page);
-    await page.goto("/employees");
-    await page.getByRole("switch", { name: "Enable portal access for Riya Sen" }).click();
-    await expect(toast(page)).toContainText("sign in with the code emailed to their work email");
-
+  test("the new hire signs in with an emailed code → must accept the policy first", async ({ page, browser }) => {
+    // Add employee gives portal access straight away (no switch to turn on), so the hire can sign in with the emailed code
     const ctx = await browser.newContext();
     const hire = await ctx.newPage();
     await login(hire, WORK_EMAIL);
