@@ -29,7 +29,7 @@ export function AuthFrame({ children }: { children: React.ReactNode }) {
         </div>
         <div className="mock">
           <div className="glass a">
-            <small>Today · Night shift</small>
+            <small>{t("Today · Night shift")}</small>
             <div className="mono" style={{ fontSize: 34, fontWeight: 500, margin: "6px 0 10px" }}>04:28:12</div>
             <div style={{ height: 6, borderRadius: 9, background: "rgba(255,255,255,.2)" }}>
               <div style={{ width: "50%", height: "100%", borderRadius: 9, background: "#fff" }}></div>
@@ -39,10 +39,10 @@ export function AuthFrame({ children }: { children: React.ReactNode }) {
             <span style={{ width: 36, height: 36, borderRadius: "50%", background: "#7CFFB2", color: "#0D3B24", display: "grid", placeItems: "center", flex: "none" }}>
               <Icon name="ok" size={16} />
             </span>
-            <div><b style={{ fontSize: 14 }}>Leave approved</b><br /><small>Casual leave · 19 – 22 Oct</small></div>
+            <div><b style={{ fontSize: 14 }}>{t("Leave approved")}</b><br /><small>{t("Casual leave · 19 – 22 Oct")}</small></div>
           </div>
           <div className="glass c">
-            <small>Attendance · last 14 weeks</small>
+            <small>{t("Attendance · last 14 weeks")}</small>
             <div className="mini-heat">
               {Array.from({ length: 98 }, (_, i) => i + 1).map((cellNumber) => (
                 <i key={cellNumber} style={{ background: `rgba(255,255,255,${0.12 + ((cellNumber * 37) % 10) / 13})` }}></i>

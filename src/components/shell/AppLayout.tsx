@@ -1,7 +1,9 @@
 import { Suspense, useEffect, type ReactNode } from "react";
 import { Navigate, Outlet, useLocation } from "react-router";
 import Link from "@/lib/link";
+import { LockedShell } from "@/components/shell/LockedShell";
 import { Shell } from "@/components/shell/Shell";
+import { mustCompleteOnboarding } from "@/lib/onboarding-gate";
 import type { ShellNote, SubscriptionCurrent } from "@/lib/api-types";
 import { formatDayMonthYear } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
@@ -29,12 +31,23 @@ export function AppLayout({ children }: { children?: ReactNode }) {
   const { user, loading } = useCurrentUser();
   const loc = useLocation();
   const t = useT();
-  const data = useData<ShellData>(user ? "/api/shell" : null);
+  const isLocked = mustCompleteOnboarding(user?.onboarding);
+  // a locked employee (onboarding not approved yet) gets no menu, so the menu data is not even asked for
+  const data = useData<ShellData>(user && !isLocked ? "/api/shell" : null);
   // every page opened by a signed-in user goes into the audit log (once per navigation)
-  const signedIn = !!user;
+  const signedIn = !!user && !isLocked;
   useEffect(() => { if (signedIn) reportPageView(loc.pathname); }, [signedIn, loc.pathname]);
   if (loading) return <PageLoading />;
   if (!user) return <Navigate to={`/login${loc.pathname !== "/" ? `?next=${encodeURIComponent(loc.pathname + loc.search)}` : ""}`} replace />;
+  if (isLocked) {
+    return (
+      <LockedShell employeeName={user.name}>
+        <PageErrorBoundary key={loc.pathname} onRetry={refreshData}>
+          <Suspense fallback={<PageLoading />}>{children ?? <Outlet />}</Suspense>
+        </PageErrorBoundary>
+      </LockedShell>
+    );
+  }
   if (!data) return <PageLoading />;
   // the owner is warned on every page during the last week of the subscription
   const subscription = data.subscription;

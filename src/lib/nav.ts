@@ -2,10 +2,10 @@ import type { Permission } from "./permissions";
 
 export type NavId =
   | "platform" | "platform-audit" | "plans" | "juris-track" | "lead-intelligence" | "notifications" | "profile" | "home" | "overview" | "attendance" | "leave" | "payslips" | "declare" | "directory" | "team"
-  | "register" | "approvals" | "employees" | "onboarding" | "departments" | "holidays"
+  | "register" | "approvals" | "employees" | "departments" | "holidays"
   | "payroll" | "structures" | "tax" | "proofs" | "roles" | "policies" | "settings" | "audit" | "subscription" | "my-policies"
   | "my-assets" | "announcements" | "assets" | "manage-announcements" | "my-letters" | "letters"
-  | "my-tasks" | "team-tasks" | "projects" | "task-settings";
+  | "my-tasks" | "team-tasks" | "projects" | "task-settings" | "onboard-employee";
 
 export type NavGroup = "Platform" | "My workspace" | "Workspace" | "Tasks" | "Team" | "People ops" | "Finance" | "Administration";
 
@@ -23,6 +23,8 @@ export interface NavItem {
   /** Extra condition evaluated on the server (e.g. has direct reports). */
   needsReports?: boolean;
   group?: NavGroup;
+  /** The page address when it is not `/<id>` (the page and everything under it belong to this item). */
+  path?: string;
   /** Only for businesses whose plan or grant includes this module (else the page doesn't exist). */
   module?: string;
 }
@@ -59,7 +61,7 @@ export const NAV: NavItem[] = [
   { id: "register", label: "Attendance register", icon: "grid", perm: ["att.all"], group: "People ops" },
   { id: "approvals", label: "Approvals", icon: "check", perm: ["appr.leave", "appr.reg"], group: "People ops" },
   { id: "employees", label: "Employees", icon: "users", perm: ["people.view"], group: "People ops" },
-  { id: "onboarding", label: "Onboarding", icon: "inbox", perm: ["people.add"], group: "People ops" },
+  { id: "onboard-employee", label: "Onboard employee", icon: "plus", perm: ["people.add"], group: "People ops", path: "/onboarding/hires" },
   { id: "departments", label: "Departments", icon: "building", perm: ["dept.manage"], group: "People ops" },
   { id: "holidays", label: "Holiday calendar", icon: "sun", perm: ["holidays.manage"], group: "People ops" },
   { id: "assets", label: "Assets", icon: "layers", perm: ["assets.manage"], group: "People ops" },
@@ -75,6 +77,13 @@ export const NAV: NavItem[] = [
   { id: "audit", label: "Audit log", icon: "doc", perm: ["roles.manage"], group: "Administration" },
   { id: "subscription", label: "Subscription", icon: "receipt", perm: [BUSINESS_MANAGE], group: "Administration" },
 ];
+
+/** Where the sidebar link of a nav item goes. */
+export const navPath = (item: { id: string }) => NAV.find((navItem) => navItem.id === item.id)?.path ?? `/${item.id}`;
+
+/** The nav item a page with its own `path` belongs to (e.g. `/onboarding/hires/123` is "Onboard employee"), if any. */
+export const navIdForPath = (pathname: string): NavId | undefined =>
+  NAV.find((item) => item.path && (pathname === item.path || pathname.startsWith(`${item.path}/`)))?.id;
 
 export const PAGE_TITLES = Object.fromEntries(NAV.map((n) => [n.id, n.label])) as Record<NavId, string>;
 

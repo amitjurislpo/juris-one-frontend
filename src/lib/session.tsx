@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiGet } from "./api";
-import { NAV, navAllowed } from "./nav";
+import { NAV, navAllowed, navPath } from "./nav";
+import { readOnboardingGate, type OnboardingGate } from "./onboarding-gate";
 import type { Permission } from "./permissions";
 
 export interface CurrentUser {
@@ -28,14 +29,17 @@ export interface CurrentUser {
   modules: string[];
   /** Published policies this user still has to accept (they see only the acknowledgement screen until then). */
   pendingPolicies: number;
+  /** Onboarding state when the API sends it (see onboarding-gate.ts); null = nothing to do. */
+  onboarding: OnboardingGate | null;
 }
 
 interface MeResponse {
-  user: Omit<CurrentUser, "perms" | "subscriptionActive" | "readOnly" | "modules" | "pendingPolicies"> & { perms: Permission[] };
+  user: Omit<CurrentUser, "perms" | "subscriptionActive" | "readOnly" | "modules" | "pendingPolicies" | "onboarding"> & { perms: Permission[] };
   subscriptionActive: boolean | null;
   readOnly: boolean;
   modules: string[];
   pendingPolicies: number;
+  onboarding?: { status?: string; isRequired?: boolean } | null;
 }
 
 export const CURRENT_USER_QUERY_KEY = ["api", "/api/me"];
@@ -43,7 +47,7 @@ export const CURRENT_USER_QUERY_KEY = ["api", "/api/me"];
 export async function fetchMe(): Promise<CurrentUser | null> {
   const response = await apiGet<MeResponse>("/api/me");
   if (!response) return null;
-  return { ...response.user, perms: new Set(response.user.perms), subscriptionActive: response.subscriptionActive, readOnly: response.readOnly, modules: response.modules, pendingPolicies: response.pendingPolicies };
+  return { ...response.user, perms: new Set(response.user.perms), subscriptionActive: response.subscriptionActive, readOnly: response.readOnly, modules: response.modules, pendingPolicies: response.pendingPolicies, onboarding: readOnboardingGate(response) };
 }
 
 /**
@@ -76,5 +80,5 @@ export function landingPath(user: CurrentUser) {
   if (user.perms.has("self")) return "/home";
   if (user.perms.has("roles.manage")) return "/overview";
   const first = allowedNav(user)[0];
-  return first ? `/${first.id}` : "/no-access";
+  return first ? navPath(first) : "/no-access";
 }

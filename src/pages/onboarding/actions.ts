@@ -1,47 +1,67 @@
-
 import type { ActionResult } from "@/lib/action";
 import { apiAction, apiCall } from "@/lib/api";
+import { queryClient } from "@/lib/query";
+import type { AttachmentFile, OnboardingView, StepNumber } from "./types";
 
-// HR's side of onboarding (Spring Boot /api/onboardings).
+// The onboarding API of one person. The employee uses `/api/onboarding/mine`; HR filling it on behalf uses `/api/people/{id}/onboarding`
+// (same sub-paths). See references/ONBOARDING_WIZARD_API.md.
 const enc = encodeURIComponent;
 
-export interface PlanInput {
-  candidateName: string; personalEmail: string; designation?: string; departmentId?: string; roleId?: string; managerId?: string; joiningDate?: string;
-  location?: string; requiredDocs?: string[];
-}
-export interface AddInput { workEmail: string; designation: string; departmentId: string; managerId: string; roleId: string; joiningDate: string; location: string; shift: string; joiningOffice: string }
+export type OnboardingTarget = { kind: "mine" } | { kind: "hr"; employeeId: string };
+export const MINE: OnboardingTarget = { kind: "mine" };
 
-const pages = (id?: string) => ["/onboarding", ...(id ? [`/onboarding/${id}`] : [])];
+export interface OnboardingSecrets { bankAccountNumber: string; pan: string; aadhaar: string }
 
-export async function startOnboarding(input: PlanInput): Promise<ActionResult<{ id: string }>> {
-  return apiAction("POST", "/api/onboardings", input, pages());
-}
-
-export async function updateOnboarding(id: string, input: PlanInput): Promise<ActionResult> {
-  return apiAction("PUT", `/api/onboardings/${enc(id)}`, input, pages(id));
-}
-
-export async function resendOnboarding(id: string): Promise<ActionResult> {
-  return apiAction("POST", `/api/onboardings/${enc(id)}/invitations`, {}, pages(id));
-}
-
-export async function decideDocument(id: string, docId: string, status: "VERIFIED" | "REJECTED", comment?: string): Promise<ActionResult> {
-  return apiAction("PUT", `/api/onboardings/${enc(id)}/documents/${enc(docId)}/status`, { status, comment }, pages(id));
-}
-
-export async function setOnboardingStatus(id: string, status: "CHANGES_REQUESTED" | "VERIFIED" | "CANCELLED", comment?: string): Promise<ActionResult> {
-  return apiAction("PUT", `/api/onboardings/${enc(id)}/status`, { status, comment }, pages(id));
+export interface OnboardingApi {
+  /** The path `useData` reads the whole payload from. */
+  viewPath: string;
+  /** Saves one step; the answer is the full payload with `currentStep` moved on. A 422 carries `errors` (field path to message). */
+  saveStep(step: StepNumber, body: unknown): Promise<ActionResult<OnboardingView>>;
+  /** Remembers the step the person is on without saving data (stepper clicks, the Summary edit icons). */
+  rememberCurrentStep(step: StepNumber): Promise<ActionResult>;
+  /** Uploads one file to a slot with progress (fetch cannot report upload progress, so XHR). */
+  uploadAttachment(slotKey: string, file: File, onProgress: (percent: number) => void): Promise<ActionResult<AttachmentFile>>;
+  deleteAttachment(attachmentId: string): Promise<ActionResult>;
+  /** The full bank account number, PAN and Aadhaar (audited by the API). */
+  loadSecrets(): Promise<ActionResult<OnboardingSecrets>>;
+  /** Validates every step and the mandatory attachments, then sets SUBMITTED (also a resubmit from CHANGES_REQUESTED). A 422 carries `errors`. */
+  submitOnboarding(): Promise<ActionResult>;
+  /** Where a file is shown / downloaded. */
+  attachmentUrl(fileId: string, isDownload: boolean): string;
 }
 
-export async function addOnboardedEmployee(id: string, input: AddInput): Promise<ActionResult<{ id: string; code: string }>> {
-  return apiAction("POST", `/api/onboardings/${enc(id)}/employee`, input, [...pages(id), "/employees"]);
+export function onboardingApiFor(target: OnboardingTarget): OnboardingApi {
+  const basePath = target.kind === "mine" ? "/api/onboarding/mine" : `/api/people/${enc(target.employeeId)}/onboarding`;
+  return {
+    viewPath: basePath,
+    saveStep: (step, body) => apiAction<OnboardingView>("PUT", `${basePath}/steps/${step}`, body),
+    rememberCurrentStep: (step) => apiAction("PUT", `${basePath}/current-step`, { step }),
+    uploadAttachment: (slotKey, file, onProgress) => new Promise((resolve) => {
+      const request = new XMLHttpRequest();
+      request.open("POST", `${basePath}/attachments`);
+      request.setRequestHeader("accept", "application/json");
+      request.withCredentials = true;
+      request.upload.onprogress = (event) => { if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100)); };
+      request.onerror = () => resolve({ ok: false, error: "Something went wrong. Please try again." });
+      request.onload = () => {
+        let json: { ok?: boolean; data?: AttachmentFile; detail?: string; error?: string } & Partial<AttachmentFile> = {};
+        try { json = JSON.parse(request.responseText); } catch { /* keep the generic error */ }
+        if (request.status >= 200 && request.status < 300) {
+          void queryClient.invalidateQueries();
+          resolve({ ok: true, data: typeof json.ok === "boolean" ? json.data : (json as AttachmentFile) });
+        } else {
+          resolve({ ok: false, error: json.detail ?? json.error ?? "Something went wrong. Please try again." });
+        }
+      };
+      const form = new FormData();
+      form.append("slotKey", slotKey);
+      form.append("file", file);
+      request.send(form);
+    }),
+    deleteAttachment: (attachmentId) => apiAction("DELETE", `${basePath}/attachments/${enc(attachmentId)}`),
+    loadSecrets: async () => (await apiCall<OnboardingSecrets>("GET", `${basePath}/secrets`)).body,
+    submitOnboarding: () => apiAction("POST", `${basePath}/submission`),
+    attachmentUrl: (fileId, isDownload) => `${basePath}/attachments/${enc(fileId)}/file?download=${isDownload}`,
+  };
 }
 
-/** The business's default required documents (and every kind HR can pick). */
-export async function getOnboardingDefaults(): Promise<ActionResult<{ requiredDocs: string[]; kinds: Record<string, string> }>> {
-  return (await apiCall<{ requiredDocs: string[]; kinds: Record<string, string> }>("GET", "/api/onboardings/defaults")).body;
-}
-
-export async function saveOnboardingDefaults(requiredDocs: string[]): Promise<ActionResult> {
-  return apiAction("PUT", "/api/onboardings/defaults", { requiredDocs }, pages());
-}

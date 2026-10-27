@@ -1,5 +1,6 @@
 
 import { useState, useSyncExternalStore, useTransition } from "react";
+import { useDismissOnEdit } from "@/lib/useDismissOnEdit";
 import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
 import { SortableHeader } from "@/components/table/Table";
@@ -127,6 +128,7 @@ function EditPay({ row, month, onClose }: { row: PayView; month: string; onClose
   const [busy, start] = useTransition();
   const [adjustmentForm, setF] = useState({ lop: String(row.lop), bonus: String(row.bonus / 100), other: String(row.other / 100), note: row.note ?? "" });
   const [err, setErr] = useState("");
+  useDismissOnEdit(err, () => setErr(""), adjustmentForm);
   const save = () => start(async () => {
     const lop = Number(adjustmentForm.lop);
     const saveResult = await saveAdjustment({ month, employeeId: row.employeeId, lopDays: lop === row.attendanceLop && !row.edited ? null : lop, bonus: Math.round(Number(adjustmentForm.bonus) || 0), otherDeduction: Math.round(Number(adjustmentForm.other) || 0), note: adjustmentForm.note });

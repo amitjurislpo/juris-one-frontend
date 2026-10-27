@@ -7,6 +7,7 @@ import { ApiError, apiData } from "./api";
 import { useT } from "./i18n/client";
 import type { T } from "./i18n/translate";
 import { NAV, navAllowed, type NavId } from "./nav";
+import { isOnboardingPath, mustCompleteOnboarding } from "./onboarding-gate";
 import { useSearchRecord } from "./router";
 import { landingPath, useCurrentUser, type CurrentUser } from "./session";
 
@@ -88,6 +89,8 @@ export function RequirePage({ id, children }: { id?: NavId; children: ReactNode 
   const searchParams = useSearchRecord();
   const ctx = useMemo<PageContext | null>(() => (user ? { user, t, searchParams, params: params as Record<string, string> } : null), [user, t, searchParams, params]);
   if (!user || !ctx) return <Navigate to={`/login${currentLocation.pathname !== "/" ? `?next=${encodeURIComponent(currentLocation.pathname + currentLocation.search)}` : ""}`} replace />;
+  // a locked employee (onboarding not approved yet) opens nothing but the onboarding pages
+  if (mustCompleteOnboarding(user.onboarding) && !isOnboardingPath(currentLocation.pathname)) return <Navigate to="/onboarding" replace />;
   if (id) {
     const item = NAV.find((n) => n.id === id)!;
     if (item.module && !user.modules.includes(item.module)) return <NotFound />;
