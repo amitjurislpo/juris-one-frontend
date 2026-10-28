@@ -25,6 +25,13 @@ origin, which is what the API's `SameSite=Lax` session cookies and its Origin ch
 To see the fixed sign-in code on the login page in development, set `VITE_DEV_OTP_CODE` to the backend's `OTP_FIXED_CODE`
 at build time (leave it unset everywhere else; it is only a hint on the sign-in page).
 
+## Production web server
+
+`dist/` is static files. The web server in front must overwrite `X-Forwarded-For` with the address it saw (the API trusts the
+last hop only), proxy `/api/*` to the API, and send on every response: `Content-Security-Policy` (the value in `vite.config.ts`),
+`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer` and, over https,
+`Strict-Transport-Security: max-age=31536000; includeSubDomains`. Never build production with `VITE_DEV_OTP_CODE` set.
+
 ## Scripts
 
 | Command | What it does |
