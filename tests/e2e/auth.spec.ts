@@ -56,7 +56,7 @@ test.describe("authentication", () => {
     expect(mails[0].text).toContain("past employee");
   });
 
-  test("five wrong codes burn the code; a fresh code works", async ({ page }) => {
+  test("five wrong codes burn the code and lock the account; once the lock ends a fresh code works", async ({ page }) => {
     const badTries = async () => Number((await sql<{ n: string }>(
       `SELECT count(*)::text AS n FROM login_history h JOIN employees e ON e.id = h.employee_id WHERE e.code = 'JC-058' AND NOT h.success AND h.reason = 'bad_otp'`,
     ))[0].n);
@@ -66,9 +66,9 @@ test.describe("authentication", () => {
       await page.getByLabel("Digit 1 of 6").fill("222222");
       await expect.poll(badTries).toBe(i); // one refused try at a time
     }
-    await page.getByLabel("Digit 1 of 6").fill("000000"); // the right code, but the code is burnt after five wrong tries
-    await expect.poll(badTries).toBe(6);
-    await expect(page.locator(".err")).toContainText("wrong or has expired");
+    await page.getByLabel("Digit 1 of 6").fill("000000"); // the right code, but the code is burnt and the account is locked after five wrong tries
+    await expect(page.locator(".err")).toContainText("account is locked");
+    await sql(`UPDATE users SET locked_until = NULL FROM employees e WHERE e.id = users.employee_id AND e.code = 'JC-058'`);
     await page.getByRole("button", { name: "Back" }).first().click();
     await page.getByRole("button", { name: "Login", exact: true }).click();
     await page.getByLabel("Digit 1 of 6").fill("000000");
