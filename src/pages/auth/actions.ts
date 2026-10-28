@@ -14,6 +14,11 @@ function leave(destination: string) {
   navigate(destination);
 }
 
+/** Only a path inside this app may be navigated to after sign-in (no `//host`, no backslash, no scheme). */
+function safeRedirect(destination: string): string {
+  return destination.startsWith("/") && !destination.startsWith("//") && !destination.includes("\\") ? destination : "/home";
+}
+
 /** After sign-in: load who the user is and the shell (menu, notifications) first, so the page appears complete. */
 async function enter(destination: string) {
   queryClient.clear();
@@ -33,7 +38,7 @@ export async function loginAction(_prev: FormState, form: FormData): Promise<For
     next: String(form.get("next") ?? ""),
   });
   if (!response.body.ok) return { error: response.body.error, identifier: identifier.slice(0, 200) };
-  await enter(response.body.data!.redirect);
+  await enter(safeRedirect(response.body.data!.redirect));
   return { ok: response.body.message, identifier: identifier.slice(0, 200) };
 }
 
