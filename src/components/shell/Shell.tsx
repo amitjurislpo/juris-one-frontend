@@ -10,6 +10,7 @@ import { useT } from "@/lib/i18n/client";
 import { shiftLabel } from "@/lib/shifts";
 import { useNotificationText } from "@/lib/notification-text";
 import { Avatar } from "@/components/Avatar";
+import { BrandLockup } from "@/components/BrandLockup";
 import { formatWeekdayDayMonthYear } from "@/lib/format";
 import { useCurrentUser } from "@/lib/session";
 import { navIdForPath, navPath, PAGE_TITLES, type NavId } from "@/lib/nav";
@@ -41,10 +42,12 @@ export interface ShellProps {
   children: React.ReactNode;
 }
 
+const FOLD_KEY = "jo_rail_folded";
+
 interface PaletteAction { group: string; label: string; icon: string; run: () => void; position: number }
 
 export function Shell(props: ShellProps) {
-  const { currentUser: signedInUser, groups, badges, notes, landing, canSelf, businessName } = props;
+  const { currentUser: signedInUser, groups, badges, notes, landing, canSelf } = props;
   const t = useT();
   const translateNotification = useNotificationText();
   const { user } = useCurrentUser();
@@ -66,6 +69,23 @@ export function Shell(props: ShellProps) {
   const [paletteIndex, setPaletteIndex] = useState(0);
   const [theme, setThemeState] = useState<Theme>(props.initialTheme);
   const palIn = useRef<HTMLInputElement>(null);
+  // the wide-screen menu can be folded to icons; the choice is remembered in this browser (the page works without storage)
+  const [isFolded, setIsFolded] = useState(() => { try { return window.localStorage.getItem(FOLD_KEY) === "1"; } catch { return false; } });
+  const [railTip, setRailTip] = useState<{ text: string; top: number } | null>(null);
+  const toggleFold = () => {
+    const nextFolded = !isFolded;
+    setIsFolded(nextFolded);
+    setRailTip(null);
+    try { window.localStorage.setItem(FOLD_KEY, nextFolded ? "1" : "0"); } catch { /* storage unavailable: the choice lasts for this visit only */ }
+  };
+  // a folded item shows its name beside it on pointer hover or keyboard focus
+  const showRailTip = (e: React.SyntheticEvent) => {
+    if (!isFolded) return;
+    const tipTarget = (e.target as HTMLElement).closest<HTMLElement>("[data-tip]");
+    if (!tipTarget) return;
+    const bounds = tipTarget.getBoundingClientRect();
+    setRailTip({ text: tipTarget.dataset.tip ?? "", top: bounds.top + bounds.height / 2 });
+  };
 
   // Close transient UI on navigation (state adjusted during render, not in an effect).
   const [lastPath, setLastPath] = useState(pathname);
@@ -167,19 +187,18 @@ export function Shell(props: ShellProps) {
       <div className="shell">
         <a className="skip" href="#main">{t("Skip to content")}</a>
         <div className={`scrim${sideOpen ? " open" : ""}`} onClick={() => setSideOpen(false)}></div>
-        <aside id="side" className={`side${sideOpen ? " open" : ""}`} aria-label={t("Main menu")}>
-          <Link className="ws" href={landing}>
-            <span className="monogram">{(businessName ?? "J").charAt(0).toUpperCase()}</span>
-            <span style={{ flex: 1, minWidth: 0 }}><b>{businessName ?? "JurisOne"}</b><small>{businessName ? t("JurisOne workspace") : t("Platform console")}</small></span>
+        <aside id="side" className={`side${sideOpen ? " open" : ""}${isFolded ? " folded" : ""}`} aria-label={t("Main menu")} onMouseOver={showRailTip} onFocus={showRailTip} onMouseOut={() => setRailTip(null)} onBlur={() => setRailTip(null)}>
+          <Link className="ws" href={landing} data-tip="JURIS ONE">
+            <BrandLockup product="JURIS ONE" />
           </Link>
-          <button className="side-search" type="button" onClick={openPal}><Icon name="search" size={15} />{t("Search")}<kbd>⌘K</kbd></button>
+          <button className="side-search" type="button" onClick={openPal} data-tip={t("Search")}><Icon name="search" size={15} />{t("Search")}<kbd>⌘K</kbd></button>
           {groups.map((navGroup) => (
             <div key={navGroup.title} style={{ display: "contents" }}>
               <div className="group">{t(navGroup.title)}</div>
               {navGroup.items.map((navItem) => (
-                <Link key={navItem.id} href={navPath(navItem)} className={`nav-item${page === navItem.id ? " on" : ""}`} aria-current={page === navItem.id ? "page" : undefined}>
+                <Link key={navItem.id} href={navPath(navItem)} className={`nav-item${page === navItem.id ? " on" : ""}`} aria-current={page === navItem.id ? "page" : undefined} data-tip={t(navItem.label)}>
                   <span className="ic"><Icon name={navItem.icon} size={17} /></span>
-                  {t(navItem.label)}
+                  <span className="nav-label">{t(navItem.label)}</span>
                   {navItem.id === "approvals" && badges.approvals > 0 && <span className="badge">{badges.approvals}</span>}
                   {navItem.id === "proofs" && badges.proofs > 0 && <span className="badge">{badges.proofs}</span>}
                   {navItem.id === "my-tasks" && (badges.myTasks ?? 0) > 0 && <span className="badge" title={t("Overdue or due today")}>{badges.myTasks}</span>}
@@ -187,7 +206,13 @@ export function Shell(props: ShellProps) {
               ))}
             </div>
           ))}
+          <div className="rail-foot">
+            <button type="button" className="rail-fold" onClick={toggleFold} aria-expanded={!isFolded} aria-label={isFolded ? t("Open the menu") : t("Fold the menu")} data-tip={isFolded ? t("Open the menu") : t("Fold the menu")}>
+              <Icon name="chevL" size={16} /><span className="nav-label">{isFolded ? t("Open the menu") : t("Fold the menu")}</span>
+            </button>
+          </div>
         </aside>
+        {railTip && isFolded && <span role="tooltip" className="rail-tip" style={{ top: railTip.top }}>{railTip.text}</span>}
 
         <div className="main">
           <header className="top">

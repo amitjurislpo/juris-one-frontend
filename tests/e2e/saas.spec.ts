@@ -61,7 +61,7 @@ test.describe.serial("a business on JurisOne, end to end", () => {
 
   test("the sub admin runs the business: Juris Track, subscription and a policy everyone must accept", async ({ page }) => {
     await asOwner(page);
-    await expect(page.locator(".side")).toContainText(BUSINESS);
+    await expect(page.locator(".side")).toContainText("Juris Consultants Group"); // the brand; the business name is no longer repeated in the menu
     await page.getByRole("link", { name: "Juris Track" }).click();
     // the business has the module (granted): the page opens (no 404). The e2e
     // environment runs no JurisTrack service, so the module's own screens cannot load here: the gateway error is expected.

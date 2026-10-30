@@ -89,6 +89,8 @@ export const hindiMessages: Record<string, string> = {
   "navigate": "चुनें",
   "select": "सेलेक्ट करें",
   "Sign out": "साइन आउट",
+  "Fold the menu": "मेन्यू समेटें",
+  "Open the menu": "मेन्यू खोलें",
   "Close": "बंद करें",
   "Designation": "पदनाम",
   "Role": "भूमिका",
