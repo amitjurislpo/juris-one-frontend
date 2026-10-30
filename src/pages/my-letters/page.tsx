@@ -8,7 +8,7 @@ import { formatDayMonthYear, isoDateIn } from "@/lib/format";
 /** Letters HR has issued to the signed-in employee (offer, appointment, experience, relieving, employment verification). */
 export default function MyLettersPage() {
   const { user, t } = usePage();
-  const rows = useData<IssuedLetter[]>("/api/letters/mine");
+  const rows = useData<IssuedLetter[]>("/api/v1/letters/mine");
   if (!rows) return <PageLoading />;
 
   return (
@@ -24,7 +24,7 @@ export default function MyLettersPage() {
               <span className="faint" style={{ fontSize: 12.5 }}>{letter.templateName} · {t("issued {date} by {name}", { date: formatDayMonthYear(isoDateIn(letter.issuedAt, user.timeZone)), name: letter.issuedBy })}</span>
               <span className="faint mono" style={{ fontSize: 11.5 }}>{letter.reference}</span>
             </span>
-            <a className="btn btn-sm btn-gold" href={`/api/letters/${letter.id}/pdf`} download><Icon name="download" size={14} />{t("PDF")}</a>
+            <a className="btn btn-sm btn-gold" href={`/api/v1/letters/${letter.id}/pdf`} download><Icon name="download" size={14} />{t("PDF")}</a>
           </div>
         ))}
       </div>

@@ -8,7 +8,7 @@ import { AcknowledgeClient } from "./AcknowledgeClient";
 /** Shown instead of every page until the user has accepted the current version of each published policy that needs it. */
 export default function AcknowledgePage() {
   const { user } = usePage();
-  const pending = useData<PolicyToRead[]>(user.subscriptionActive === false || user.readOnly ? null : "/api/policies/pending");
+  const pending = useData<PolicyToRead[]>(user.subscriptionActive === false || user.readOnly ? null : "/api/v1/policies/pending");
   if (user.subscriptionActive === false) return <Navigate to="/paused" replace />;
   if (user.readOnly) return <Navigate to={landingPath(user)} replace />; // accepting a policy is a change: not while the subscription has ended
   if (!pending) return <PageLoading />;

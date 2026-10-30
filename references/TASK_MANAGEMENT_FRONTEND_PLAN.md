@@ -54,7 +54,7 @@ Nothing is built yet. The first phase (MVP) delivers the items above; calendar, 
 | Topic | Rule |
 |---|---|
 | Names | Full words: `projectId`, `dueDate`, `TaskBoard`, `moveTask`. Booleans as questions (`isOverdue`, `canEdit`). No `u`, `d`, `p`, `tsk`. Single letters only for loop index, event `e`, translate `t`, tiny lambdas. |
-| Page shape | `const { user, t, searchParams, params } = usePage()`; data with `useData<T>("/api/…")` (call it `data` or a full noun, never `d`). |
+| Page shape | `const { user, t, searchParams, params } = usePage()`; data with `useData<T>("/api/v1/…")` (call it `data` or a full noun, never `d`). |
 | Files | Named after what they hold (`TaskBoard.tsx`), one exported component per file, hooks start with `use`. |
 | API calls | In the page folder's `actions.ts`, one function per endpoint, named after what it does; path and method **exactly** as in the backend plan §12. |
 | Text | English text is the translation key; every new `t("…")` string needs Hindi in `src/lib/i18n/messages/hi.ts` (`tests/unit/i18n.test.ts` fails otherwise); fixed API error messages need Hindi in `src/lib/i18n/messages/hi-api.ts`. |
@@ -72,7 +72,7 @@ Nothing is built yet. The first phase (MVP) delivers the items above; calendar, 
 ## 2. Left side menu
 
 How it works today: `src/lib/nav.ts` (`NAV`, must stay identical to the backend `engine/Nav.java`) defines id, label, icon, permissions, `needsReports`, `group`, `module`;
-the server sends the visible groups in `/api/shell`, and `src/components/shell/Shell.tsx` renders them (`groups.map` → `.group` title + `a.nav-item` links to `/${navItem.id}`), with badges for `approvals` and `proofs`.
+the server sends the visible groups in `/api/v1/shell`, and `src/components/shell/Shell.tsx` renders them (`groups.map` → `.group` title + `a.nav-item` links to `/${navItem.id}`), with badges for `approvals` and `proofs`.
 
 ### 2.1 Changes to `src/lib/nav.ts`
 
@@ -96,15 +96,15 @@ the server sends the visible groups in `/api/shell`, and `src/components/shell/S
 
 | Menu item | Icon | Who sees it (default) | Badge | Route → page file | Opens | Main API calls |
 |---|---|---|---|---|---|---|
-| My tasks | `tasks` (new) | every signed-in user of a business | overdue + due today (direct or indirect assignee) | `/my-tasks` → `src/pages/my-tasks/page.tsx` | My tasks list grouped by due; board tab | `GET /api/tasks/mine`, `POST /api/tasks`, `PATCH /api/tasks/{taskId}`, `PUT /api/tasks/{taskId}/position` |
-| Team tasks | `team` | people with direct reports | — | `/team-tasks` → `src/pages/team-tasks/page.tsx` | People summary + their tasks; depth switch | `GET /api/tasks/team` |
-| Projects | `folder` (new) | every signed-in user of a business | — | `/projects` → `src/pages/projects/page.tsx` | Projects I can see (Owner: all); "New project" for `projects.create` (Owner, HR Manager) | `GET /api/projects`, `POST /api/projects` |
-| (project) | — | via Projects | — | `/projects/:projectId` → `src/pages/projects/[id]/page.tsx` | One project: List / Board tabs | `GET /api/projects/{projectId}`, `GET /api/tasks?projectId=`, `GET /api/projects/{projectId}/board` |
-| (project settings) | — | project owners | — | `/projects/:projectId/settings` → `src/pages/projects/[id]/settings/page.tsx` | Details, members, workflow, labels, archive | `PUT /api/projects/{projectId}`, members, workflow-statuses, task-labels |
-| (task) | — | anyone who can see the task | — | `/tasks/:taskRef` → `src/pages/tasks/[ref]/page.tsx` | Full task page | `GET /api/tasks/{taskRef}`, comments, activity, attachments |
-| Task calendar (v2) | `cal` | every signed-in user of a business | — | `/task-calendar` → `src/pages/task-calendar/page.tsx` | Month/week grid by due date (Mine / Team / a project) | `GET /api/tasks/mine?dueFrom=&dueTo=&pageSize=500` (or `/team`, `/api/tasks?projectId=`) |
-| Task reports (v2) | `chart` (new) | Owner, HR Manager | — | `/task-reports` → `src/pages/task-reports/page.tsx` | KPIs, workload, overdue, finished per week | `GET /api/task-reports/summary` |
-| Task settings | `sliders` | Owner (`tasks.manage`) | — | `/task-settings` → `src/pages/task-settings/page.tsx` | Default workflow, company labels; templates (v2) | `GET /api/task-settings`, `/api/task-settings/workflow-statuses…`, `/api/task-labels…` |
+| My tasks | `tasks` (new) | every signed-in user of a business | overdue + due today (direct or indirect assignee) | `/my-tasks` → `src/pages/my-tasks/page.tsx` | My tasks list grouped by due; board tab | `GET /api/v1/tasks/mine`, `POST /api/v1/tasks`, `PATCH /api/v1/tasks/{taskId}`, `PUT /api/v1/tasks/{taskId}/position` |
+| Team tasks | `team` | people with direct reports | — | `/team-tasks` → `src/pages/team-tasks/page.tsx` | People summary + their tasks; depth switch | `GET /api/v1/tasks/team` |
+| Projects | `folder` (new) | every signed-in user of a business | — | `/projects` → `src/pages/projects/page.tsx` | Projects I can see (Owner: all); "New project" for `projects.create` (Owner, HR Manager) | `GET /api/v1/projects`, `POST /api/v1/projects` |
+| (project) | — | via Projects | — | `/projects/:projectId` → `src/pages/projects/[id]/page.tsx` | One project: List / Board tabs | `GET /api/v1/projects/{projectId}`, `GET /api/v1/tasks?projectId=`, `GET /api/v1/projects/{projectId}/board` |
+| (project settings) | — | project owners | — | `/projects/:projectId/settings` → `src/pages/projects/[id]/settings/page.tsx` | Details, members, workflow, labels, archive | `PUT /api/v1/projects/{projectId}`, members, workflow-statuses, task-labels |
+| (task) | — | anyone who can see the task | — | `/tasks/:taskRef` → `src/pages/tasks/[ref]/page.tsx` | Full task page | `GET /api/v1/tasks/{taskRef}`, comments, activity, attachments |
+| Task calendar (v2) | `cal` | every signed-in user of a business | — | `/task-calendar` → `src/pages/task-calendar/page.tsx` | Month/week grid by due date (Mine / Team / a project) | `GET /api/v1/tasks/mine?dueFrom=&dueTo=&pageSize=500` (or `/team`, `/api/v1/tasks?projectId=`) |
+| Task reports (v2) | `chart` (new) | Owner, HR Manager | — | `/task-reports` → `src/pages/task-reports/page.tsx` | KPIs, workload, overdue, finished per week | `GET /api/v1/task-reports/summary` |
+| Task settings | `sliders` | Owner (`tasks.manage`) | — | `/task-settings` → `src/pages/task-settings/page.tsx` | Default workflow, company labels; templates (v2) | `GET /api/v1/task-settings`, `/api/v1/task-settings/workflow-statuses…`, `/api/v1/task-labels…` |
 
 No separate "Board" menu item: a board always belongs to a project or to My tasks, so it is a tab there (one line reason: a menu item would first need a project picker).
 
@@ -148,7 +148,7 @@ Add to `APP_ROUTES` in `src/routes.tsx` (lazy `page(() => import(…))` like eve
 - **URL state:** filters, sort, page, view (`view=list|board`), the open drawer task (`task=WEB-12`) and the team depth (`depth=2`) live in the URL via `useQuery()` from `src/components/table/useQuery.ts` (`set({ name: value })` resets `page`). So a filtered board can be bookmarked and the Back button closes the drawer.
 - **Writes:** functions in `actions.ts` calling `apiAction(method, path, body)` (`src/lib/api.ts`). On success **every** cached query is refetched before the promise resolves, so the toast shows with fresh data (no manual cache code). Errors come back as `{ ok: false, error }` with the API's `detail` already translated.
 - **Uploads:** multipart (attachments). Today `src/pages/policies/PoliciesClient.tsx` uses a raw `fetch` with `FormData`, which skips the 401 refresh. Add one helper to `src/lib/api.ts`: `apiUpload(path, formData)` → same envelope + 401 refresh + refetch, built on `apiCall`'s refresh logic (extend `send()` to accept a `FormData` body without setting `content-type`). Use it from `uploadTaskAttachment`. (Moving the policy upload onto it is optional and not part of this work.)
-- **Conflicts:** `PATCH /api/tasks/{taskId}` needs `version`. On a 409 the edit form shows the message ("Someone else changed this task. Reload to see their changes.") with a **Reload** button that calls `router.refresh()` (`src/lib/router.ts`).
+- **Conflicts:** `PATCH /api/v1/tasks/{taskId}` needs `version`. On a 409 the edit form shows the message ("Someone else changed this task. Reload to see their changes.") with a **Reload** button that calls `router.refresh()` (`src/lib/router.ts`).
 - **Toasts:** `useToast()` from `src/components/shell/Toasts.tsx`; `toast(message)` / `toast(error, "bad")`.
 - **Read-only:** `useReadOnly()` from `src/lib/session.tsx` hides every write control (pattern: `AddAssetButton` in `src/pages/assets/AssetsClient.tsx`).
 
@@ -179,7 +179,7 @@ Widths: desktop 1280 px (sidebar + content), phone 390 px (sidebar is a drawer, 
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-- Data: `GET /api/tasks/mine` + `toQueryString(searchParams)` (defaults `relation=ASSIGNED`, `statusCategory=TODO,IN_PROGRESS`, `sort=dueDate`, `pageSize=200`); the header counts come from `data.counts`.
+- Data: `GET /api/v1/tasks/mine` + `toQueryString(searchParams)` (defaults `relation=ASSIGNED`, `statusCategory=TODO,IN_PROGRESS`, `sort=dueDate`, `pageSize=200`); the header counts come from `data.counts`.
 - The segmented filter sets `relation`: All mine = `ASSIGNED` (I am the direct **or** the indirect assignee, default), Doing = `DIRECT`, Accountable = `INDIRECT`, Reported by me = `REPORTED`, Following = `WATCHING`. A row where `myAssignment === "INDIRECT"` shows an "Accountable" chip and the direct assignee's `Avatar`, so the overseer sees who is doing it.
 - Rows are grouped client-side with `dueBucket()`. The checkbox marks the task done with `updateTask(taskId, { version, statusCategory: "DONE" })`: the list does not carry each project's workflow, so the server maps the category to the project's first `DONE` status (backend plan §8.2 and row T7 of §12.1). Unticking sends `statusCategory: "TODO"`.
 - Click a row → opens the task drawer (`?task=WEB-12`); the key link opens `/tasks/WEB-12` in full.
@@ -204,7 +204,7 @@ Widths: desktop 1280 px (sidebar + content), phone 390 px (sidebar is a drawer, 
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-- Data: `GET /api/tasks/team?depth=1|2&employeeId=&…` → `rows` + `people`. Clicking a person card sets `employeeId` in the URL (click again to clear). The switch sets `depth=2`.
+- Data: `GET /api/v1/tasks/team?depth=1|2&employeeId=&…` → `rows` + `people`. Clicking a person card sets `employeeId` in the URL (click again to clear). The switch sets `depth=2`.
 - Team tasks follows the **reporting line** (tasks whose direct assignee reports to me); the indirect assignee is a separate per-task choice. The "Where I'm accountable" checkbox adds `indirectAssigneeId={user.id}`. Tasks where I am accountable also appear in my own My tasks.
 - Read-only for the manager (view + comment) unless they are also a project member or the task's indirect assignee (then they may change status and priority and reassign the direct assignee); the API's `permissions` in the task detail decide and the drawer hides controls accordingly.
 - Table: `SortableHeader` (`sort`, `sortDirection`) and `Pager` from `src/components/table/Table.tsx`.
@@ -226,7 +226,7 @@ Widths: desktop 1280 px (sidebar + content), phone 390 px (sidebar is a drawer, 
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-- Data: `GET /api/projects` + query. Cards use `.card` in a `.grid3` (2 columns ≤ 1100 px, 1 column ≤ 700 px). A table view is not needed in MVP.
+- Data: `GET /api/v1/projects` + query. Cards use `.card` in a `.grid3` (2 columns ≤ 1100 px, 1 column ≤ 700 px). A table view is not needed in MVP.
 - "New project" (only when `user.perms` has `projects.create` or `tasks.manage`, and not read-only) opens `ProjectFormModal`: Key (auto-suggested from the name, uppercase, 2–6), Name, Description, Visibility (Private / Company-wide, with one-line explanations), Colour, Department (optional). On success → navigate to `/projects/{id}`.
 
 ### 5.4 Project — `src/pages/projects/[id]/page.tsx` (+ `ProjectClient.tsx`)
@@ -249,7 +249,7 @@ Widths: desktop 1280 px (sidebar + content), phone 390 px (sidebar is a drawer, 
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-- Data: `GET /api/projects/{id}` (header, statuses, labels, `canManage`, `canCreateTasks`) and, by tab, `GET /api/tasks?projectId={id}&…` (List) or `GET /api/projects/{id}/board?…` (Board).
+- Data: `GET /api/v1/projects/{id}` (header, statuses, labels, `canManage`, `canCreateTasks`) and, by tab, `GET /api/v1/tasks?projectId={id}&…` (List) or `GET /api/v1/projects/{id}/board?…` (Board).
 - List tab: table with Key, Title (+ sub-task marker), Status chip, Priority, Assignee (`Avatar`), Accountable (`Avatar`, `hide-sm`), Due (red when `isOverdue`), Labels, 💬 count; sortable; paged 50. Filters `assigneeId` and `indirectAssigneeId` (person select + "Nobody" = `none`); also sent to the board endpoint.
 - Cards show the direct assignee's avatar and, when set, a smaller second avatar for the accountable person (title attribute "Accountable: {name}").
 - Board: `TaskBoard` + `TaskCard` (§8). "+ Add a task" at the bottom of a column creates in that status (`createTask({ projectId, title, statusId })`).
@@ -259,7 +259,7 @@ Widths: desktop 1280 px (sidebar + content), phone 390 px (sidebar is a drawer, 
 
 Sections as `.card`s, each with its own Save (owners only; others are redirected back by a 403 from the API — show the read-only view instead):
 1. **Details**: name, description, visibility, colour, department (key editable only while the project has no tasks). `updateProject(id, {version, …})`.
-2. **Members**: table (person, role select Owner/Member/Viewer, remove ✕); "Add member" = person picker (`GET /api/tasks/assignees?search=`) + role. Leaving the project is a button for the member themself.
+2. **Members**: table (person, role select Owner/Member/Viewer, remove ✕); "Add member" = person picker (`GET /api/v1/tasks/assignees?search=`) + role. Leaving the project is a button for the member themself.
 3. **Workflow**: rows of statuses (name, category select, colour, "initial" radio, task count, ✕); "Add status"; reorder with ↑/↓ buttons (sends the full order to `PUT …/workflow-status-order`). Deleting a status with tasks asks "Move its tasks to:" (select).
 4. **Labels**: chips with edit/delete; "Add label".
 5. **Danger zone**: Archive / Restore; Delete (only offered when the project has no tasks; a soft delete like everything else).
@@ -295,7 +295,7 @@ The same `TaskDetail` component renders full-page (`/tasks/WEB-12`) and inside `
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-- Data: `GET /api/tasks/{ref}` (`TaskDetail`: fields, `version`, `statuses`, `permissions`, sub-tasks, checklist, attachments, watchers, `mentionedPeople`); `GET /api/tasks/{id}/comments?page=` and `GET /api/tasks/{id}/activity?page=` (load the tab that is open; "Show older" sets the page).
+- Data: `GET /api/v1/tasks/{ref}` (`TaskDetail`: fields, `version`, `statuses`, `permissions`, sub-tasks, checklist, attachments, watchers, `mentionedPeople`); `GET /api/v1/tasks/{id}/comments?page=` and `GET /api/v1/tasks/{id}/activity?page=` (load the tab that is open; "Show older" sets the page).
 - Each field saves on change (`updateTask(id, {version, field})`); title and description switch to an input/textarea on click and save on blur/Ctrl+Enter, Esc cancels.
 - Field controls follow `permissions` from the API, field by field: `canEdit` (all fields), `canChangeStatus` (status select, board moves), `canChangePriority`, `canChangeDirectAssignee`, `canChangeIndirectAssignee`, `canComment` (comment box), `canDelete`. A field the user may not change is shown as text.
 - **Due box:** a date input plus an optional time input (`<input type="date">` + `<input type="time">`, no new library); the time input is disabled until a date is chosen; clearing the date clears the time. Saved as `dueDate` (`YYYY-MM-DD`) and `dueTime` (`HH:mm` or null). The due time is optional: if a time is given, the task is due at that time; otherwise the task is due at the **end of that day** (23:59:59 in the task time zone), so it becomes overdue at the start of the next day. `DueInput` shows no default time (never pre-fills 00:00 or 09:00); `DueLabel` shows a date-only task as just the date (no time). Hint under it: "Due times are in the assignee's time zone"; when `dueTimeZone` differs from the viewer's zone the value shows the zone name (`formatDue`). Overdue (from the server's `isOverdue`) is shown in `--bad` with the word "Overdue".
@@ -307,7 +307,7 @@ The same `TaskDetail` component renders full-page (`/tasks/WEB-12`) and inside `
 
 ### 5.7 Task settings — `src/pages/task-settings/page.tsx` (+ `TaskSettingsClient.tsx`)
 
-- Owner only (`tasks.manage`). Cards: **Default workflow** (same editor as the project Workflow card, against `/api/task-settings/workflow-statuses…`; note "Used for personal tasks and copied into new projects"), **Company labels** (`/api/task-labels` without `projectId`), counts (projects, tasks). v2: **Templates** list/editor; v3: custom fields.
+- Owner only (`tasks.manage`). Cards: **Default workflow** (same editor as the project Workflow card, against `/api/v1/task-settings/workflow-statuses…`; note "Used for personal tasks and copied into new projects"), **Company labels** (`/api/v1/task-labels` without `projectId`), counts (projects, tasks). v2: **Templates** list/editor; v3: custom fields.
 - Reuse the `WorkflowEditor` and `LabelEditor` components (§6) for both project and company settings; they take the action functions as props.
 
 ### 5.8 Task calendar (v2) — `src/pages/task-calendar/page.tsx`
@@ -321,11 +321,11 @@ The same `TaskDetail` component renders full-page (`/tasks/WEB-12`) and inside `
 │         +2 more                                                               │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
-- Data: `GET /api/tasks/mine?dueFrom=&dueTo=&pageSize=500` (Team: `/api/tasks/team`, Project: `/api/tasks?projectId=`). Tasks are placed on their `dueDate`; timed tasks show their `dueTime` (via `formatDue`) and come first in the day, sorted by time; **date-only tasks sort after the timed tasks of the same day** because they are due at the end of that day (23:59:59, task time zone). Grid styling from the existing `.cal` classes used by `src/pages/attendance/AttendanceClient.tsx`. Phone: an agenda list (one day per row) instead of the grid.
+- Data: `GET /api/v1/tasks/mine?dueFrom=&dueTo=&pageSize=500` (Team: `/api/v1/tasks/team`, Project: `/api/v1/tasks?projectId=`). Tasks are placed on their `dueDate`; timed tasks show their `dueTime` (via `formatDue`) and come first in the day, sorted by time; **date-only tasks sort after the timed tasks of the same day** because they are due at the end of that day (23:59:59, task time zone). Grid styling from the existing `.cal` classes used by `src/pages/attendance/AttendanceClient.tsx`. Phone: an agenda list (one day per row) instead of the grid.
 
 ### 5.9 Task reports (v2) — `src/pages/task-reports/page.tsx`
 
-- Filters: project, department, person, period (`from`/`to`). KPI row (`.kpis` / `.kpi`): Open, Overdue, Completed in period, Average days to complete. Cards: "Finished per week" (bars with the existing `.bars` styles), "Workload by person" (table: open, overdue, estimate hours, completed), "By status", "By project". Data: `GET /api/task-reports/summary`. Export: link to `GET /api/tasks/export?…`.
+- Filters: project, department, person, period (`from`/`to`). KPI row (`.kpis` / `.kpi`): Open, Overdue, Completed in period, Average days to complete. Cards: "Finished per week" (bars with the existing `.bars` styles), "Workload by person" (table: open, overdue, estimate hours, completed), "By status", "By project". Data: `GET /api/v1/task-reports/summary`. Export: link to `GET /api/v1/tasks/export?…`.
 
 ---
 
@@ -358,10 +358,10 @@ The same `TaskDetail` component renders full-page (`/tasks/WEB-12`) and inside `
 | `TaskDetail.tsx` | Full task view used by the page and the drawer |
 | `TaskDrawer.tsx` | Reads `?task=` and renders `Drawer` + `TaskDetail`; closing removes the parameter |
 | `QuickAddTask.tsx` | Single-line create (title + optional project/status) |
-| `TaskFormModal.tsx` | "New task" with all fields (project, title, description, type, priority, assignee, accountable person, start date, due date + optional due time, estimate, labels); after an assignee is chosen it offers their reporting manager (`reportingManagerId` from `/api/tasks/assignees`) as a one-click "Accountable" suggestion chip (decided by the owner; never set automatically) |
+| `TaskFormModal.tsx` | "New task" with all fields (project, title, description, type, priority, assignee, accountable person, start date, due date + optional due time, estimate, labels); after an assignee is chosen it offers their reporting manager (`reportingManagerId` from `/api/v1/tasks/assignees`) as a one-click "Accountable" suggestion chip (decided by the owner; never set automatically) |
 | `StatusChip.tsx`, `PriorityLabel.tsx`, `DueLabel.tsx`, `LabelChips.tsx` | Small display pieces (colour from palette names; `DueLabel` shows date + optional time via `formatDue`, overdue in `--bad`) |
 | `DueInput.tsx` | Date + optional time inputs used by the task panel and the form modal |
-| `PersonPicker.tsx` | Search-as-you-type person select (`GET /api/tasks/assignees?search=&projectId=`); listbox with `aria-activedescendant` (pattern of `PhoneInput`'s country list) |
+| `PersonPicker.tsx` | Search-as-you-type person select (`GET /api/v1/tasks/assignees?search=&projectId=`); listbox with `aria-activedescendant` (pattern of `PhoneInput`'s country list) |
 | `MentionTextarea.tsx` | Textarea that opens the person picker after `@` and inserts `@{uuid}` |
 | `RichText.tsx` | Renders stored text: paragraphs, line breaks, auto-links (`rel="noopener"`), `@{uuid}` → `@Name` chip; v2 adds bold/italic/lists/code. **Never** uses `dangerouslySetInnerHTML` |
 | `CommentList.tsx`, `TaskActivityList.tsx`, `ChecklistEditor.tsx`, `SubtaskList.tsx`, `AttachmentList.tsx` | Sections of `TaskDetail` |
@@ -396,63 +396,63 @@ Paths and methods are binding: they must match backend plan §12 exactly.
 
 | Function | Method + path | Body |
 |---|---|---|
-| `createProject(input)` | `POST /api/projects` | `{key, name, description, visibility, color, departmentId}` → `{id, key}` |
-| `updateProject(projectId, input)` | `PUT /api/projects/{projectId}` | `{version, name, description, visibility, color, departmentId}` → `{version}` |
-| `setProjectStatus(projectId, status)` | `PUT /api/projects/{projectId}/status` | `{status: "ACTIVE" \| "ARCHIVED"}` |
-| `deleteProject(projectId)` | `DELETE /api/projects/{projectId}` | — |
-| `addProjectMember(projectId, employeeId, role)` | `POST /api/projects/{projectId}/members` | `{employeeId, role}` |
-| `changeProjectMemberRole(projectId, employeeId, role)` | `PUT /api/projects/{projectId}/members/{employeeId}` | `{role}` |
-| `removeProjectMember(projectId, employeeId)` | `DELETE /api/projects/{projectId}/members/{employeeId}` | — |
-| `createProjectStatus(projectId, input)` | `POST /api/projects/{projectId}/workflow-statuses` | `{name, category, color}` |
-| `updateProjectStatus(projectId, statusId, input)` | `PUT /api/projects/{projectId}/workflow-statuses/{statusId}` | `{name, category, color, isInitial}` |
-| `reorderProjectStatuses(projectId, statusIds)` | `PUT /api/projects/{projectId}/workflow-status-order` | `{statusIds}` |
-| `deleteProjectStatus(projectId, statusId, moveTasksToStatusId?)` | `DELETE /api/projects/{projectId}/workflow-statuses/{statusId}?moveTasksToStatusId=` | — |
-| `createTaskLabel(input)` | `POST /api/task-labels` | `{name, color, projectId?}` |
-| `updateTaskLabel(labelId, input)` | `PUT /api/task-labels/{labelId}` | `{name, color}` |
-| `deleteTaskLabel(labelId)` | `DELETE /api/task-labels/{labelId}` | — |
+| `createProject(input)` | `POST /api/v1/projects` | `{key, name, description, visibility, color, departmentId}` → `{id, key}` |
+| `updateProject(projectId, input)` | `PUT /api/v1/projects/{projectId}` | `{version, name, description, visibility, color, departmentId}` → `{version}` |
+| `setProjectStatus(projectId, status)` | `PUT /api/v1/projects/{projectId}/status` | `{status: "ACTIVE" \| "ARCHIVED"}` |
+| `deleteProject(projectId)` | `DELETE /api/v1/projects/{projectId}` | — |
+| `addProjectMember(projectId, employeeId, role)` | `POST /api/v1/projects/{projectId}/members` | `{employeeId, role}` |
+| `changeProjectMemberRole(projectId, employeeId, role)` | `PUT /api/v1/projects/{projectId}/members/{employeeId}` | `{role}` |
+| `removeProjectMember(projectId, employeeId)` | `DELETE /api/v1/projects/{projectId}/members/{employeeId}` | — |
+| `createProjectStatus(projectId, input)` | `POST /api/v1/projects/{projectId}/workflow-statuses` | `{name, category, color}` |
+| `updateProjectStatus(projectId, statusId, input)` | `PUT /api/v1/projects/{projectId}/workflow-statuses/{statusId}` | `{name, category, color, isInitial}` |
+| `reorderProjectStatuses(projectId, statusIds)` | `PUT /api/v1/projects/{projectId}/workflow-status-order` | `{statusIds}` |
+| `deleteProjectStatus(projectId, statusId, moveTasksToStatusId?)` | `DELETE /api/v1/projects/{projectId}/workflow-statuses/{statusId}?moveTasksToStatusId=` | — |
+| `createTaskLabel(input)` | `POST /api/v1/task-labels` | `{name, color, projectId?}` |
+| `updateTaskLabel(labelId, input)` | `PUT /api/v1/task-labels/{labelId}` | `{name, color}` |
+| `deleteTaskLabel(labelId)` | `DELETE /api/v1/task-labels/{labelId}` | — |
 
 ### 7.2 `src/pages/tasks/actions.ts`
 
 | Function | Method + path | Body |
 |---|---|---|
-| `createTask(input)` | `POST /api/tasks` | `TaskInput` (backend §12.1) → `{id, key}` |
-| `updateTask(taskId, changes)` | `PATCH /api/tasks/{taskId}` | `{version, …changed fields}` incl. `assigneeId`, `indirectAssigneeId`, `dueDate`, `dueTime` (`null` clears; `statusCategory` allowed instead of `statusId`, see §5.1) → `{version}` |
-| `moveTask(taskId, target)` | `PUT /api/tasks/{taskId}/position` | `{statusId, previousTaskId?, nextTaskId?}` |
-| `deleteTask(taskId)` | `DELETE /api/tasks/{taskId}` | — |
-| `followTask(taskId, employeeId)` | `PUT /api/tasks/{taskId}/watchers/{employeeId}` | — |
-| `unfollowTask(taskId, employeeId)` | `DELETE /api/tasks/{taskId}/watchers/{employeeId}` | — |
-| `addChecklistItem(taskId, text)` | `POST /api/tasks/{taskId}/checklist-items` | `{text}` |
-| `updateChecklistItem(taskId, itemId, changes)` | `PATCH /api/tasks/{taskId}/checklist-items/{itemId}` | `{text?, isDone?, position?}` |
-| `deleteChecklistItem(taskId, itemId)` | `DELETE /api/tasks/{taskId}/checklist-items/{itemId}` | — |
-| `addComment(taskId, body)` | `POST /api/tasks/{taskId}/comments` | `{body}` |
-| `editComment(taskId, commentId, body)` | `PATCH /api/tasks/{taskId}/comments/{commentId}` | `{body}` |
-| `deleteComment(taskId, commentId)` | `DELETE /api/tasks/{taskId}/comments/{commentId}` | — |
-| `uploadTaskAttachment(taskId, file)` | `POST /api/tasks/{taskId}/attachments` (multipart `file`, via `apiUpload`) | → `{id, name}` |
-| `deleteTaskAttachment(taskId, attachmentId)` | `DELETE /api/tasks/{taskId}/attachments/{attachmentId}` | — |
-| v2 `updateTasks(taskIds, changes)` | `PATCH /api/tasks` | `{taskIds, changes}` |
-| v2 `restoreTask(taskId)` | `POST /api/tasks/{taskId}/restoration` | — |
-| v2 `addTaskDependency(taskId, dependsOnTaskId)` / `removeTaskDependency(…)` | `POST /api/tasks/{taskId}/dependencies` / `DELETE /api/tasks/{taskId}/dependencies/{dependsOnTaskId}` | `{dependsOnTaskId}` |
-| v2 `setTaskRecurrence(taskId, rule)` / `removeTaskRecurrence(taskId)` | `PUT` / `DELETE /api/tasks/{taskId}/recurrence` | rule fields |
-| v2 `importTasks(projectId, file, isDryRun)` | `POST /api/projects/{projectId}/task-imports?isDryRun=` (multipart) | — |
-| v2 `saveTaskFilter(input)` / `updateTaskFilter` / `deleteTaskFilter` | `POST /api/task-filters`, `PUT`/`DELETE /api/task-filters/{filterId}` | `{name, page, projectId?, query}` |
+| `createTask(input)` | `POST /api/v1/tasks` | `TaskInput` (backend §12.1) → `{id, key}` |
+| `updateTask(taskId, changes)` | `PATCH /api/v1/tasks/{taskId}` | `{version, …changed fields}` incl. `assigneeId`, `indirectAssigneeId`, `dueDate`, `dueTime` (`null` clears; `statusCategory` allowed instead of `statusId`, see §5.1) → `{version}` |
+| `moveTask(taskId, target)` | `PUT /api/v1/tasks/{taskId}/position` | `{statusId, previousTaskId?, nextTaskId?}` |
+| `deleteTask(taskId)` | `DELETE /api/v1/tasks/{taskId}` | — |
+| `followTask(taskId, employeeId)` | `PUT /api/v1/tasks/{taskId}/watchers/{employeeId}` | — |
+| `unfollowTask(taskId, employeeId)` | `DELETE /api/v1/tasks/{taskId}/watchers/{employeeId}` | — |
+| `addChecklistItem(taskId, text)` | `POST /api/v1/tasks/{taskId}/checklist-items` | `{text}` |
+| `updateChecklistItem(taskId, itemId, changes)` | `PATCH /api/v1/tasks/{taskId}/checklist-items/{itemId}` | `{text?, isDone?, position?}` |
+| `deleteChecklistItem(taskId, itemId)` | `DELETE /api/v1/tasks/{taskId}/checklist-items/{itemId}` | — |
+| `addComment(taskId, body)` | `POST /api/v1/tasks/{taskId}/comments` | `{body}` |
+| `editComment(taskId, commentId, body)` | `PATCH /api/v1/tasks/{taskId}/comments/{commentId}` | `{body}` |
+| `deleteComment(taskId, commentId)` | `DELETE /api/v1/tasks/{taskId}/comments/{commentId}` | — |
+| `uploadTaskAttachment(taskId, file)` | `POST /api/v1/tasks/{taskId}/attachments` (multipart `file`, via `apiUpload`) | → `{id, name}` |
+| `deleteTaskAttachment(taskId, attachmentId)` | `DELETE /api/v1/tasks/{taskId}/attachments/{attachmentId}` | — |
+| v2 `updateTasks(taskIds, changes)` | `PATCH /api/v1/tasks` | `{taskIds, changes}` |
+| v2 `restoreTask(taskId)` | `POST /api/v1/tasks/{taskId}/restoration` | — |
+| v2 `addTaskDependency(taskId, dependsOnTaskId)` / `removeTaskDependency(…)` | `POST /api/v1/tasks/{taskId}/dependencies` / `DELETE /api/v1/tasks/{taskId}/dependencies/{dependsOnTaskId}` | `{dependsOnTaskId}` |
+| v2 `setTaskRecurrence(taskId, rule)` / `removeTaskRecurrence(taskId)` | `PUT` / `DELETE /api/v1/tasks/{taskId}/recurrence` | rule fields |
+| v2 `importTasks(projectId, file, isDryRun)` | `POST /api/v1/projects/{projectId}/task-imports?isDryRun=` (multipart) | — |
+| v2 `saveTaskFilter(input)` / `updateTaskFilter` / `deleteTaskFilter` | `POST /api/v1/task-filters`, `PUT`/`DELETE /api/v1/task-filters/{filterId}` | `{name, page, projectId?, query}` |
 
-Downloads are plain links (no action): attachment `href="/api/tasks/{taskId}/attachments/{attachmentId}/file"`; v2 export `href="/api/tasks/export?…"` with `download` (pattern: the audit export link).
+Downloads are plain links (no action): attachment `href="/api/v1/tasks/{taskId}/attachments/{attachmentId}/file"`; v2 export `href="/api/v1/tasks/export?…"` with `download` (pattern: the audit export link).
 
 ### 7.3 `src/pages/task-settings/actions.ts`
 
 | Function | Method + path | Body |
 |---|---|---|
-| `createDefaultStatus(input)` | `POST /api/task-settings/workflow-statuses` | `{name, category, color}` |
-| `updateDefaultStatus(statusId, input)` | `PUT /api/task-settings/workflow-statuses/{statusId}` | `{name, category, color, isInitial}` |
-| `reorderDefaultStatuses(statusIds)` | `PUT /api/task-settings/workflow-status-order` | `{statusIds}` |
-| `deleteDefaultStatus(statusId, moveTasksToStatusId?)` | `DELETE /api/task-settings/workflow-statuses/{statusId}?moveTasksToStatusId=` | — |
-| v2 template functions | `/api/task-templates…` | as backend §12.2 |
+| `createDefaultStatus(input)` | `POST /api/v1/task-settings/workflow-statuses` | `{name, category, color}` |
+| `updateDefaultStatus(statusId, input)` | `PUT /api/v1/task-settings/workflow-statuses/{statusId}` | `{name, category, color, isInitial}` |
+| `reorderDefaultStatuses(statusIds)` | `PUT /api/v1/task-settings/workflow-status-order` | `{statusIds}` |
+| `deleteDefaultStatus(statusId, moveTasksToStatusId?)` | `DELETE /api/v1/task-settings/workflow-statuses/{statusId}?moveTasksToStatusId=` | — |
+| v2 template functions | `/api/v1/task-templates…` | as backend §12.2 |
 
 Company labels reuse `createTaskLabel` etc. from `src/pages/projects/actions.ts` (no `projectId`).
 
 ### 7.4 Reads (`useData` paths, for reference)
 
-`/api/tasks/mine?…`, `/api/tasks/team?…`, `/api/tasks?projectId=…`, `/api/tasks/{ref}`, `/api/tasks/{taskId}/comments?page=`, `/api/tasks/{taskId}/activity?page=`, `/api/tasks/assignees?search=&projectId=` (person picker; small direct `apiData` call inside the picker, debounced 250 ms like `SearchBox`, not `useData`, because it changes per keystroke), `/api/projects?…`, `/api/projects/{id}`, `/api/projects/{id}/members`, `/api/projects/{id}/board?…`, `/api/task-labels?projectId=`, `/api/task-settings`; v2 `/api/task-reports/summary?…`, `/api/task-filters/mine`, `/api/task-templates?projectId=`, `/api/tasks/deleted`.
+`/api/v1/tasks/mine?…`, `/api/v1/tasks/team?…`, `/api/v1/tasks?projectId=…`, `/api/v1/tasks/{ref}`, `/api/v1/tasks/{taskId}/comments?page=`, `/api/v1/tasks/{taskId}/activity?page=`, `/api/v1/tasks/assignees?search=&projectId=` (person picker; small direct `apiData` call inside the picker, debounced 250 ms like `SearchBox`, not `useData`, because it changes per keystroke), `/api/v1/projects?…`, `/api/v1/projects/{id}`, `/api/v1/projects/{id}/members`, `/api/v1/projects/{id}/board?…`, `/api/v1/task-labels?projectId=`, `/api/v1/task-settings`; v2 `/api/v1/task-reports/summary?…`, `/api/v1/task-filters/mine`, `/api/v1/task-templates?projectId=`, `/api/v1/tasks/deleted`.
 
 ---
 
@@ -590,7 +590,7 @@ Matches backend plan §20. Each phase: backend PR first, then this repo's PR, bo
 | **T1 — MVP** | nav + icons + permissions; routes; My tasks (list + board + quick add); Projects (cards + create); Project (list + board with DnD + Move menu); Project settings (details, members, workflow, labels, archive); task page + drawer (fields incl. assignee and accountable person with field-level rights, description, sub-tasks, checklist, attachments, comments with mentions, history, follow, delete); Team tasks (people summary + table + depth switch); Task settings (default workflow, company labels); shell badge; `apiUpload`; Hindi for everything; unit + e2e scenarios 1–11. Suggested split: **T1a** lists, project, board, task page without comments/attachments; **T1b** comments, mentions, attachments, team tasks, settings, badge. | `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `npx knip` clean, `npm run test:e2e` green against the backend branch; manual check at 390 px and 1280 px in light and dark theme; owner demo |
 | **T2 — Planning tools** | Task calendar; Task reports; bulk select + bulk edit bar on lists; CSV export link and import dialog (dry run preview → import); saved filters (dropdown on My tasks / Project); templates (settings + "New task from template"); recurring rule editor on the task; dependencies section ("Blocked by"); recently deleted + restore; limited markdown in `RichText`; command-palette action "New task". | same + e2e for each new feature |
 | **T3 — Advanced** | Custom fields (settings + task fields + filters); configurable types; timeline/Gantt view (CSS grid of weeks, bars from start/due, dependency lines optional); WIP limits on board columns; first integrations (JurisTrack time per task in the task page, leave warnings in the person picker). | same |
-| **Later: email alerts** (the owner will start it; backend plan §20) | A "Task notifications" card on the profile page: per event, bell on/off and email on/off (`GET`/`PUT /api/task-notification-preferences/mine`), and a daily digest switch; Hindi for its labels. Nothing in T1–T3 sends or configures email. | same |
+| **Later: email alerts** (the owner will start it; backend plan §20) | A "Task notifications" card on the profile page: per event, bell on/off and email on/off (`GET`/`PUT /api/v1/task-notification-preferences/mine`), and a daily digest switch; Hindi for its labels. Nothing in T1–T3 sends or configures email. | same |
 
 ---
 
@@ -622,10 +622,10 @@ Still open:
 | F4 | Show the My tasks badge also on the bell? | No; the menu badge is enough. |
 | F5 | Hindi for user-typed content (task titles)? | Not translated (it is user data); only the UI is. |
 | F6 | Default view of a project: List or Board? | Board for projects (visual), List for My tasks; remembered per person in `localStorage` (wrapped in try/catch), the URL `view=` wins. |
-| F7 | Should the Home page get a "My tasks" card? | Yes in T2 (top 5 due today/overdue), reusing `GET /api/tasks/mine?due=OVERDUE…`; not in MVP to keep Home unchanged. |
+| F7 | Should the Home page get a "My tasks" card? | Yes in T2 (top 5 due today/overdue), reusing `GET /api/v1/tasks/mine?due=OVERDUE…`; not in MVP to keep Home unchanged. |
 | Q15 | Should **timed** tasks also get a reminder shortly before the due time (e.g. 1 hour before)? (same as backend §22.2) | No; only the 09:00 daily reminders. |
 
-Contract reminder: `PATCH /api/tasks/{taskId}` accepts `statusCategory` (`TODO`/`IN_PROGRESS`/`DONE`) as an alternative to `statusId` (exactly one of them; the server picks the project's first status of that category). It is in the backend plan (§8.2 and §12.1 row T7).
+Contract reminder: `PATCH /api/v1/tasks/{taskId}` accepts `statusCategory` (`TODO`/`IN_PROGRESS`/`DONE`) as an alternative to `statusId` (exactly one of them; the server picks the project's first status of that category). It is in the backend plan (§8.2 and §12.1 row T7).
 
 ---
 

@@ -13,7 +13,7 @@ export default function StructuresPage() {
   const data = useData<{
     rows: { id: string; photo?: number | null; code: string; name: string; title: string; dateOfJoining: string; revisions: SalaryRevision[]; current: SalaryRevision | null; gross: number }[];
     total: number; departments: { id: string; name: string }[]; today: string; minFrom: string;
-  }>(`/api/structures${toQueryString(searchParams)}`);
+  }>(`/api/v1/structures${toQueryString(searchParams)}`);
   if (!data) return <PageLoading />;
   const { rows, departments, today, minFrom } = data;
   const all = { length: data.total };

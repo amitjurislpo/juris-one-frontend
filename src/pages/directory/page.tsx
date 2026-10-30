@@ -11,7 +11,7 @@ export default function DirectoryPage() {
   const { t, searchParams } = usePage();
   const data = useData<{
     rows: { id: string; photo?: number | null; name: string; email: string; title: string; status: string }[]; total: number; page: number; take: number; activeCount: number; departments: { id: string; name: string }[];
-  }>(`/api/directory${toQueryString(searchParams)}`);
+  }>(`/api/v1/directory${toQueryString(searchParams)}`);
   if (!data) return <PageLoading />;
   const { rows, total, page, take, activeCount, departments } = data;
 

@@ -16,5 +16,5 @@ export interface AttendancePolicyInput {
 
 /** Attendance policy (REQUIREMENTS §5.4 "configurable in Policies") — saved by the API. Locked months keep their frozen values. */
 export async function updateAttendancePolicy(input: AttendancePolicyInput): Promise<ActionResult> {
-  return apiAction("PUT", "/api/settings/attendance", input, ["/settings", "/home", "/attendance", "/register", "/team"]);
+  return apiAction("PUT", "/api/v1/settings/attendance", input, ["/settings", "/home", "/attendance", "/register", "/team"]);
 }

@@ -12,11 +12,11 @@ export default function ProjectPage() {
   const { searchParams, params } = usePage();
   const projectId = encodeURIComponent(params.id);
   const { view, setView } = useTaskView("jurisone.project.view", "board");
-  const project = useData<ProjectDetail>(`/api/projects/${projectId}`);
-  const members = useData<ProjectMember[]>(`/api/projects/${projectId}/members`);
+  const project = useData<ProjectDetail>(`/api/v1/projects/${projectId}`);
+  const members = useData<ProjectMember[]>(`/api/v1/projects/${projectId}/members`);
   const boardFilters = Object.fromEntries(Object.entries(searchParams).filter(([name]) => BOARD_FILTERS.includes(name)));
-  const board = useData<ProjectBoard>(view === "board" ? taskListPath(`/api/projects/${projectId}/board`, boardFilters) : null);
-  const list = useData<TaskPage<TaskRow>>(view === "list" ? taskListPath("/api/tasks", searchParams, { sort: "dueDate", pageSize: "50" }, { projectId: params.id }) : null);
+  const board = useData<ProjectBoard>(view === "board" ? taskListPath(`/api/v1/projects/${projectId}/board`, boardFilters) : null);
+  const list = useData<TaskPage<TaskRow>>(view === "list" ? taskListPath("/api/v1/tasks", searchParams, { sort: "dueDate", pageSize: "50" }, { projectId: params.id }) : null);
   if (!project || !members) return <PageLoading />;
   return <ProjectClient project={project} members={members} board={board} list={list} view={view} onViewChange={setView} />;
 }

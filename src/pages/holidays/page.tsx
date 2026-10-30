@@ -13,7 +13,7 @@ const RLABEL = { IN: "India team", US: "US team", ALL: "Everyone" } as const;
 
 export default function HolidaysPage() {
   const { t, searchParams } = usePage();
-  const data = useData<{ items: Item[]; rows: Item[]; today: string }>(`/api/holidays${toQueryString(searchParams)}`);
+  const data = useData<{ items: Item[]; rows: Item[]; today: string }>(`/api/v1/holidays${toQueryString(searchParams)}`);
   if (!data) return <PageLoading />;
   const { items, rows, today } = data;
 

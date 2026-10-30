@@ -18,7 +18,7 @@ const STATUS: Record<Row["status"], { cls: string; text: string }> = {
 /** HR / the owner: write and publish policies; see how many people have accepted each one. */
 export default function PoliciesPage() {
   const { user, t } = usePage();
-  const rows = useData<Row[]>("/api/policies");
+  const rows = useData<Row[]>("/api/v1/policies");
   if (!rows) return <PageLoading />;
 
   return (

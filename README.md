@@ -72,7 +72,7 @@ server {
 - `src/routes.tsx` lists every page (path, tab title, the nav entry that grants access). `RequirePage` (`src/lib/page.tsx`)
   is the route guard: nav permission, paused subscription, pending policy acceptance.
 - A page reads `const { u, t, sp, params } = usePage()` (user, translator, search params, route params) and its data with
-  `useData<T>("/api/...")`. Writes are plain functions in each page folder's `actions.ts` that call `apiAction(...)`.
+  `useData<T>("/api/v1/...")`. Writes are plain functions in each page folder's `actions.ts` that call `apiAction(...)`.
 - Authorization is enforced by the API on every request; hiding a page or button here is only convenience.
 - A 401 triggers one silent session refresh and a retry, then sends the user to `/login?next=…`.
 

@@ -7,5 +7,5 @@ import { apiAction } from "@/lib/api";
  * Amounts in rupees; stored in paise. India employees only.
  */
 export async function addStructure(i: { employeeId: string; effectiveFrom: string; reason: "JOINING" | "APPRAISAL" | "PROMOTION" | "CORRECTION"; basic: number; hra: number; lta: number; special: number }): Promise<ActionResult> {
-  return apiAction("POST", "/api/structures", i, ["/structures", "/payroll", "/tax", "/employees"]);
+  return apiAction("POST", "/api/v1/structures", i, ["/structures", "/payroll", "/tax", "/employees"]);
 }

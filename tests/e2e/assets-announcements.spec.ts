@@ -116,6 +116,6 @@ test.describe("assets & announcements", () => {
     }
     const menu = page.getByRole("complementary", { name: "Main menu" });
     await expect(menu.getByRole("link", { name: "Assets", exact: true })).toHaveCount(0);
-    expect((await page.request.get("/api/assets")).status()).toBe(403);
+    expect((await page.request.get("/api/v1/assets")).status()).toBe(403);
   });
 });

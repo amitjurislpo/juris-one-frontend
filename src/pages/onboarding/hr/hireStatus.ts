@@ -31,7 +31,7 @@ export function hireActionLabel(status: string): string {
   return "Fill details";
 }
 
-/** One row of `GET /api/onboardings`. */
+/** One row of `GET /api/v1/onboardings`. */
 export interface HireRow {
   employeeId: string;
   name: string;
@@ -61,5 +61,5 @@ export function hiresPath(searchParams: Record<string, string>): string {
   if (searchParams.search?.trim()) query.set("search", searchParams.search.trim());
   if (searchParams.page && searchParams.page !== "1") query.set("page", searchParams.page);
   const text = query.toString();
-  return `/api/onboardings${text ? `?${text}` : ""}`;
+  return `/api/v1/onboardings${text ? `?${text}` : ""}`;
 }

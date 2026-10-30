@@ -70,7 +70,7 @@ test.describe("HR letters", () => {
     // and the API refuses it as well
     const [ids] = await sql<{ templateId: string; employeeId: string }>(
       `SELECT t.id AS "templateId", e.id AS "employeeId" FROM letter_templates t JOIN employees e ON e.business_id = t.business_id WHERE t.name = 'Offer letter' AND e.code = 'JC-072'`);
-    const response = await page.request.post("/api/letters", { data: { templateId: ids.templateId, employeeId: ids.employeeId }, headers: ORIGIN });
+    const response = await page.request.post("/api/v1/letters", { data: { templateId: ids.templateId, employeeId: ids.employeeId }, headers: ORIGIN });
     expect(response.status()).toBe(403);
     const issued = await sql(`SELECT 1 FROM issued_letters WHERE template_name = 'Offer letter' AND issued_at >= $1`, [TEST_START_TIME]);
     expect(issued).toHaveLength(0);

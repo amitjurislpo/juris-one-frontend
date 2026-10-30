@@ -9,7 +9,7 @@ import { describeActivity } from "@/lib/tasks";
 export function TaskActivityList({ taskId, timeZone }: { taskId: string; timeZone: string }) {
   const t = useT();
   const [page, setPage] = useState(1);
-  const data = useData<TaskPage<TaskActivityEntry>>(`/api/tasks/${encodeURIComponent(taskId)}/activity?page=${page}`);
+  const data = useData<TaskPage<TaskActivityEntry>>(`/api/v1/tasks/${encodeURIComponent(taskId)}/activity?page=${page}`);
   if (!data) return null;
   const lastPage = Math.max(1, Math.ceil(data.total / Math.max(1, data.take)));
   return (

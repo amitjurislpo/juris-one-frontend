@@ -11,7 +11,7 @@ export function Avatar({ id, name, photo, isLarge, plain, style }: { id?: string
   const showPhoto = !!id && !!photo && failed !== photo;
   return (
     <span className={`avatar${isLarge ? " lg" : ""}${plain ? "" : ` ${avatarColorClass(initials(name))}`}`} style={style} title={name}>
-      {showPhoto ? <img src={`/api/people/${id}/photo?v=${photo}`} alt={name} loading="lazy" onError={() => setFailed(photo)} /> : initials(name)}
+      {showPhoto ? <img src={`/api/v1/people/${id}/photo?v=${photo}`} alt={name} loading="lazy" onError={() => setFailed(photo)} /> : initials(name)}
     </span>
   );
 }

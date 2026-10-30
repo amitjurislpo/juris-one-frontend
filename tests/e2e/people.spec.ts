@@ -167,18 +167,18 @@ test.describe("people operations", () => {
   test("export is permission-checked on the server", async ({ page, request }) => {
     await login(page, "JC-012");
     await expectLanded(page, "/home");
-    const exportResponse = await page.request.get("/api/people/export?status=All");
+    const exportResponse = await page.request.get("/api/v1/people/export?status=All");
     expect(exportResponse.status()).toBe(200);
     const csv = await exportResponse.text();
     expect(csv).toContain("Employee ID,Name,Email");
     expect(csv).toContain("Vikas Rao");
     expect(csv).not.toMatch(/Aadhaar|PAN|gross/i);
     expect(csv).not.toMatch(/^JC-002,/m); // the owner is never exported (only named as a manager)
-    expect((await request.get("/api/people/export")).status()).toBe(403); // no session
+    expect((await request.get("/api/v1/people/export")).status()).toBe(403); // no session
     await page.context().clearCookies();
     await login(page, "JC-074");
     await expectLanded(page, "/home");
-    expect((await page.request.get("/api/people/export")).status()).toBe(403);
+    expect((await page.request.get("/api/v1/people/export")).status()).toBe(403);
   });
 });
 
@@ -230,10 +230,10 @@ test.describe("directory, departments, roles, team", () => {
     await expect(page.getByRole("button", { name: "Delete role" })).toHaveCount(0);
     await expect(page.locator('[role="switch"]:not([disabled])')).toHaveCount(0);
     // ...and the API refuses it as well (only the super admin changes roles)
-    const roles = await (await page.request.get("/api/roles")).json();
+    const roles = await (await page.request.get("/api/v1/roles")).json();
     const employee = roles.data.find((r: { key: string }) => r.key === "employee");
     expect(employee.canEdit).toBe(false);
-    const res = await page.request.put(`/api/roles/${employee.id}/permissions/att.all`, { headers: { origin: new URL(page.url()).origin } });
+    const res = await page.request.put(`/api/v1/roles/${employee.id}/permissions/att.all`, { headers: { origin: new URL(page.url()).origin } });
     expect(res.status()).toBe(403);
 
     // policies matrix reflects the roles table

@@ -37,7 +37,7 @@ export default function SettingsPage() {
 function AccessMatrix() {
   const t = useT();
   // already in the built-in order
-  const roles = useData<{ id: string; key: string; name: string; perms: string[] }[]>("/api/settings/access");
+  const roles = useData<{ id: string; key: string; name: string; perms: string[] }[]>("/api/v1/settings/access");
   if (!roles) return <PageLoading />;
   return (
     <>
@@ -68,7 +68,7 @@ function AccessMatrix() {
 
 function LeavePolicy() {
   const t = useT();
-  const data = useData<{ types: LeaveTypeView[]; attendance: SettingValue<"attendance.policy"> }>("/api/settings/leave");
+  const data = useData<{ types: LeaveTypeView[]; attendance: SettingValue<"attendance.policy"> }>("/api/v1/settings/leave");
   if (!data) return <PageLoading />;
   const { types, attendance: att } = data;
   const card = (leaveType: (typeof types)[number]): [string, string] => {
@@ -99,7 +99,7 @@ function LeavePolicy() {
 function HolidayList() {
   const t = useT();
   const year = Number(todayIn(useCurrentUser().user?.timeZone ?? INDIA_TIME_ZONE).slice(0, 4));
-  const hol = useData<{ id: string; date: string; name: string; region: "IN" | "US" | "ALL" }[]>(`/api/settings/holidays?year=${year}`);
+  const hol = useData<{ id: string; date: string; name: string; region: "IN" | "US" | "ALL" }[]>(`/api/v1/settings/holidays?year=${year}`);
   if (!hol) return <PageLoading />;
   return (
     <section className="card pad enter">
@@ -122,7 +122,7 @@ function HolidayList() {
 
 function AttendancePolicy() {
   const translate = useT();
-  const data = useData<{ policy: SettingValue<"attendance.policy">; shifts: ShiftView[]; locked: boolean }>("/api/settings/attendance");
+  const data = useData<{ policy: SettingValue<"attendance.policy">; shifts: ShiftView[]; locked: boolean }>("/api/v1/settings/attendance");
   if (!data) return <PageLoading />;
   const { policy: attendancePolicy, shifts, locked } = data;
   const grc = shifts[0]?.graceMinutes ?? attendancePolicy.graceMinutes;

@@ -251,7 +251,7 @@ export function keyboardMoveIndex(currentIndex: number, columnLength: number, mo
 /** URL parameters that only steer the screen (open drawer, view, board column) and never go to the API. */
 const SCREEN_PARAMETERS = ["task", "view", "column"];
 
-/** `/api/tasks/mine?…` from the page URL: defaults, then the URL's filters (screen-only ones left out), then fixed values. */
+/** `/api/v1/tasks/mine?…` from the page URL: defaults, then the URL's filters (screen-only ones left out), then fixed values. */
 export function taskListPath(basePath: string, searchParams: Record<string, string>, defaults: Record<string, string> = {}, fixed: Record<string, string> = {}): string {
   const query = new URLSearchParams();
   const merged: Record<string, string> = { ...defaults };

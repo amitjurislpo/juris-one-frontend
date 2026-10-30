@@ -39,7 +39,7 @@ const onPublicPage = () => PUBLIC.some((p) => location.pathname === p || locatio
 let refreshing: Promise<boolean> | null = null;
 /** Exchanges the refresh cookie for new session cookies; one call at a time. */
 function refreshSession(): Promise<boolean> {
-  refreshing ??= fetch("/api/auth/session-refreshes", {
+  refreshing ??= fetch("/api/v1/auth/session-refreshes", {
     method: "POST",
     headers: { "content-type": "application/json", accept: "application/json" },
     body: "{}",
@@ -87,7 +87,7 @@ async function send<T>(method: string, path: string, body: unknown, file?: Blob 
  */
 export async function apiCall<T>(method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", path: string, body?: unknown, opts: { quiet?: boolean; file?: Blob | FormData } = {}): Promise<ApiResponse<T>> {
   let response = await send<T>(method, path, body, opts.file);
-  if (response.status === 401 && !path.startsWith("/api/auth/")) {
+  if (response.status === 401 && !path.startsWith("/api/v1/auth/")) {
     if (await refreshSession()) response = await send<T>(method, path, body, opts.file);
     if (response.status === 401 && !opts.quiet && !onPublicPage()) {
       queryClient.clear();
@@ -102,7 +102,7 @@ export async function apiCall<T>(method: "GET" | "POST" | "PUT" | "PATCH" | "DEL
 
 /** Tells the audit log that this page was opened. Fire and forget: no redirect on 401, no refetch, errors ignored. */
 export function reportPageView(path: string) {
-  fetch("/api/audit/page-views", {
+  fetch("/api/v1/audit/page-views", {
     method: "POST",
     headers: { accept: "application/json", "content-type": "application/json" },
     body: JSON.stringify({ path }),

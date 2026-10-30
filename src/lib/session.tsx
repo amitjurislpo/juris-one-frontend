@@ -42,10 +42,10 @@ interface MeResponse {
   onboarding?: { status?: string; isRequired?: boolean } | null;
 }
 
-export const CURRENT_USER_QUERY_KEY = ["api", "/api/me"];
+export const CURRENT_USER_QUERY_KEY = ["api", "/api/v1/me"];
 
 export async function fetchMe(): Promise<CurrentUser | null> {
-  const response = await apiGet<MeResponse>("/api/me");
+  const response = await apiGet<MeResponse>("/api/v1/me");
   if (!response) return null;
   return { ...response.user, perms: new Set(response.user.perms), subscriptionActive: response.subscriptionActive, readOnly: response.readOnly, modules: response.modules, pendingPolicies: response.pendingPolicies, onboarding: readOnboardingGate(response) };
 }

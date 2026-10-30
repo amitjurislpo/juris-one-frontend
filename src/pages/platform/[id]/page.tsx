@@ -28,9 +28,9 @@ const GRANT_STATE: Record<ModuleGrant["state"], { cls: string; text: string }> =
 export default function BusinessPage() {
   const { t, params } = usePage();
   const { id } = params;
-  const data = useData<Detail>(`/api/platform/businesses/${encodeURIComponent(id)}`);
-  const plans = useData<PlanRow[]>("/api/platform/plans");
-  const catalogue = useData<RoleTemplates>("/api/platform/role-templates");
+  const data = useData<Detail>(`/api/v1/platform/businesses/${encodeURIComponent(id)}`);
+  const plans = useData<PlanRow[]>("/api/v1/platform/plans");
+  const catalogue = useData<RoleTemplates>("/api/v1/platform/role-templates");
   if (!data || !plans || !catalogue) return <PageLoading />;
   const business = data.business;
   const subscription = data.subscription;

@@ -2,7 +2,7 @@
 import type { ActionResult } from "@/lib/action";
 import { apiAction, apiCall } from "@/lib/api";
 
-// Proof verification runs in the Spring Boot API (/api/proofs).
+// Proof verification runs in the Spring Boot API (/api/v1/proofs).
 const PAGES = ["/proofs", "/tax", "/declare", "/payroll"];
 const enc = encodeURIComponent;
 
@@ -11,14 +11,14 @@ export interface ProofDetail { name: string; code: string; regime: "NEW" | "OLD"
 
 /** Drawer contents: items + TDS now vs. if everything pending is approved. */
 export async function proofDetail(employeeId: string): Promise<ActionResult<ProofDetail>> {
-  return (await apiCall<ProofDetail>("GET", `/api/proofs/${enc(employeeId)}`)).body;
+  return (await apiCall<ProofDetail>("GET", `/api/v1/proofs/${enc(employeeId)}`)).body;
 }
 
 /** Approve / reject one proof. Only approved amounts reduce TDS. */
 export async function decideProof(i: { id: string; approve: boolean; reason?: string }): Promise<ActionResult> {
-  return apiAction("PUT", `/api/proofs/items/${enc(i.id)}/decision`, { approve: i.approve, reason: i.reason }, PAGES);
+  return apiAction("PUT", `/api/v1/proofs/items/${enc(i.id)}/decision`, { approve: i.approve, reason: i.reason }, PAGES);
 }
 
 export async function approveAllPending(employeeId: string): Promise<ActionResult> {
-  return apiAction("PUT", `/api/proofs/${enc(employeeId)}/decision`, { approve: true }, PAGES);
+  return apiAction("PUT", `/api/v1/proofs/${enc(employeeId)}/decision`, { approve: true }, PAGES);
 }

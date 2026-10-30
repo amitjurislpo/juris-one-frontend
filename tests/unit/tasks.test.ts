@@ -178,10 +178,10 @@ describe("board ordering", () => {
 
 describe("list queries", () => {
   it("merges defaults, the URL's filters and fixed values, and drops screen-only parameters", () => {
-    expect(taskListPath("/api/tasks/mine", { relation: "INDIRECT", task: "WEB-12", view: "board", search: "login" }, { relation: "ASSIGNED", sort: "dueDate" }))
-      .toBe("/api/tasks/mine?relation=INDIRECT&sort=dueDate&search=login");
-    expect(taskListPath("/api/tasks", { projectId: "other" }, {}, { projectId: "p1" })).toBe("/api/tasks?projectId=p1");
-    expect(taskListPath("/api/tasks/team", {})).toBe("/api/tasks/team");
+    expect(taskListPath("/api/v1/tasks/mine", { relation: "INDIRECT", task: "WEB-12", view: "board", search: "login" }, { relation: "ASSIGNED", sort: "dueDate" }))
+      .toBe("/api/v1/tasks/mine?relation=INDIRECT&sort=dueDate&search=login");
+    expect(taskListPath("/api/v1/tasks", { projectId: "other" }, {}, { projectId: "p1" })).toBe("/api/v1/tasks?projectId=p1");
+    expect(taskListPath("/api/v1/tasks/team", {})).toBe("/api/v1/tasks/team");
   });
 });
 
