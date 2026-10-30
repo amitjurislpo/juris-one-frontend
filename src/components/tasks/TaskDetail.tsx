@@ -60,7 +60,7 @@ function DueBox({ task, save }: { task: TaskDetailData; save: Save }) {
 function MoveToProjectDialog({ task, onClose, save }: { task: TaskDetailData; onClose: () => void; save: Save }) {
   const t = useT();
   const { user } = useCurrentUser();
-  const projects = useData<TaskPage<ProjectRow>>("/api/projects?status=ACTIVE&sort=name");
+  const projects = useData<TaskPage<ProjectRow>>("/api/v1/projects?status=ACTIVE&sort=name");
   const [projectId, setProjectId] = useState("");
   const [busy, start] = useTransition();
   const isTaskAdmin = !!user?.perms.has("tasks.manage");
@@ -83,7 +83,7 @@ function MoveToProjectDialog({ task, onClose, save }: { task: TaskDetailData; on
 /** Labels of the task: chips, ✕ to remove, a select to add one of the project's (or company) labels. */
 function LabelField({ task, canEdit, save }: { task: TaskDetailData; canEdit: boolean; save: Save }) {
   const t = useT();
-  const available = useData<TaskLabel[]>(canEdit ? `/api/task-labels${task.projectId ? `?projectId=${encodeURIComponent(task.projectId)}` : ""}` : null) ?? [];
+  const available = useData<TaskLabel[]>(canEdit ? `/api/v1/task-labels${task.projectId ? `?projectId=${encodeURIComponent(task.projectId)}` : ""}` : null) ?? [];
   const ids = task.labels.map((label) => label.id);
   if (!canEdit) return task.labels.length ? <LabelChips labels={task.labels} /> : <span className="muted">—</span>;
   return (
@@ -189,7 +189,7 @@ export function TaskDetail({ taskRef, onClose }: { taskRef: string; /** set when
   const router = useRouter();
   const readOnly = useReadOnly();
   const { user } = useCurrentUser();
-  const task = useData<TaskDetailData>(`/api/tasks/${encodeURIComponent(taskRef)}`);
+  const task = useData<TaskDetailData>(`/api/v1/tasks/${encodeURIComponent(taskRef)}`);
   const [saveError, setSaveError] = useState("");
   const [dialog, setDialog] = useState<"move" | "delete" | null>(null);
   const [tab, setTab] = useState<"comments" | "history">("comments");

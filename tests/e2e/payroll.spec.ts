@@ -47,8 +47,8 @@ test.describe("payroll", () => {
       await page.goto(path);
       await expectLanded(page, "/home");
     }
-    expect((await page.request.get(`/api/payroll/export?month=${SEP}&type=bank`)).status()).toBe(403);
-    expect((await page.request.get(`/api/payslips/2026-08/JC-049`)).status()).toBe(403);
+    expect((await page.request.get(`/api/v1/payroll/export?month=${SEP}&type=bank`)).status()).toBe(403);
+    expect((await page.request.get(`/api/v1/payslips/2026-08/JC-049`)).status()).toBe(403);
   });
 
   test("Finance Executive reviews and edits but can't close", async ({ page }) => {
@@ -102,10 +102,10 @@ test.describe("payroll", () => {
     await sql(`UPDATE salary_structures SET basic = basic - 100000 WHERE employee_id = (SELECT id FROM employees WHERE code = 'JC-074')`);
 
     // exports
-    const bank = await page.request.get(`/api/payroll/export?month=${SEP}&type=bank`);
+    const bank = await page.request.get(`/api/v1/payroll/export?month=${SEP}&type=bank`);
     expect(bank.status()).toBe(200);
     expect(await bank.text()).toContain("93074.00");
-    expect((await page.request.get(`/api/payroll/export?month=${SEP}&type=ecr`)).status()).toBe(200);
+    expect((await page.request.get(`/api/v1/payroll/export?month=${SEP}&type=ecr`)).status()).toBe(200);
   });
 
   test("employee sees and downloads only their own payslip", async ({ page }) => {
@@ -120,11 +120,11 @@ test.describe("payroll", () => {
     await expect(slip).toContainText("Rupees Ninety Three Thousand Seventy Four only");
     await expect(slip).toContainText("XXXXXX");
     await slip.getByRole("button", { name: "Close" }).click();
-    const pdf = await page.request.get("/api/payslips/2026-09/JC-074");
+    const pdf = await page.request.get("/api/v1/payslips/2026-09/JC-074");
     expect(pdf.status()).toBe(200);
     expect(pdf.headers()["content-type"]).toBe("application/pdf");
     expect((await pdf.body()).subarray(0, 4).toString()).toBe("%PDF");
-    expect((await page.request.get("/api/payslips/2026-09/JC-049")).status()).toBe(403);
+    expect((await page.request.get("/api/v1/payslips/2026-09/JC-049")).status()).toBe(403);
 
     await page.context().clearCookies();
     await login(page, "JC-090"); // US

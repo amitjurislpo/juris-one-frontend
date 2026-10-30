@@ -154,8 +154,8 @@ test.describe.serial("a business on JurisOne, end to end", () => {
     await page.getByRole("link", { name: "Export employees (Excel)" }).click();
     expect((await download).suggestedFilename()).toMatch(/\.xlsx$/);
     // the API refuses writes too, not just the screen
-    expect((await page.request.get("/api/people")).status()).toBe(200);
-    const write = await page.request.post("/api/departments", { data: { name: "Sneaky" }, headers: { Origin: "http://localhost:3006" } });
+    expect((await page.request.get("/api/v1/people")).status()).toBe(200);
+    const write = await page.request.post("/api/v1/departments", { data: { name: "Sneaky" }, headers: { Origin: "http://localhost:3006" } });
     expect(write.status()).toBe(402);
   });
 

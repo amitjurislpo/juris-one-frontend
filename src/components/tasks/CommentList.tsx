@@ -17,7 +17,7 @@ export function CommentList({ taskId, projectId, canComment, timeZone }: { taskI
   const t = useT();
   const toast = useToast();
   const [page, setPage] = useState(1);
-  const data = useData<TaskPage<TaskComment>>(`/api/tasks/${encodeURIComponent(taskId)}/comments?page=${page}`);
+  const data = useData<TaskPage<TaskComment>>(`/api/v1/tasks/${encodeURIComponent(taskId)}/comments?page=${page}`);
   const [draft, setDraft] = useState("");
   const [mentioned, setMentioned] = useState<{ id: string; name: string }[]>([]);
   const [editing, setEditing] = useState<{ id: string; text: string; mentioned: { id: string; name: string }[] } | null>(null);

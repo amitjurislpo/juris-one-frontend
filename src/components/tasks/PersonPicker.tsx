@@ -6,12 +6,12 @@ import { useT } from "@/lib/i18n/client";
 
 export interface PickedPerson { id: string; name: string; photo?: number | null; reportingManagerId?: string | null; reportingManagerName?: string | null }
 
-/** People matching `search` (name or code) who can be picked for a task; at most 20 (GET /api/tasks/assignees). */
+/** People matching `search` (name or code) who can be picked for a task; at most 20 (GET /api/v1/tasks/assignees). */
 export async function searchAssignees(search: string, projectId?: string | null): Promise<TaskAssignee[]> {
   const query = new URLSearchParams({ search });
   if (projectId) query.set("projectId", projectId);
   try {
-    return await apiData<TaskAssignee[]>(`/api/tasks/assignees?${query}`);
+    return await apiData<TaskAssignee[]>(`/api/v1/tasks/assignees?${query}`);
   } catch {
     return [];
   }

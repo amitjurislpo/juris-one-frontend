@@ -9,7 +9,7 @@ import type { PayslipSnapshot } from "@/lib/api-types";
 export function SlipActions({ snap, code }: { snap: PayslipSnapshot; code: string }) {
   const t = useT();
   const [open, setOpen] = useState(false);
-  const href = `/api/payslips/${snap.month}/${code}`;
+  const href = `/api/v1/payslips/${snap.month}/${code}`;
   return (
     <>
       <button className="btn btn-sm" onClick={() => setOpen(true)}><Icon name="eye" size={14} />{t("View")}</button>

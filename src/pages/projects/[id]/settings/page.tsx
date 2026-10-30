@@ -6,8 +6,8 @@ import { ProjectSettingsClient } from "./ProjectSettingsClient";
 export default function ProjectSettingsPage() {
   const { params } = usePage();
   const projectId = encodeURIComponent(params.id);
-  const project = useData<ProjectDetail>(`/api/projects/${projectId}`);
-  const members = useData<ProjectMember[]>(`/api/projects/${projectId}/members`);
+  const project = useData<ProjectDetail>(`/api/v1/projects/${projectId}`);
+  const members = useData<ProjectMember[]>(`/api/v1/projects/${projectId}/members`);
   if (!project || !members) return <PageLoading />;
   return <ProjectSettingsClient project={project} members={members} />;
 }

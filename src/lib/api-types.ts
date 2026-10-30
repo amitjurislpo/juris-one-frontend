@@ -190,7 +190,7 @@ export interface PolicyDetail {
   people: { code: string; name: string; department: string | null; acknowledgedAt: string | null; lastVersion: number | null }[];
 }
 
-/** One asset of the register (GET /api/assets); holder* is set while it is assigned. */
+/** One asset of the register (GET /api/v1/assets); holder* is set while it is assigned. */
 export interface AssetRow {
   id: string; tag: string; type: string; make: string | null; model: string | null; serial: string | null; purchaseDate: string | null;
   status: "AVAILABLE" | "ASSIGNED" | "IN_REPAIR" | "RETIRED"; notes: string | null;
@@ -437,7 +437,7 @@ export interface TaskActivityEntry {
   occurredAt: string;
 }
 
-/** GET /api/tasks/mine */
+/** GET /api/v1/tasks/mine */
 export interface MyTasksPage extends TaskPage<TaskRow> {
   counts: { overdue: number; today: number; thisWeek: number; later: number; noDate: number };
 }
@@ -454,18 +454,18 @@ interface TeamPerson {
   doneLast7Days: number;
 }
 
-/** GET /api/tasks/team */
+/** GET /api/v1/tasks/team */
 export interface TeamTasksPage extends TaskPage<TaskRow> {
   people: TeamPerson[];
 }
 
-/** GET /api/projects/{projectId}/board */
+/** GET /api/v1/projects/{projectId}/board */
 export interface ProjectBoard {
   columns: { status: WorkflowStatus; taskCount: number; tasks: TaskRow[] }[];
   hasMoreDone: boolean;
 }
 
-/** GET /api/tasks/assignees (person picker). */
+/** GET /api/v1/tasks/assignees (person picker). */
 export interface TaskAssignee {
   id: string;
   code: string;
@@ -478,7 +478,7 @@ export interface TaskAssignee {
   reportingManagerName: string | null;
 }
 
-/** GET /api/task-settings */
+/** GET /api/v1/task-settings */
 export interface TaskSettings {
   defaultStatuses: WorkflowStatus[];
   labels: TaskLabel[];

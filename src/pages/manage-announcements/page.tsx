@@ -7,7 +7,7 @@ import { ManageTable, NewAnnouncementButton } from "./ManageClient";
 /** HR / the owner: post, edit and unpublish announcements. */
 export default function ManageAnnouncementsPage() {
   const { t } = usePage();
-  const rows = useData<Announcement[]>("/api/announcements?scope=all");
+  const rows = useData<Announcement[]>("/api/v1/announcements?scope=all");
   if (!rows) return <PageLoading />;
 
   return (

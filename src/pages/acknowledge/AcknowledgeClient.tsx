@@ -35,7 +35,7 @@ export function AcknowledgeClient({ policy, left, name }: { policy: PolicyToRead
         <div style={{ padding: "16px 24px", overflowY: "auto", flex: 1 }}>
           {policy.body ? <PolicyText body={policy.body} /> : <p className="muted">{t("This policy is in the attached PDF.")}</p>}
           {policy.fileName && (
-            <a className="btn btn-sm" style={{ marginTop: 12 }} href={`/api/policies/${policy.id}/versions/${policy.version}/file`} target="_blank" rel="noopener">
+            <a className="btn btn-sm" style={{ marginTop: 12 }} href={`/api/v1/policies/${policy.id}/versions/${policy.version}/file`} target="_blank" rel="noopener">
               <Icon name="doc" size={14} />{t("Open {file}", { file: policy.fileName })}
             </a>
           )}

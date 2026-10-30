@@ -9,7 +9,7 @@ import { PlanButton } from "./PlansClient";
 /** The super admin's plan catalogue: what a business can subscribe to. */
 export default function PlansPage() {
   const { t } = usePage();
-  const plans = useData<PlanRow[]>("/api/platform/plans");
+  const plans = useData<PlanRow[]>("/api/v1/platform/plans");
   if (!plans) return <PageLoading />;
 
   return (

@@ -7,7 +7,7 @@ import type { TaskPriority, TaskStatusCategory, TaskType } from "@/lib/api-types
 // Paths and methods follow the backend plan §12.1 (TaskController, TaskCollaborationController).
 const enc = encodeURIComponent;
 
-/** POST /api/tasks body (backend `TaskInput`); only the fields that are set are sent. */
+/** POST /api/v1/tasks body (backend `TaskInput`); only the fields that are set are sent. */
 export interface TaskInput {
   projectId?: string | null;
   title: string;
@@ -27,7 +27,7 @@ export interface TaskInput {
   checklist?: string[];
 }
 
-/** PATCH /api/tasks/{taskId}: `version` plus the changed fields only (`null` clears one; `statusCategory` instead of `statusId`). */
+/** PATCH /api/v1/tasks/{taskId}: `version` plus the changed fields only (`null` clears one; `statusCategory` instead of `statusId`). */
 export type TaskChanges = { version: number } & Partial<{
   title: string;
   description: string | null;
@@ -48,61 +48,61 @@ export type TaskChanges = { version: number } & Partial<{
 }>;
 
 export async function createTask(input: TaskInput): Promise<ActionResult<{ id: string; key: string | null }>> {
-  return apiAction("POST", "/api/tasks", input);
+  return apiAction("POST", "/api/v1/tasks", input);
 }
 
 export async function updateTask(taskId: string, changes: TaskChanges): Promise<ActionResult<{ version: number }>> {
-  return apiAction("PATCH", `/api/tasks/${enc(taskId)}`, changes);
+  return apiAction("PATCH", `/api/v1/tasks/${enc(taskId)}`, changes);
 }
 
 /** A board move: the target step and the cards it lands between (both absent = bottom of the column). */
 export async function moveTask(taskId: string, target: { statusId: string; previousTaskId?: string; nextTaskId?: string }): Promise<ActionResult<{ statusId: string; position: number }>> {
-  return apiAction("PUT", `/api/tasks/${enc(taskId)}/position`, target);
+  return apiAction("PUT", `/api/v1/tasks/${enc(taskId)}/position`, target);
 }
 
 export async function deleteTask(taskId: string): Promise<ActionResult> {
-  return apiAction("DELETE", `/api/tasks/${enc(taskId)}`);
+  return apiAction("DELETE", `/api/v1/tasks/${enc(taskId)}`);
 }
 
 export async function followTask(taskId: string, employeeId: string): Promise<ActionResult> {
-  return apiAction("PUT", `/api/tasks/${enc(taskId)}/watchers/${enc(employeeId)}`);
+  return apiAction("PUT", `/api/v1/tasks/${enc(taskId)}/watchers/${enc(employeeId)}`);
 }
 
 export async function unfollowTask(taskId: string, employeeId: string): Promise<ActionResult> {
-  return apiAction("DELETE", `/api/tasks/${enc(taskId)}/watchers/${enc(employeeId)}`);
+  return apiAction("DELETE", `/api/v1/tasks/${enc(taskId)}/watchers/${enc(employeeId)}`);
 }
 
 export async function addChecklistItem(taskId: string, text: string): Promise<ActionResult<{ id: string }>> {
-  return apiAction("POST", `/api/tasks/${enc(taskId)}/checklist-items`, { text });
+  return apiAction("POST", `/api/v1/tasks/${enc(taskId)}/checklist-items`, { text });
 }
 
 export async function updateChecklistItem(taskId: string, itemId: string, changes: { text?: string; isDone?: boolean; position?: number }): Promise<ActionResult> {
-  return apiAction("PATCH", `/api/tasks/${enc(taskId)}/checklist-items/${enc(itemId)}`, changes);
+  return apiAction("PATCH", `/api/v1/tasks/${enc(taskId)}/checklist-items/${enc(itemId)}`, changes);
 }
 
 export async function deleteChecklistItem(taskId: string, itemId: string): Promise<ActionResult> {
-  return apiAction("DELETE", `/api/tasks/${enc(taskId)}/checklist-items/${enc(itemId)}`);
+  return apiAction("DELETE", `/api/v1/tasks/${enc(taskId)}/checklist-items/${enc(itemId)}`);
 }
 
 export async function addComment(taskId: string, body: string): Promise<ActionResult<{ id: string }>> {
-  return apiAction("POST", `/api/tasks/${enc(taskId)}/comments`, { body });
+  return apiAction("POST", `/api/v1/tasks/${enc(taskId)}/comments`, { body });
 }
 
 export async function editComment(taskId: string, commentId: string, body: string): Promise<ActionResult> {
-  return apiAction("PATCH", `/api/tasks/${enc(taskId)}/comments/${enc(commentId)}`, { body });
+  return apiAction("PATCH", `/api/v1/tasks/${enc(taskId)}/comments/${enc(commentId)}`, { body });
 }
 
 export async function deleteComment(taskId: string, commentId: string): Promise<ActionResult> {
-  return apiAction("DELETE", `/api/tasks/${enc(taskId)}/comments/${enc(commentId)}`);
+  return apiAction("DELETE", `/api/v1/tasks/${enc(taskId)}/comments/${enc(commentId)}`);
 }
 
 /** Multipart, part `file`. */
 export async function uploadTaskAttachment(taskId: string, file: File): Promise<ActionResult<{ id: string; name: string }>> {
   const formData = new FormData();
   formData.append("file", file);
-  return apiUpload(`/api/tasks/${enc(taskId)}/attachments`, formData);
+  return apiUpload(`/api/v1/tasks/${enc(taskId)}/attachments`, formData);
 }
 
 export async function deleteTaskAttachment(taskId: string, attachmentId: string): Promise<ActionResult> {
-  return apiAction("DELETE", `/api/tasks/${enc(taskId)}/attachments/${enc(attachmentId)}`);
+  return apiAction("DELETE", `/api/v1/tasks/${enc(taskId)}/attachments/${enc(attachmentId)}`);
 }

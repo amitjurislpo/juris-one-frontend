@@ -63,7 +63,7 @@ export function PolicyEditor({ policy: policyToEdit }: { policy: PolicyDetail })
     const formData = new FormData();
     formData.set("file", file);
     try {
-      const res = await fetch(`/api/policies/${policyToEdit.id}/file`, { method: "PUT", body: formData });
+      const res = await fetch(`/api/v1/policies/${policyToEdit.id}/file`, { method: "PUT", body: formData });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) toast(j.detail ?? t("Upload failed"), "bad"); else toast(j.message ?? t("Attached"));
       router.refresh();
@@ -86,7 +86,7 @@ export function PolicyEditor({ policy: policyToEdit }: { policy: PolicyDetail })
           <span style={{ flex: 1 }} />
           {policyToEdit.fileName ? (
             <span style={{ display: "flex", gap: 6, alignItems: "center" }}>
-              <a className="linkish" href={`/api/policies/${policyToEdit.id}/file`} target="_blank" rel="noopener"><Icon name="doc" size={14} /> {policyToEdit.fileName}</a>
+              <a className="linkish" href={`/api/v1/policies/${policyToEdit.id}/file`} target="_blank" rel="noopener"><Icon name="doc" size={14} /> {policyToEdit.fileName}</a>
               {!archived && <button className="btn btn-sm btn-ghost" aria-label={t("Remove the PDF")} onClick={() => start(async () => { const removeResult = await removePolicyFile(policyToEdit.id); toast(removeResult.ok ? removeResult.message! : removeResult.error, removeResult.ok ? undefined : "bad"); })}><Icon name="x" size={13} /></button>}
             </span>
           ) : <span className="muted">{t("No PDF attached")}</span>}
@@ -122,8 +122,8 @@ export function PolicyActions({ policy }: { policy: PolicyDetail }) {
   if (readOnly) return null;
   return (
     <>
-      {policy.versions.length > 0 && <a className="btn" href={`/api/policies/${policy.id}/acknowledgements/export`} download><Icon name="download" size={14} />{t("Evidence (CSV)")}</a>}
-      {policy.versions.length > 0 && <a className="btn" href={`/api/policies/${policy.id}/acknowledgements/export?format=pdf`} download><Icon name="doc" size={14} />{t("Evidence (PDF)")}</a>}
+      {policy.versions.length > 0 && <a className="btn" href={`/api/v1/policies/${policy.id}/acknowledgements/export`} download><Icon name="download" size={14} />{t("Evidence (CSV)")}</a>}
+      {policy.versions.length > 0 && <a className="btn" href={`/api/v1/policies/${policy.id}/acknowledgements/export?format=pdf`} download><Icon name="doc" size={14} />{t("Evidence (PDF)")}</a>}
       {policy.status === "PUBLISHED" && policy.requiresAcknowledgement && <button className="btn" disabled={busy} onClick={() => run(() => remindPolicy(policy.id))}><Icon name="bell" size={14} />{t("Remind")}</button>}
       {policy.status === "PUBLISHED" && <button className="btn btn-ghost" onClick={() => setAsk("archive")}>{t("Archive")}</button>}
       {policy.version === 0 && <button className="btn btn-ghost" onClick={() => setAsk("delete")} aria-label={t("Delete draft")}><Icon name="trash" size={14} /></button>}

@@ -67,7 +67,7 @@ function ReviewDrawer({ employeeId, onClose }: { employeeId: string; onClose: ()
                 <div style={{ flex: "1 1 180px", minWidth: 0 }}>
                   <b style={{ fontWeight: 500 }}>{proofItem.label}</b>
                   <div className="faint" style={{ fontSize: 12, display: "flex", gap: 6, alignItems: "center" }}>
-                    <Icon name="doc" size={12} />{proofItem.hasProof ? <a className="linkish" style={{ fontSize: 12 }} href={`/api/declarations/proofs/${proofItem.id}`} target="_blank" rel="noopener">{proofItem.proofName ?? t("Open proof")}</a> : t("No proof attached")}
+                    <Icon name="doc" size={12} />{proofItem.hasProof ? <a className="linkish" style={{ fontSize: 12 }} href={`/api/v1/declarations/proofs/${proofItem.id}`} target="_blank" rel="noopener">{proofItem.proofName ?? t("Open proof")}</a> : t("No proof attached")}
                   </div>
                   {proofItem.reason && <div style={{ fontSize: 12, color: "var(--bad)" }}>{t("Rejected: {reason}", { reason: proofItem.reason })}</div>}
                 </div>

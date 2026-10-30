@@ -15,13 +15,13 @@ export interface NewHireInput {
 
 /** Creates the employee with portal access on and onboarding NOT_STARTED, and emails the invitation. */
 export function createOnboarding(input: NewHireInput): Promise<ActionResult<{ employeeId: string }>> {
-  return apiAction<{ employeeId: string }>("POST", "/api/onboardings", input);
+  return apiAction<{ employeeId: string }>("POST", "/api/v1/onboardings", input);
 }
 
 export function approveOnboarding(employeeId: string): Promise<ActionResult> {
-  return apiAction("POST", `/api/people/${enc(employeeId)}/onboarding/approvals`, {});
+  return apiAction("POST", `/api/v1/people/${enc(employeeId)}/onboarding/approvals`, {});
 }
 
 export function requestOnboardingChanges(employeeId: string, request: RejectionRequest): Promise<ActionResult> {
-  return apiAction("POST", `/api/people/${enc(employeeId)}/onboarding/rejections`, request);
+  return apiAction("POST", `/api/v1/people/${enc(employeeId)}/onboarding/rejections`, request);
 }

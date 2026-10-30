@@ -47,7 +47,7 @@ describe("summary formatting", () => {
   });
 
   it("builds attachment urls", () => {
-    expect(onboardingApiFor({ kind: "mine" }).attachmentUrl("a b", true)).toBe("/api/onboarding/mine/attachments/a%20b/file?download=true");
-    expect(onboardingApiFor({ kind: "hr", employeeId: "p1" }).attachmentUrl("f1", false)).toBe("/api/people/p1/onboarding/attachments/f1/file?download=false");
+    expect(onboardingApiFor({ kind: "mine" }).attachmentUrl("a b", true)).toBe("/api/v1/onboarding/mine/attachments/a%20b/file?download=true");
+    expect(onboardingApiFor({ kind: "hr", employeeId: "p1" }).attachmentUrl("f1", false)).toBe("/api/v1/people/p1/onboarding/attachments/f1/file?download=false");
   });
 });

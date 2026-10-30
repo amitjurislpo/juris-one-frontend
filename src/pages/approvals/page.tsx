@@ -14,7 +14,7 @@ export default function ApprovalsPage() {
     leaveCards: { id: string; name: string; department: string; type: string; span: string; days: number; part: string; reason: string | null; impact: string; overlap: number }[];
     regularizationCards: { id: string; name: string; department: string; kind: string; date: string; detail: string; reason: string | null }[];
     decided: { id: string; when: string; employeeName: string; what: string; approved: boolean; decidedBy: string }[];
-  }>(`/api/approvals${toQueryString(searchParams)}`);
+  }>(`/api/v1/approvals${toQueryString(searchParams)}`);
   if (!data) return <PageLoading />;
   const { tab, search, canLeave, canApproveRegularizations, leaveCount, regularizationCount, leaveCards, regularizationCards, decided } = data;
 

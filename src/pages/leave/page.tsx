@@ -33,7 +33,7 @@ export default function LeavePage() {
     requests: { id: string; typeName: string; leaveType: string; from: string; to: string; part: string; days: number; lopDays: number; applied: string; reason: string | null; status: string; decidedBy: string | null }[];
     holidays: { id: string; date: string; name: string }[]; holidayMap: Record<string, string>;
     types: { code: string; name: string; paid: boolean; available: number | null; lockedReason: string | null }[]; weeklyOffs: number[];
-  }>(`/api/leave${toQueryString(searchParams)}`);
+  }>(`/api/v1/leave${toQueryString(searchParams)}`);
   if (!data) return <PageLoading />;
   const { tab, status, today, year, balances, requests, holidays, holidayMap, types, lopYear } = data;
 

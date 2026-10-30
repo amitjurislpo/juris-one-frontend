@@ -10,7 +10,7 @@ export default function PeoplePage() {
   const data = useData<{
     rows: PersonRow[]; total: number; page: number; take: number; departments: { id: string; name: string }[];
     counts: { current: number; usTeam: number; accessDisabled: number; past: number }; seePay: boolean; canAdd: boolean;
-  }>(`/api/people${toQueryString(searchParams)}`);
+  }>(`/api/v1/people${toQueryString(searchParams)}`);
   if (!data) return <PageLoading />;
   const { rows: people, total, page, take, departments, counts, seePay, canAdd } = data;
 
@@ -20,7 +20,7 @@ export default function PeoplePage() {
     <div className="col">
       <PageHeader eyebrow={t("People operations")} title={t("All")} emphasis={t("employees")}
         sub={seePay ? t("Employee records, portal access and reporting lines.") : t("Employee records, portal access and reporting lines. Compensation is visible to Finance only.")}>
-        <a className="btn" href={`/api/people/export${exportQs ? `?${exportQs}` : ""}`} download>{t("Export CSV")}</a>
+        <a className="btn" href={`/api/v1/people/export${exportQs ? `?${exportQs}` : ""}`} download>{t("Export CSV")}</a>
         {canAdd && <AddEmployeeButton />}
       </PageHeader>
       <div className="kpis">

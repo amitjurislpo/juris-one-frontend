@@ -41,7 +41,7 @@ export function AttachmentList({ taskId, attachments, canAttach, timeZone }: { t
         {attachments.map((attachment) => (
           <li key={attachment.id}>
             <Icon name="paperclip" size={14} />
-            <a href={`/api/tasks/${encodeURIComponent(taskId)}/attachments/${encodeURIComponent(attachment.id)}/file`} download={attachment.fileName}>{attachment.fileName}</a>
+            <a href={`/api/v1/tasks/${encodeURIComponent(taskId)}/attachments/${encodeURIComponent(attachment.id)}/file`} download={attachment.fileName}>{attachment.fileName}</a>
             <small className="muted">{formatFileSize(attachment.sizeBytes)} · {attachment.uploadedByName} · {formatDayMonth(isoDateIn(attachment.uploadedAt, timeZone))}</small>
             {canAttach && attachment.canDelete && <button type="button" className="btn btn-sm btn-ghost" aria-label={t("Remove {item}", { item: attachment.fileName })} onClick={() => setRemoving(attachment)}><Icon name="x" size={13} /></button>}
           </li>

@@ -281,9 +281,9 @@ describe("onboarding redirect gate", () => {
 });
 
 describe("onboarding api target", () => {
-  it("uses /api/onboarding/mine for the employee and /api/people/{id}/onboarding for HR", () => {
-    expect(onboardingApiFor({ kind: "mine" }).viewPath).toBe("/api/onboarding/mine");
-    expect(onboardingApiFor({ kind: "hr", employeeId: "e 1" }).viewPath).toBe("/api/people/e%201/onboarding");
+  it("uses /api/v1/onboarding/mine for the employee and /api/v1/people/{id}/onboarding for HR", () => {
+    expect(onboardingApiFor({ kind: "mine" }).viewPath).toBe("/api/v1/onboarding/mine");
+    expect(onboardingApiFor({ kind: "hr", employeeId: "e 1" }).viewPath).toBe("/api/v1/people/e%201/onboarding");
   });
 
   it("lets HR edit a submitted onboarding but not the employee, and nobody an approved one", () => {

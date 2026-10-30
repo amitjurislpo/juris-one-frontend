@@ -9,7 +9,7 @@ import { ProfileForm, type MyProfile } from "./ProfileForm";
 /** Everyone's own record: job details (read-only), and personal details they keep up to date themselves. */
 export default function ProfilePage() {
   const { t } = usePage();
-  const profile = useData<MyProfile>("/api/profile");
+  const profile = useData<MyProfile>("/api/v1/profile");
   if (!profile) return <PageLoading />;
   const readOnlyRows: [string, string | null][] = [
     [t("Employee ID"), profile.code], [t("Work email"), profile.email], [t("Phone"), profile.phone], [t("Designation"), profile.designation], [t("Department"), profile.department], [t("Role"), profile.role],
@@ -35,7 +35,7 @@ export default function ProfilePage() {
           {profile.documents.map((profileDocument) => (
             <div key={profileDocument.id} className="kv">
               <span>{profileDocument.label}</span>
-              <a className="linkish" href={`/api/profile/documents/${profileDocument.id}/file`} target="_blank" rel="noopener">{profileDocument.fileName}</a>
+              <a className="linkish" href={`/api/v1/profile/documents/${profileDocument.id}/file`} target="_blank" rel="noopener">{profileDocument.fileName}</a>
             </div>
           ))}
         </section>

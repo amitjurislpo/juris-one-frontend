@@ -8,8 +8,8 @@ import { AddAssetButton, AssetsTable } from "./AssetsClient";
 /** HR / the owner: the asset register, who holds what, assign and take back. */
 export default function AssetsPage() {
   const { user, t } = usePage();
-  const rows = useData<AssetRow[]>("/api/assets");
-  const people = useData<{ id: string; code: string; name: string }[]>("/api/assets/assignees");
+  const rows = useData<AssetRow[]>("/api/v1/assets");
+  const people = useData<{ id: string; code: string; name: string }[]>("/api/v1/assets/assignees");
   if (!rows || !people) return <PageLoading />;
   const today = todayIn(user.timeZone);
   const count = (s: string) => rows.filter((r) => r.status === s).length;

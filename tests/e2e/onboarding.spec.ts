@@ -107,7 +107,7 @@ const withoutIds = <T extends object>(value: T): T => JSON.parse(JSON.stringify(
 
 /** Saves steps 1 to 6 and uploads the mandatory files for a person, as HR, with the first hire's data. */
 async function fillBehalfByApi(page: Page, id: string) {
-  const base = `/api/people/${id}/onboarding`;
+  const base = `/api/v1/people/${id}/onboarding`;
   const saved = async (step: number, data: unknown) => {
     const response = await page.request.put(`${base}/steps/${step}`, { headers: SAME_ORIGIN, data });
     expect(response.status(), `step ${step}`).toBe(200);
@@ -426,27 +426,27 @@ test.describe("employee onboarding wizard", () => {
     expect(onDisk.some((file) => file.includes("address_permanent"))).toBe(true);
 
     // the server also refuses a wrong type and an over-size file sent straight to the API (the browser check bypassed)
-    const oversized = await hire.request.post("/api/onboarding/mine/attachments", { headers: SAME_ORIGIN, multipart: { slotKey: "bank", file: { name: "big.pdf", mimeType: "application/pdf", buffer: Buffer.alloc(11 * 1024 * 1024, 1) } } });
+    const oversized = await hire.request.post("/api/v1/onboarding/mine/attachments", { headers: SAME_ORIGIN, multipart: { slotKey: "bank", file: { name: "big.pdf", mimeType: "application/pdf", buffer: Buffer.alloc(11 * 1024 * 1024, 1) } } });
     expect([400, 413]).toContain(oversized.status());
-    const wrongType = await hire.request.post("/api/onboarding/mine/attachments", { headers: SAME_ORIGIN, multipart: { slotKey: "bank", file: { name: "run.exe", mimeType: "application/octet-stream", buffer: Buffer.from("MZ") } } });
+    const wrongType = await hire.request.post("/api/v1/onboarding/mine/attachments", { headers: SAME_ORIGIN, multipart: { slotKey: "bank", file: { name: "run.exe", mimeType: "application/octet-stream", buffer: Buffer.from("MZ") } } });
     expect([400, 415, 422]).toContain(wrongType.status());
     expect(listFiles(path.join(monthFolder, employeeCode)).length).toBe(9);
 
-    const mine = await (await hire.request.get("/api/onboarding/mine")).json();
+    const mine = await (await hire.request.get("/api/v1/onboarding/mine")).json();
     const view = mine.data ?? mine;
     savedView = view;
     for (const eachSlot of view.attachmentSlots as { files: { id: string }[] }[]) for (const file of eachSlot.files) uploadedFileIds.push(file.id);
     expect(uploadedFileIds.length).toBe(9);
-    expect((await hire.request.get(`/api/onboarding/mine/attachments/${uploadedFileIds[0]}/file?download=false`)).status()).toBe(200);
+    expect((await hire.request.get(`/api/v1/onboarding/mine/attachments/${uploadedFileIds[0]}/file?download=false`)).status()).toBe(200);
 
     const other = await browser.newContext();
     const otherPage = await other.newPage();
     await login(otherPage, "JC-049"); // an ordinary employee (not HR)
     await expectLanded(otherPage, "/home");
-    for (const url of [`/api/onboarding/mine/attachments/${uploadedFileIds[0]}/file?download=false`, `/api/people/${hireId}/onboarding/attachments/${uploadedFileIds[0]}/file?download=false`, `/api/people/${hireId}/onboarding`]) {
+    for (const url of [`/api/v1/onboarding/mine/attachments/${uploadedFileIds[0]}/file?download=false`, `/api/v1/people/${hireId}/onboarding/attachments/${uploadedFileIds[0]}/file?download=false`, `/api/v1/people/${hireId}/onboarding`]) {
       expect([403, 404], url).toContain((await otherPage.request.get(url)).status());
     }
-    expect([403, 404]).toContain((await otherPage.request.delete(`/api/onboarding/mine/attachments/${uploadedFileIds[0]}`, { headers: SAME_ORIGIN })).status());
+    expect([403, 404]).toContain((await otherPage.request.delete(`/api/v1/onboarding/mine/attachments/${uploadedFileIds[0]}`, { headers: SAME_ORIGIN })).status());
     await other.close();
 
     // ---------- Summary ----------
@@ -514,11 +514,11 @@ test.describe("employee onboarding wizard", () => {
     await hire.goto("/leave");
     await expect(hire).toHaveURL(/\/onboarding$/); // still locked while HR reviews
     // the API refuses a write while it waits for HR
-    const writeAfterSubmit = await hire.request.put("/api/onboarding/mine/steps/4", { headers: SAME_ORIGIN, data: { familyMembers: [] } });
+    const writeAfterSubmit = await hire.request.put("/api/v1/onboarding/mine/steps/4", { headers: SAME_ORIGIN, data: { familyMembers: [] } });
     expect(writeAfterSubmit.status()).toBe(409);
-    const uploadAfterSubmit = await hire.request.post("/api/onboarding/mine/attachments", { headers: SAME_ORIGIN, multipart: { slotKey: "bank", file: { name: "late.pdf", mimeType: "application/pdf", buffer: PDF_BYTES } } });
+    const uploadAfterSubmit = await hire.request.post("/api/v1/onboarding/mine/attachments", { headers: SAME_ORIGIN, multipart: { slotKey: "bank", file: { name: "late.pdf", mimeType: "application/pdf", buffer: PDF_BYTES } } });
     expect(uploadAfterSubmit.status()).toBe(409);
-    expect((await hire.request.get("/api/leave/requests/mine")).status()).toBe(403); // the hard lock is on the server too
+    expect((await hire.request.get("/api/v1/leave/requests/mine")).status()).toBe(403); // the hard lock is on the server too
   });
 
   test("HR reads the submitted form and its files, and asks for changes with flagged sections and a comment", async ({ page }) => {
@@ -691,7 +691,7 @@ test.describe("employee onboarding wizard", () => {
     await panel.getByRole("button", { name: "Approve" }).click();
     await page.getByRole("dialog").getByRole("button", { name: "Approve" }).click();
     await expect(page).toHaveURL(/\/employees$/, { timeout: 15_000 }); // approving leads to the employee list
-    const finished = await (await page.request.get(`/api/people/${id}/onboarding`)).json();
+    const finished = await (await page.request.get(`/api/v1/people/${id}/onboarding`)).json();
     expect((finished.data ?? finished).status).toBe("APPROVED");
   });
 });

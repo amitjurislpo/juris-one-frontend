@@ -17,9 +17,9 @@ interface BusinessRow {
 /** The super admin's console: every business on the platform. */
 export default function PlatformPage() {
   const { user, t } = usePage();
-  const rows = useData<BusinessRow[]>("/api/platform/businesses");
-  const plans = useData<PlanRow[]>("/api/platform/plans");
-  const catalogue = useData<RoleTemplates>("/api/platform/role-templates");
+  const rows = useData<BusinessRow[]>("/api/v1/platform/businesses");
+  const plans = useData<PlanRow[]>("/api/v1/platform/plans");
+  const catalogue = useData<RoleTemplates>("/api/v1/platform/role-templates");
   const [searchText, setSearchText] = useState("");
   if (!rows || !plans || !catalogue) return <PageLoading />;
   const chipText = (subscriptionState: SubscriptionCurrent) => !subscriptionState || subscriptionState.state === "NONE" ? t("No plan") : subscriptionState.state === "UPCOMING" ? t("Starts {date}", { date: formatDayMonthYear(subscriptionState.startsOn!) }) : subscriptionState.state === "EXPIRED" ? t("Ended {date}", { date: formatDayMonthYear(subscriptionState.endsOn!) }) : subscriptionState.daysLeft !== null && subscriptionState.daysLeft <= 7 ? (subscriptionState.daysLeft === 0 ? t("Ends today") : t(subscriptionState.daysLeft === 1 ? "{n} day left" : "{n} days left", { n: subscriptionState.daysLeft })) : t("Until {date}", { date: formatDayMonthYear(subscriptionState.endsOn!) });

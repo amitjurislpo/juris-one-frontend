@@ -8,8 +8,8 @@ import Link from "@/lib/link";
 import { refreshData } from "@/lib/query";
 import type { TrackContextValue, TrackLinkProps, TrackUser } from "@/track";
 
-/** Where the JurisOne gateway forwards to JurisTrack (`/api/juris-track/<path>` is JurisTrack's `/api/<path>`), and where its pages are mounted in this app. */
-export const GATEWAY_PATH = "/api/juris-track";
+/** Where the JurisOne gateway forwards to JurisTrack (`/api/v1/juris-track/<path>` is JurisTrack's `/api/<path>`), and where its pages are mounted in this app. */
+export const GATEWAY_PATH = "/api/v1/juris-track";
 export const MODULE_PATH = "/juris-track";
 
 const LOCALES = { en: "en-GB", hi: "hi-IN" } as const;
@@ -54,7 +54,7 @@ export function useTrackContext(trackUser: TrackUser): TrackContextValue {
     // the same rule as the Home greeting (JurisOne says "Working late" before 05:00)
     greetingFor: (hour) => (hour < 5 ? "Working late, {name}" : hour < 12 ? "Good morning, {name}" : hour < 17 ? "Good afternoon, {name}" : "Good evening, {name}"),
     // the JurisOne session is what counts: ask "who am I?" (this renews it, or sends the user to sign-in) and repeat the request if it is still valid
-    onUnauthorized: async ({ isQuiet }) => (await apiCall("GET", "/api/me", undefined, { quiet: isQuiet })).status !== 401,
+    onUnauthorized: async ({ isQuiet }) => (await apiCall("GET", "/api/v1/me", undefined, { quiet: isQuiet })).status !== 401,
     onBusinessSuspended: () => { void refreshData(); },
     // a 404 from the gateway is either an ordinary missing record or the module being gone (revoked, plan changed): ask the module's own address
     onNotFound: () => {

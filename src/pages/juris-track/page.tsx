@@ -28,7 +28,7 @@ function ComingSoon() {
 
 /** The JurisTrack pages, once its user is known (the role decides which of them open). */
 function ActiveModule() {
-  const trackUser = useData<TrackUser>("/api/juris-track/me");
+  const trackUser = useData<TrackUser>("/api/v1/juris-track/me");
   if (!trackUser) return <PageLoading />;
   return (
     <Routes>
@@ -45,10 +45,10 @@ function ActiveModule() {
 
 /**
  * Juris Track inside JurisOne (`/juris-track/*`): only for businesses with the module (plan or grant), everyone else gets a 404
- * (see RequirePage). The pages are JurisTrack's own, talking to it through the JurisOne gateway (`/api/juris-track`).
+ * (see RequirePage). The pages are JurisTrack's own, talking to it through the JurisOne gateway (`/api/v1/juris-track`).
  */
 export default function JurisTrackPage() {
-  const jurisTrack = useData<{ module: string; status: string }>("/api/juris-track");
+  const jurisTrack = useData<{ module: string; status: string }>("/api/v1/juris-track");
   if (!jurisTrack) return <PageLoading />;
   return jurisTrack.status === "ACTIVE" ? <ActiveModule /> : <ComingSoon />;
 }

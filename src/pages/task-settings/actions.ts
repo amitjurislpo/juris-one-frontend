@@ -7,18 +7,18 @@ import type { WorkflowStatusInput } from "@/pages/projects/actions";
 const enc = encodeURIComponent;
 
 export async function createDefaultStatus(input: WorkflowStatusInput): Promise<ActionResult<{ id: string }>> {
-  return apiAction("POST", "/api/task-settings/workflow-statuses", input);
+  return apiAction("POST", "/api/v1/task-settings/workflow-statuses", input);
 }
 
 export async function updateDefaultStatus(statusId: string, input: WorkflowStatusInput & { isInitial: boolean }): Promise<ActionResult> {
-  return apiAction("PUT", `/api/task-settings/workflow-statuses/${enc(statusId)}`, input);
+  return apiAction("PUT", `/api/v1/task-settings/workflow-statuses/${enc(statusId)}`, input);
 }
 
 export async function reorderDefaultStatuses(statusIds: string[]): Promise<ActionResult> {
-  return apiAction("PUT", "/api/task-settings/workflow-status-order", { statusIds });
+  return apiAction("PUT", "/api/v1/task-settings/workflow-status-order", { statusIds });
 }
 
 export async function deleteDefaultStatus(statusId: string, moveTasksToStatusId?: string): Promise<ActionResult> {
   const query = moveTasksToStatusId ? `?moveTasksToStatusId=${enc(moveTasksToStatusId)}` : "";
-  return apiAction("DELETE", `/api/task-settings/workflow-statuses/${enc(statusId)}${query}`);
+  return apiAction("DELETE", `/api/v1/task-settings/workflow-statuses/${enc(statusId)}${query}`);
 }

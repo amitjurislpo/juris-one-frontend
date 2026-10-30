@@ -87,7 +87,7 @@ test.describe("tax & declarations", () => {
     await expect(toast(page)).toContainText("Regime set to");
     await page.goto("/tax?search=Siddharth");
     await expect(page.locator("tbody tr").first()).toContainText("set by Finance");
-    const exp = await page.request.get("/api/tax/export");
+    const exp = await page.request.get("/api/v1/tax/export");
     expect(exp.status()).toBe(200);
     expect(await exp.text()).toContain("Amit Jaspal");
 
@@ -108,7 +108,7 @@ test.describe("tax & declarations", () => {
       await page.goto(path);
       await expectLanded(page, "/home");
     }
-    expect((await page.request.get("/api/tax/export")).status()).toBe(403);
-    if (item) expect((await page.request.get(`/api/declarations/proofs/${item.id}`)).status()).toBe(403);
+    expect((await page.request.get("/api/v1/tax/export")).status()).toBe(403);
+    if (item) expect((await page.request.get(`/api/v1/declarations/proofs/${item.id}`)).status()).toBe(403);
   });
 });

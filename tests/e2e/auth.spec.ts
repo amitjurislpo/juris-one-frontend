@@ -15,7 +15,7 @@ test.describe("authentication", () => {
     await expect(menu.getByRole("link", { name: "Plans" })).toBeVisible();
     await expect(menu.getByRole("link", { name: "Employees" })).toBeVisible(); // the platform company's staff
     await expect(page.getByRole("link", { name: "My attendance" })).toHaveCount(0);
-    const people = await page.request.get("/api/people?status=All");
+    const people = await page.request.get("/api/v1/people?status=All");
     expect(people.status()).toBe(200);
     expect(await people.text()).not.toContain("JC-0"); // never a customer's employees
   });

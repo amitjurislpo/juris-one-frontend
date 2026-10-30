@@ -127,7 +127,7 @@ function HistoryDialog({ asset, onClose }: { asset: AssetRow; onClose: () => voi
   const [rows, setRows] = useState<AssetAssignment[] | null>(null);
   useEffect(() => {
     let live = true;
-    fetch(`/api/assets/${asset.id}`).then((response) => response.json()).then((j) => { if (live) setRows(j.data?.history ?? []); }).catch(() => { if (live) setRows([]); });
+    fetch(`/api/v1/assets/${asset.id}`).then((response) => response.json()).then((j) => { if (live) setRows(j.data?.history ?? []); }).catch(() => { if (live) setRows([]); });
     return () => { live = false; };
   }, [asset.id]);
   return (

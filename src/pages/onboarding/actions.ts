@@ -3,7 +3,7 @@ import { apiAction, apiCall } from "@/lib/api";
 import { queryClient } from "@/lib/query";
 import type { AttachmentFile, OnboardingView, StepNumber } from "./types";
 
-// The onboarding API of one person. The employee uses `/api/onboarding/mine`; HR filling it on behalf uses `/api/people/{id}/onboarding`
+// The onboarding API of one person. The employee uses `/api/v1/onboarding/mine`; HR filling it on behalf uses `/api/v1/people/{id}/onboarding`
 // (same sub-paths). See references/ONBOARDING_WIZARD_API.md.
 const enc = encodeURIComponent;
 
@@ -31,7 +31,7 @@ export interface OnboardingApi {
 }
 
 export function onboardingApiFor(target: OnboardingTarget): OnboardingApi {
-  const basePath = target.kind === "mine" ? "/api/onboarding/mine" : `/api/people/${enc(target.employeeId)}/onboarding`;
+  const basePath = target.kind === "mine" ? "/api/v1/onboarding/mine" : `/api/v1/people/${enc(target.employeeId)}/onboarding`;
   return {
     viewPath: basePath,
     saveStep: (step, body) => apiAction<OnboardingView>("PUT", `${basePath}/steps/${step}`, body),

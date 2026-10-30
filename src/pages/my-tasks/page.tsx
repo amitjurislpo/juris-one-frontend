@@ -6,7 +6,7 @@ import { PageLoading, useData, usePage } from "@/lib/page";
 import { taskListPath } from "@/lib/tasks";
 import { MyTasksClient } from "./MyTasksClient";
 
-/** Defaults of GET /api/tasks/mine on this page (the URL overrides them). */
+/** Defaults of GET /api/v1/tasks/mine on this page (the URL overrides them). */
 const LIST_DEFAULTS = { relation: "ASSIGNED", statusCategory: "TODO,IN_PROGRESS", sort: "dueDate", pageSize: "200" };
 
 /** Everything I do (direct assignee) or answer for (accountable), grouped by due; a board as the other view. */
@@ -14,8 +14,8 @@ export default function MyTasksPage() {
   const { user, t, searchParams } = usePage();
   const { view, setView } = useTaskView("jurisone.my-tasks.view", "list");
   // the board shows Done too (the last 14 days of it, filtered on screen)
-  const data = useData<MyTasksData>(taskListPath("/api/tasks/mine", searchParams, LIST_DEFAULTS, view === "board" ? { statusCategory: "TODO,IN_PROGRESS,DONE" } : {}));
-  const projects = useData<TaskPage<ProjectRow>>("/api/projects?status=ACTIVE&sort=name");
+  const data = useData<MyTasksData>(taskListPath("/api/v1/tasks/mine", searchParams, LIST_DEFAULTS, view === "board" ? { statusCategory: "TODO,IN_PROGRESS,DONE" } : {}));
+  const projects = useData<TaskPage<ProjectRow>>("/api/v1/projects?status=ACTIVE&sort=name");
   if (!data || !projects) return <PageLoading />;
   const isTaskAdmin = user.perms.has("tasks.manage");
   // projects where I can add tasks (the quick add and "New task" offer these)

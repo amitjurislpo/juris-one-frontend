@@ -10,7 +10,7 @@ import { PolicyActions, PolicyEditor } from "../PoliciesClient";
 export default function PolicyPage() {
   const { user, t, params } = usePage();
   const { id } = params;
-  const policy = useData<PolicyDetail>(`/api/policies/${encodeURIComponent(id)}`);
+  const policy = useData<PolicyDetail>(`/api/v1/policies/${encodeURIComponent(id)}`);
   if (!policy) return <PageLoading />;
   const accepted = policy.people.filter((x) => x.acknowledgedAt).length;
 
@@ -61,7 +61,7 @@ export default function PolicyPage() {
                     <td className="muted hide-sm">{version.publishedBy ?? "—"}</td>
                     <td className="r num">{version.requiresAcknowledgement ? version.acknowledgements : "—"}</td>
                     <td className="mono muted hide-sm" style={{ fontSize: 11.5 }} title={version.bodySha256}>{version.bodySha256.slice(0, 16)}…</td>
-                    <td className="r">{version.fileName && <a className="linkish" href={`/api/policies/${policy.id}/versions/${version.version}/file`} target="_blank" rel="noopener">{t("PDF")}</a>}</td>
+                    <td className="r">{version.fileName && <a className="linkish" href={`/api/v1/policies/${policy.id}/versions/${version.version}/file`} target="_blank" rel="noopener">{t("PDF")}</a>}</td>
                   </tr>
                 ))}
               </tbody>

@@ -13,7 +13,7 @@ type TaxRowView = { id: string; photo?: number | null; code: string; name: strin
 
 export default function TaxPage() {
   const { user, t, searchParams } = usePage();
-  const data = useData<{ month: string; financialYear: string; all: TaxRowView[]; rows: TaxRowView[] }>(`/api/tax${toQs(searchParams)}`);
+  const data = useData<{ month: string; financialYear: string; all: TaxRowView[]; rows: TaxRowView[] }>(`/api/v1/tax${toQs(searchParams)}`);
   if (!data) return <PageLoading />;
   const { month, financialYear, all, rows } = data;
   const queryString = new URLSearchParams(Object.entries(searchParams).flatMap(([parameterName, paramValue]) => (typeof paramValue === "string" ? [[parameterName, paramValue]] : []))).toString();
@@ -22,7 +22,7 @@ export default function TaxPage() {
   return (
     <div className="col">
       <PageHeader eyebrow={t("Finance · Tax year {fy}", { fy: financialYear })} title={t("Tax")} emphasis={t("& TDS")} sub={t("Monthly TDS for every employee as of {month} payroll, based on their regime and verified investment proofs.", { month: formatMonthLabel(month) })}>
-        <a className="btn" href={`/api/tax/export${queryString ? `?${queryString}` : ""}`} download>{t("Export CSV")}</a>
+        <a className="btn" href={`/api/v1/tax/export${queryString ? `?${queryString}` : ""}`} download>{t("Export CSV")}</a>
       </PageHeader>
       <div className="kpis">
         <div className="card kpi enter" style={{ ["--i" as string]: 1 }}><span className="spot"></span><span className="l">{t("Monthly TDS (all)")}</span><span className="v num">{formatWholeRupees(all.reduce((total, row) => total + row.tds, 0))}</span></div>

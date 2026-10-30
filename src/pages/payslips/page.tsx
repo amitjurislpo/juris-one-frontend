@@ -9,7 +9,7 @@ import { SlipActions } from "./SlipViewer";
 /** A month appears only after Finance closes it; open months show "Processing" (REQUIREMENTS §5.11). */
 export default function PayslipsPage() {
   const { user, t } = usePage();
-  const data = useData<{ india: boolean; months: ({ month: string; closed: false } | { month: string; closed: true; snapshot: PayslipSnapshot; paidOn: string | null })[] }>("/api/payslips");
+  const data = useData<{ india: boolean; months: ({ month: string; closed: false } | { month: string; closed: true; snapshot: PayslipSnapshot; paidOn: string | null })[] }>("/api/v1/payslips");
   if (!data) return <PageLoading />;
   const { india, months } = data;
 

@@ -13,7 +13,7 @@ const LOCKED_STATUSES: readonly string[] = ["NOT_STARTED", "IN_PROGRESS", "SUBMI
 /** Pages a locked employee may open (everything else sends them to /onboarding). */
 const ONBOARDING_PATHS: readonly string[] = ["/onboarding", "/onboarding/summary", "/onboarding/success"];
 
-/** Reads `onboarding: { status, isRequired }` from the `/api/me` payload; null when the API sent nothing (everyone unaffected). */
+/** Reads `onboarding: { status, isRequired }` from the `/api/v1/me` payload; null when the API sent nothing (everyone unaffected). */
 export function readOnboardingGate(mePayload: { onboarding?: { status?: string; isRequired?: boolean } | null }): OnboardingGate | null {
   const raw = mePayload.onboarding;
   if (!raw || !raw.status) return null;

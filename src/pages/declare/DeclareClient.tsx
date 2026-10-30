@@ -55,7 +55,7 @@ export function DeclareClient(props: {
     formData.set("item", key);
     formData.set("file", file);
     try {
-      const res = await fetch("/api/declarations/proofs", { method: "POST", body: formData });
+      const res = await fetch("/api/v1/declarations/proofs", { method: "POST", body: formData });
       const j = await res.json();
       if (!res.ok) toast(j.detail ?? j.error ?? t("Upload failed"), "bad");
       else toast(t("Attached {name}", { name: j.data.name }));
@@ -148,7 +148,7 @@ export function DeclareClient(props: {
                               <input type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" style={{ display: "none" }} disabled={locked || cur?.status === "PENDING"} aria-label={t("Upload proof for {label}", { label: t(sectionItem.label) })}
                                 onChange={(e) => { const file = e.target.files?.[0]; if (file) void upload(sectionItem.field, file); e.target.value = ""; }} />
                             </label>}
-                            {cur?.proofName && <a className="linkish" style={{ fontSize: 12.5 }} href={`/api/declarations/proofs/${cur.id}`} target="_blank" rel="noopener">{cur.proofName}</a>}
+                            {cur?.proofName && <a className="linkish" style={{ fontSize: 12.5 }} href={`/api/v1/declarations/proofs/${cur.id}`} target="_blank" rel="noopener">{cur.proofName}</a>}
                             <span className={`chip ${cur ? CHIP[cur.status] : "neutral"}`} style={{ minWidth: 84, justifyContent: "center" }}>{cur && (cur.amount || cur.proofName) ? t(LABEL[cur.status]) : t("Not declared")}</span>
                           </>
                         )}
