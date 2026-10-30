@@ -1253,6 +1253,7 @@ export const hindiMessages: Record<string, string> = {
   "Employee ID prefix": "कर्मचारी आईडी उपसर्ग",
   "2–5 letters": "2–5 अक्षर",
   "Fixed once the business has people": "व्यवसाय में लोग होने के बाद स्थिर",
+  "Fixed once the business is created": "व्यवसाय बनने के बाद स्थिर",
   "Time zone": "समय क्षेत्र",
   "Contact email": "संपर्क ईमेल",
   "GSTIN": "GSTIN",
