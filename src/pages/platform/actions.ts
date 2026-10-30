@@ -94,3 +94,8 @@ export async function removeBusinessRole(businessId: string, roleId: string): Pr
 export async function syncBusinessRole(businessId: string, roleId: string): Promise<ActionResult> {
   return apiAction("POST", `/api/v1/platform/businesses/${enc(businessId)}/roles/${enc(roleId)}/template-syncs`, undefined, [`/platform/${businessId}`]);
 }
+
+/** Only the super admin: the business's web address changes, the old one is retired for good and everybody of the business is signed out. */
+export async function changeBusinessSlug(id: string, slug: string): Promise<ActionResult> {
+  return apiAction("POST", `/api/v1/platform/businesses/${enc(id)}/slug-changes`, { slug }, [...PAGES, `/platform/${id}`]);
+}

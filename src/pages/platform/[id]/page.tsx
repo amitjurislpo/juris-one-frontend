@@ -1,12 +1,12 @@
 import Link from "@/lib/link";
 import { Icon } from "@/components/Icon";
 import { PageHeader } from "@/components/PageHeader";
-import type { BusinessProfile, ModuleGrant, PlanRow, RoleTemplates, SubscriptionCurrent, SubscriptionRow } from "@/lib/api-types";
+import type { BusinessProfile, ModuleGrant, PlanRow, RoleTemplates, SlugChange, SubscriptionCurrent, SubscriptionRow } from "@/lib/api-types";
 import { PageLoading, useData, usePage } from "@/lib/page";
-import { formatDayMonthYear, formatRupees, isoDateIn, todayIn } from "@/lib/format";
+import { formatDateTimeSeconds, formatDayMonthYear, formatRupees, isoDateIn, todayIn } from "@/lib/format";
 import { MODULE_LABELS, subscriptionChip } from "@/lib/subscription";
 import {
-  AddBusinessRoleButton, AddOwnerButton, AddSubscriptionButton, BusinessRoleActions, BusinessStatusButton, CancelSubscriptionButton, EditBusinessButton, GrantJurisTrackButton, OwnerAccessSwitch,
+  AddBusinessRoleButton, AddOwnerButton, AddSubscriptionButton, BusinessRoleActions, BusinessStatusButton, CancelSubscriptionButton, ChangeWebAddressButton, EditBusinessButton, GrantJurisTrackButton, OwnerAccessSwitch,
   RevokeGrantButton,
 } from "../PlatformClient";
 
@@ -31,7 +31,8 @@ export default function BusinessPage() {
   const data = useData<Detail>(`/api/v1/platform/businesses/${encodeURIComponent(id)}`);
   const plans = useData<PlanRow[]>("/api/v1/platform/plans");
   const catalogue = useData<RoleTemplates>("/api/v1/platform/role-templates");
-  if (!data || !plans || !catalogue) return <PageLoading />;
+  const retiredAddresses = useData<SlugChange[]>(`/api/v1/platform/businesses/${encodeURIComponent(id)}/slug-changes`);
+  if (!data || !plans || !catalogue || !retiredAddresses) return <PageLoading />;
   const business = data.business;
   const subscription = data.subscription;
   const chip = subscriptionChip(subscription);
@@ -48,6 +49,7 @@ export default function BusinessPage() {
       <PageHeader back="/platform" eyebrow={<><Link href="/platform" className="linkish">{t("Businesses")}</Link> / {business.code}</>} title={business.name}
         sub={<>{t("Created {date} · employee IDs {prefix}-001 · {tz}", { date: formatDayMonthYear(isoDateIn(business.createdAt, business.timeZone)), prefix: business.employeePrefix, tz: business.timeZone })}</>}>
         <EditBusinessButton id={business.id} profile={profile} hasPeople={subscription.employees > 0} />
+        <ChangeWebAddressButton id={business.id} name={business.name} currentSlug={business.code} />
         <BusinessStatusButton id={business.id} name={business.name} status={business.status} />
       </PageHeader>
 
@@ -123,6 +125,20 @@ export default function BusinessPage() {
             </table>
           </div>
         ) : <p className="muted" style={{ padding: "0 18px 16px", margin: 0 }}>{t("No separate grants.")}</p>}
+      </section>
+
+      <section className="card enter" style={{ ["--i" as string]: 4, padding: 18 }}>
+        <div className="card-h">
+          <div>
+            <h3>{t("Web address")}</h3>
+            <small className="muted">{t("Retired addresses can never be used again.")}</small>
+          </div>
+        </div>
+        <div className="kv"><span className="muted">{t("Current address")}</span><b className="mono">{business.code}</b></div>
+        {retiredAddresses.map((retired) => (
+          <div key={retired.slug} className="kv"><span><b className="mono">{retired.slug}</b> <span className="chip neutral">{t("Retired")}</span></span><span className="muted">{formatDateTimeSeconds(new Date(retired.releasedAt), business.timeZone)}</span></div>
+        ))}
+        {!retiredAddresses.length && <p className="muted" style={{ margin: "8px 0 0" }}>{t("Never changed.")}</p>}
       </section>
 
       <section className="card enter" style={{ ["--i" as string]: 4 }}>

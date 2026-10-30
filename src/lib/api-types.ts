@@ -143,6 +143,9 @@ export interface PlanRow {
   businesses: number;
 }
 
+/** A web address a business used to have; retired for good. */
+export interface SlugChange { slug: string; releasedAt: string; releasedBy: string | null }
+
 export interface BusinessProfile {
   name: string;
   legalName: string | null;
