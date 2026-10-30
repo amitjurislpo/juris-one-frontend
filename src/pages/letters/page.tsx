@@ -10,10 +10,10 @@ import { IssueLetter, TemplatesTable, TYPE_LABEL, type EmployeeChoice } from "./
 /** HR: issue offer, appointment, experience, relieving and employment-verification letters from editable templates. */
 export default function LettersPage() {
   const { user, t } = usePage();
-  const templates = useData<LetterTemplateRow[]>("/api/letters/templates");
-  const employees = useData<EmployeeChoice[]>("/api/letters/employees");
-  const issued = useData<IssuedLetter[]>("/api/letters");
-  const meta = useData<{ fields: LetterField[] }>("/api/letters/fields");
+  const templates = useData<LetterTemplateRow[]>("/api/v1/letters/templates");
+  const employees = useData<EmployeeChoice[]>("/api/v1/letters/employees");
+  const issued = useData<IssuedLetter[]>("/api/v1/letters");
+  const meta = useData<{ fields: LetterField[] }>("/api/v1/letters/fields");
   if (!templates || !employees || !issued || !meta) return <PageLoading />;
 
   return (
@@ -36,7 +36,7 @@ export default function LettersPage() {
                   <td className="muted hide-sm">{t(TYPE_LABEL[letter.type])}{letter.needsSalary && <span className="chip warn nodot" style={{ marginLeft: 6 }}>{t("States salary")}</span>}</td>
                   <td className="muted hide-sm">{formatDayMonthYear(isoDateIn(letter.issuedAt, user.timeZone))} · {letter.issuedBy}</td>
                   <td className="r">
-                    {letter.canOpen ? <a className="btn btn-sm" href={`/api/letters/${letter.id}/pdf`} download><Icon name="download" size={14} />{t("PDF")}</a>
+                    {letter.canOpen ? <a className="btn btn-sm" href={`/api/v1/letters/${letter.id}/pdf`} download><Icon name="download" size={14} />{t("PDF")}</a>
                       : <span className="faint" style={{ fontSize: 12 }}>{t("Salary letter")}</span>}
                   </td>
                 </tr>

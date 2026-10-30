@@ -11,7 +11,7 @@ interface Data { business: BusinessProfile; subscription: SubscriptionCurrent; h
 /** The business owner's plan, its dates and the employee export (available even after the subscription ends). */
 export default function SubscriptionPage() {
   const { user, t } = usePage();
-  const data = useData<Data>("/api/business/subscription");
+  const data = useData<Data>("/api/v1/business/subscription");
   if (!data) return <PageLoading />;
   const subscription = data.subscription;
   const chip = subscriptionChip(subscription);

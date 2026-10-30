@@ -9,12 +9,12 @@ import { AuditRow } from "./AuditClient";
 const TONE: Record<string, string> = { auth: "neutral", employee: "info", role: "gold", policy: "gold", payroll: "ok", salary: "ok", tax: "ok", proof: "ok", declaration: "ok", request: "neutral", page: "neutral" };
 
 /**
- * The audit log table, shared by the business admin's page (`/api/audit`) and the super admin's page (`/api/platform/audit`,
+ * The audit log table, shared by the business admin's page (`/api/v1/audit`) and the super admin's page (`/api/v1/platform/audit`,
  * with a Business column and filter). Every entry shows its time to the second; request and page-view entries show what was called.
  */
 export function AuditTable({ platform }: { platform?: boolean }) {
   const { user, t, searchParams } = usePage();
-  const base = platform ? "/api/platform/audit" : "/api/audit";
+  const base = platform ? "/api/v1/platform/audit" : "/api/v1/audit";
   const data = useData<{ page: number; take: number; total: number; rows: Row[]; actors: { value: string; label: string }[]; businesses?: { value: string; label: string }[] }>(`${base}${toQueryString(searchParams)}`);
   if (!data) return <PageLoading />;
   const { page, take, total, rows, actors, businesses = [] } = data;

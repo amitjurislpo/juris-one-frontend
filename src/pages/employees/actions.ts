@@ -3,7 +3,7 @@ import type { ActionResult } from "@/lib/action";
 import { apiAction, apiCall, apiFile } from "@/lib/api";
 import type { EmployeeInput } from "@/lib/employee-schema";
 
-// People records run in the Spring Boot API (/api/people). Salary is only sent to struct.manage; PII is masked.
+// People records run in the Spring Boot API (/api/v1/people). Salary is only sent to struct.manage; PII is masked.
 const PAGES = ["/employees", "/directory", "/team", "/departments"];
 const enc = encodeURIComponent;
 
@@ -41,35 +41,35 @@ export interface Profile {
 }
 
 export async function getProfile(id: string): Promise<ActionResult<Profile>> {
-  return (await apiCall<Profile>("GET", `/api/people/${enc(id)}`)).body;
+  return (await apiCall<Profile>("GET", `/api/v1/people/${enc(id)}`)).body;
 }
 
 /** Full phone + address for people who may edit the record. Every reveal is audited. */
 export async function revealContact(id: string): Promise<ActionResult<{ phone: string; address: string }>> {
-  return (await apiCall<{ phone: string; address: string }>("GET", `/api/people/${enc(id)}/contact`)).body;
+  return (await apiCall<{ phone: string; address: string }>("GET", `/api/v1/people/${enc(id)}/contact`)).body;
 }
 
 // ───────────────────────── access & exit ─────────────────────────
 
 export async function toggleAccess(id: string, enabled: boolean): Promise<ActionResult> {
-  return apiAction("PUT", `/api/people/${enc(id)}/access`, { enabled }, PAGES);
+  return apiAction("PUT", `/api/v1/people/${enc(id)}/access`, { enabled }, PAGES);
 }
 
 export async function confirmEmployee(id: string): Promise<ActionResult> {
-  return apiAction("PUT", `/api/people/${enc(id)}/status`, { status: "ACTIVE" }, PAGES);
+  return apiAction("PUT", `/api/v1/people/${enc(id)}/status`, { status: "ACTIVE" }, PAGES);
 }
 
 export async function markExited(id: string, exitDate: string): Promise<ActionResult> {
-  return apiAction("PUT", `/api/people/${enc(id)}/status`, { status: "EXITED", exitDate }, PAGES);
+  return apiAction("PUT", `/api/v1/people/${enc(id)}/status`, { status: "EXITED", exitDate }, PAGES);
 }
 
 // HR / admin set or remove a person's photo (the same rules as editing that person)
 export async function uploadEmployeePhoto(id: string, photo: Blob): Promise<ActionResult> {
-  return apiFile("PUT", `/api/people/${enc(id)}/photo`, photo);
+  return apiFile("PUT", `/api/v1/people/${enc(id)}/photo`, photo);
 }
 
 export async function removeEmployeePhoto(id: string): Promise<ActionResult> {
-  return apiFile("DELETE", `/api/people/${enc(id)}/photo`);
+  return apiFile("DELETE", `/api/v1/people/${enc(id)}/photo`);
 }
 
 // ───────────────────────── add / edit ─────────────────────────
@@ -85,11 +85,11 @@ export interface FormOptions {
 }
 
 export async function getFormOptions(editId?: string): Promise<ActionResult<FormOptions>> {
-  return (await apiCall<FormOptions>("GET", `/api/people/form-options${editId ? `?id=${enc(editId)}` : ""}`)).body;
+  return (await apiCall<FormOptions>("GET", `/api/v1/people/form-options${editId ? `?id=${enc(editId)}` : ""}`)).body;
 }
 
 export async function saveEmployee(input: EmployeeInput, editId?: string): Promise<ActionResult<{ id: string; code: string }>> {
   return editId
-    ? apiAction("PUT", `/api/people/${enc(editId)}`, input, PAGES)
-    : apiAction("POST", "/api/people", input, PAGES);
+    ? apiAction("PUT", `/api/v1/people/${enc(editId)}`, input, PAGES)
+    : apiAction("POST", "/api/v1/people", input, PAGES);
 }

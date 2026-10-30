@@ -33,7 +33,7 @@ export function AppLayout({ children }: { children?: ReactNode }) {
   const t = useT();
   const isLocked = mustCompleteOnboarding(user?.onboarding);
   // a locked employee (onboarding not approved yet) gets no menu, so the menu data is not even asked for
-  const data = useData<ShellData>(user && !isLocked ? "/api/shell" : null);
+  const data = useData<ShellData>(user && !isLocked ? "/api/v1/shell" : null);
   // every page opened by a signed-in user goes into the audit log (once per navigation)
   const signedIn = !!user && !isLocked;
   useEffect(() => { if (signedIn) reportPageView(loc.pathname); }, [signedIn, loc.pathname]);

@@ -32,9 +32,9 @@ describe("status labels", () => {
 
 describe("list address and page", () => {
   it("sends only the filters that are set", () => {
-    expect(hiresPath({})).toBe("/api/onboardings");
-    expect(hiresPath({ status: "All", page: "1" })).toBe("/api/onboardings");
-    expect(hiresPath({ status: "SUBMITTED", search: " meera ", page: "2" })).toBe("/api/onboardings?status=SUBMITTED&search=meera&page=2");
+    expect(hiresPath({})).toBe("/api/v1/onboardings");
+    expect(hiresPath({ status: "All", page: "1" })).toBe("/api/v1/onboardings");
+    expect(hiresPath({ status: "SUBMITTED", search: " meera ", page: "2" })).toBe("/api/v1/onboardings?status=SUBMITTED&search=meera&page=2");
   });
   it("reads a page or a bare array", () => {
     expect(normalizeHires({ rows: [{ employeeId: "1" }], total: 31, page: 2, take: 25 })).toMatchObject({ total: 31, page: 2, take: 25 });

@@ -15,7 +15,7 @@ export default function AttendancePage() {
     tracked: boolean; month: string; minMonth: string; workDate: string; locked: boolean; selectedDate: string;
     summary: { present: number; absent: number; leave: number; holidays: number; weeklyOffs: number; workedMinutes: number; lateMarks: number; lateLopDays: number };
     days: CalendarDay[]; regularizations: RegularizationView[]; holidays: { id: string; date: string; name: string }[];
-  }>(`/api/attendance/mine${toQueryString(searchParams)}`);
+  }>(`/api/v1/attendance/mine${toQueryString(searchParams)}`);
   if (!data) return <PageLoading />;
   if (!data.tracked) return <div className="col"><PageHeader eyebrow={t("Attendance")} title={t("My")} emphasis={t("attendance")} /><ComingInPhase phase={2} t={t} what={t("Attendance isn't tracked for your account.")} /></div>;
 

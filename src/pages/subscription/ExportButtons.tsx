@@ -18,12 +18,12 @@ export function ExportButtons() {
   const t = useT();
   return (
     <>
-      <a className="btn btn-gold" href="/api/business/employees/export" download><Icon name="download" size={14} />{t("Export employees (Excel)")}</a>
+      <a className="btn btn-gold" href="/api/v1/business/employees/export" download><Icon name="download" size={14} />{t("Export employees (Excel)")}</a>
       <button className="btn" onClick={() => setAsk(true)}><Icon name="eye" size={14} />{t("With full identity details")}</button>
       {ask && (
         <ConfirmDialog title={t("Export with full identity details")} confirm={t("Download")} onClose={() => setAsk(false)}
           body={<>{t("The file will contain full PAN, Aadhaar, UAN, bank account numbers, phone numbers and addresses. Keep it somewhere safe. This download is recorded in the audit log.")}</>}
-          onConfirm={() => { setAsk(false); download("/api/business/employees/export?identity=full"); }} />
+          onConfirm={() => { setAsk(false); download("/api/v1/business/employees/export?identity=full"); }} />
       )}
     </>
   );

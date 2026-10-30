@@ -22,7 +22,7 @@ const CHIP: Record<string, string> = { Present: "ok", Working: "ok", "Half day":
 
 export default function RegisterPage() {
   const { t, searchParams } = usePage();
-  const register = useData<RegisterData>(`/api/attendance/register${toQueryString(searchParams)}`);
+  const register = useData<RegisterData>(`/api/v1/attendance/register${toQueryString(searchParams)}`);
   if (!register) return <PageLoading />;
   const departments = register.departments;
   const exportQs = new URLSearchParams(Object.entries(searchParams).flatMap(([parameterName, paramValue]) => (typeof paramValue === "string" && parameterName !== "page" ? [[parameterName, paramValue]] : []))).toString();
@@ -32,7 +32,7 @@ export default function RegisterPage() {
   return (
     <div className="col">
       <PageHeader eyebrow={t("People operations · Attendance")} title={t("Attendance")} emphasis={t("register")} sub={t("Everyone's check-ins across India and US teams — shown in the time zone you pick.")}>
-        <a className="btn" href={`/api/attendance/register/export${exportQs ? `?${exportQs}` : ""}`} download>{t("Export CSV")}</a>
+        <a className="btn" href={`/api/v1/attendance/register/export${exportQs ? `?${exportQs}` : ""}`} download>{t("Export CSV")}</a>
         <SegmentedFilter name="view" dflt="day" label={t("Register view")} options={[{ value: "day", label: t("Daily log") }, { value: "month", label: t("Monthly grid") }]} />
       </PageHeader>
       {register.view === "day" ? <Daily register={register} departmentOptions={departmentOptions} teamOptions={teamOptions} /> : <Monthly register={register} departmentOptions={departmentOptions} teamOptions={teamOptions} months={register.months ?? []} />}

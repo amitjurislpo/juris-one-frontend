@@ -12,7 +12,7 @@ interface Row { id: string; name: string; note: string; head: string; employeeCo
 
 export default function DepartmentsPage() {
   const { user, t, searchParams } = usePage();
-  const data = useData<{ rows: Row[]; heads: { id: string; name: string; title: string }[] }>(`/api/departments${toQueryString(searchParams)}`);
+  const data = useData<{ rows: Row[]; heads: { id: string; name: string; title: string }[] }>(`/api/v1/departments${toQueryString(searchParams)}`);
   if (!data) return <PageLoading />;
   const { rows, heads } = data;
 

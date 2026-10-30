@@ -40,7 +40,7 @@ export interface Nominations { epf: Nominee[]; eps: { familyMemberId: string } |
 export interface AttachmentFile { id: string; fileName: string; mime: string; sizeBytes: number; uploadedAt: string }
 export interface AttachmentSlot { slotKey: string; group: string; title: string; tooltip: string; isMandatory: boolean; files: AttachmentFile[] }
 
-/** `GET /api/onboarding/mine` (and, read-only, `GET /api/people/{id}/onboarding`). */
+/** `GET /api/v1/onboarding/mine` (and, read-only, `GET /api/v1/people/{id}/onboarding`). */
 export interface OnboardingView {
   status: OnboardingStatus; currentStep: StepNumber; stepStatus: Record<StepNumber, StepStatus>; isReadOnly: boolean; submittedAt: string | null;
   header: OnboardingHeader; personal: PersonalInformation; permanentAddress: Address; presentAddress: PresentAddress; emergencyContact: EmergencyContact;

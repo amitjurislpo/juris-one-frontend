@@ -3,7 +3,7 @@ import type { ActionResult } from "@/lib/action";
 import { apiAction, apiCall } from "@/lib/api";
 import type { Preview } from "@/lib/api-types";
 
-// Leave requests run in the Spring Boot API (/api/leave).
+// Leave requests run in the Spring Boot API (/api/v1/leave).
 const PAGES = ["/leave", "/approvals", "/home"];
 
 export interface ApplyInput {
@@ -17,13 +17,13 @@ export interface ApplyInput {
 /** Live numbers for the apply form — same rules the server enforces on submit. */
 export async function preview(input: ApplyInput): Promise<ActionResult<Preview>> {
   const queryParameters = new URLSearchParams({ type: input.type, from: input.from, to: input.to, part: input.part });
-  return (await apiCall<Preview>("GET", `/api/leave/previews?${queryParameters}`)).body;
+  return (await apiCall<Preview>("GET", `/api/v1/leave/previews?${queryParameters}`)).body;
 }
 
 export async function applyLeave(input: ApplyInput): Promise<ActionResult> {
-  return apiAction("POST", "/api/leave/requests", input, PAGES);
+  return apiAction("POST", "/api/v1/leave/requests", input, PAGES);
 }
 
 export async function cancelLeave(id: string): Promise<ActionResult> {
-  return apiAction("DELETE", `/api/leave/requests/${encodeURIComponent(id)}`, undefined, PAGES);
+  return apiAction("DELETE", `/api/v1/leave/requests/${encodeURIComponent(id)}`, undefined, PAGES);
 }

@@ -10,7 +10,7 @@ export default function NotificationsPage() {
   const { user, t, searchParams } = usePage();
   const unreadOnly = searchParams.filter === "unread";
   const page = Math.max(1, Number(searchParams.page) || 1);
-  const box = useData<InboxPage>(`/api/notifications?page=${page}${unreadOnly ? "&unread=true" : ""}`);
+  const box = useData<InboxPage>(`/api/v1/notifications?page=${page}${unreadOnly ? "&unread=true" : ""}`);
   if (!box) return <PageLoading />;
   const href = (pageNumber: number, unread = unreadOnly) => `/notifications?${new URLSearchParams({ ...(unread ? { filter: "unread" } : {}), ...(pageNumber > 1 ? { page: String(pageNumber) } : {}) })}`;
 

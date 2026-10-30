@@ -11,7 +11,7 @@ const describe = (assignment: AssetAssignment, t: (text: string) => string) => [
 /** The company equipment assigned to the signed-in user, now and before. */
 export default function MyAssetsPage() {
   const { t } = usePage();
-  const data = useData<{ current: AssetAssignment[]; past: AssetAssignment[] }>("/api/assets/mine");
+  const data = useData<{ current: AssetAssignment[]; past: AssetAssignment[] }>("/api/v1/assets/mine");
   if (!data) return <PageLoading />;
   const { current, past } = data;
 

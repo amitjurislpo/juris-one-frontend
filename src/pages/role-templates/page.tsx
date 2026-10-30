@@ -8,7 +8,7 @@ import { RoleTemplateButton, RoleTemplateDeleteButton } from "./RoleTemplatesCli
 /** The super admin's role catalogue: the roles a business can be given when it is onboarded (or later). */
 export default function RoleTemplatesPage() {
   const { t } = usePage();
-  const data = useData<RoleTemplates>("/api/platform/role-templates");
+  const data = useData<RoleTemplates>("/api/v1/platform/role-templates");
   if (!data) return <PageLoading />;
   const labels = new Map(data.groups.flatMap((g) => g.permissions.map((p) => [p.key, p.label] as const)));
   const names = new Map(data.templates.map((x) => [x.key, x.name]));

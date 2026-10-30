@@ -23,9 +23,9 @@ type Home =
 
 export default function HomePage() {
   const { user, t } = usePage();
-  const home = useData<Home>("/api/home");
-  const box = useData<InboxPage>("/api/notifications?limit=5");
-  const news = useData<Announcement[]>("/api/announcements?limit=3");
+  const home = useData<Home>("/api/v1/home");
+  const box = useData<InboxPage>("/api/v1/notifications?limit=5");
+  const news = useData<Announcement[]>("/api/v1/announcements?limit=3");
   if (!home || !box || !news) return <PageLoading />;
   const now = new Date();
 

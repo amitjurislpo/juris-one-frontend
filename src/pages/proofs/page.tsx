@@ -9,7 +9,7 @@ import { Avatar } from "@/components/Avatar";
 
 export default function ProofsPage() {
   const { t, searchParams } = usePage();
-  const data = useData<{ rows: { id: string; photo?: number | null; name: string; code: string; department: string; regime: "NEW" | "OLD"; declared: number; pending: number; approved: number }[]; total: number }>(`/api/proofs${toQueryString(searchParams)}`);
+  const data = useData<{ rows: { id: string; photo?: number | null; name: string; code: string; department: string; regime: "NEW" | "OLD"; declared: number; pending: number; approved: number }[]; total: number }>(`/api/v1/proofs${toQueryString(searchParams)}`);
   if (!data) return <PageLoading />;
   const { rows, total } = data;
 

@@ -13,7 +13,7 @@ type DeclarationData =
 
 export default function DeclarePage() {
   const { t } = usePage();
-  const data = useData<DeclarationData>("/api/declarations");
+  const data = useData<DeclarationData>("/api/v1/declarations");
   if (!data) return <PageLoading />;
   if (!data.india) {
     return <div className="col"><PageHeader eyebrow={t("Tax year {fy}", { fy: data.financialYear })} title={t("Tax")} emphasis={t("declarations")} /><div className="empty"><b className="display">{t("Not applicable")}</b><span className="muted">{t("Tax declarations are for the India payroll. US team taxes are handled by the US payroll provider.")}</span></div></div>;

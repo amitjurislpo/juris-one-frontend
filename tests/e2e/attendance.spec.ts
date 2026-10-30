@@ -137,7 +137,7 @@ test.describe("attendance", () => {
     await page.goto("/register?view=month&month=2026-09&search=Amit");
     const grid = page.locator("table.reg tbody tr").first();
     await expect(grid.locator("td").nth(22)).toHaveText("L"); // 22 Sep: leave without pay
-    const exp = await page.request.get("/api/attendance/register/export?view=month&month=2026-09");
+    const exp = await page.request.get("/api/v1/attendance/register/export?view=month&month=2026-09");
     expect(exp.status()).toBe(200);
     expect(await exp.text()).toContain("Amit Jaspal");
 
@@ -146,7 +146,7 @@ test.describe("attendance", () => {
     await expectLanded(page, "/home");
     await page.goto("/register");
     await expectLanded(page, "/home");
-    expect((await page.request.get("/api/attendance/register")).status()).toBe(403);
+    expect((await page.request.get("/api/v1/attendance/register")).status()).toBe(403);
   });
 
   test("policies: Admin edits the attendance policy", async ({ page }) => {

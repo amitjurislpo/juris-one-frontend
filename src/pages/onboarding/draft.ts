@@ -90,7 +90,7 @@ export function copyPermanentAddress(permanentAddress: Address): PresentAddress 
   return { ...permanentAddress, isSameAsPermanent: true };
 }
 
-/** The request body for `PUT /api/onboarding/mine/steps/{step}`. */
+/** The request body for `PUT /api/v1/onboarding/mine/steps/{step}`. */
 export function stepRequestBody(step: StepNumber, draft: OnboardingDraft): unknown {
   switch (step) {
     case 1: return blankToNull({

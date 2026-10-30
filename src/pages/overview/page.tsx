@@ -18,9 +18,9 @@ type Overview = {
 
 export default function OverviewPage() {
   const { user, t } = usePage();
-  const data = useData<Overview>("/api/overview");
-  const box = useData<InboxPage>("/api/notifications?limit=5");
-  const news = useData<Announcement[]>("/api/announcements?limit=3");
+  const data = useData<Overview>("/api/v1/overview");
+  const box = useData<InboxPage>("/api/v1/notifications?limit=5");
+  const news = useData<Announcement[]>("/api/v1/announcements?limit=3");
   if (!data || !box || !news) return <PageLoading />;
   const pending = data.pending.leave + data.pending.regularizations;
   const maxDept = Math.max(1, ...data.byDepartment.map((x) => x.count));

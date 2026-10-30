@@ -17,7 +17,7 @@ type Team = {
 /** Anyone with active direct reports. Read-only — approvals stay with HR (REQUIREMENTS §5.13). */
 export default function TeamPage() {
   const { t, searchParams } = usePage();
-  const data = useData<Team>(`/api/team${toQueryString(searchParams)}`);
+  const data = useData<Team>(`/api/v1/team${toQueryString(searchParams)}`);
   if (!data) return <PageLoading />;
   const { size, counts, rows, days, away } = data;
 

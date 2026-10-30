@@ -9,7 +9,7 @@ import { PolicyText } from "./PolicyText";
 /** Every current company policy, and when the signed-in user accepted it. */
 export default function MyPoliciesPage() {
   const { user, t } = usePage();
-  const rows = useData<PolicyToRead[]>("/api/policies/mine");
+  const rows = useData<PolicyToRead[]>("/api/v1/policies/mine");
   if (!rows) return <PageLoading />;
 
   return (
@@ -30,7 +30,7 @@ export default function MyPoliciesPage() {
           <div style={{ marginTop: 14, borderTop: "1px solid var(--line)", paddingTop: 14 }}>
             {policy.body ? <PolicyText body={policy.body} /> : null}
             {policy.fileName && (
-              <a className="btn btn-sm" href={`/api/policies/${policy.id}/versions/${policy.version}/file`} target="_blank" rel="noopener"><Icon name="doc" size={14} />{t("Open {file}", { file: policy.fileName })}</a>
+              <a className="btn btn-sm" href={`/api/v1/policies/${policy.id}/versions/${policy.version}/file`} target="_blank" rel="noopener"><Icon name="doc" size={14} />{t("Open {file}", { file: policy.fileName })}</a>
             )}
           </div>
         </details>

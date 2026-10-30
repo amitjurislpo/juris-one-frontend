@@ -8,7 +8,7 @@ const LCHIP: Record<string, string> = { PENDING: "warn", APPROVED: "ok", DECLINE
 const LLABEL: Record<string, string> = { PENDING: "Pending", APPROVED: "Approved", DECLINED: "Declined", CANCELLED: "Cancelled" };
 
 /** Home side column: cards that appear by permission (REQUIREMENTS §5.12). No salary figures. */
-/** Permission-driven Home cards, from /api/home (salary is never included). */
+/** Permission-driven Home cards, from /api/v1/home (salary is never included). */
 export interface HomeCardsData {
   myLeaves: { id: string; type: string; from: string; to: string; days: number; status: string }[] | null;
   team: { id: string; photo?: number | null; name: string; title: string; status: { label: string; tone: "ok" | "info" | "warn" | "gold" | "neutral" } }[] | null;

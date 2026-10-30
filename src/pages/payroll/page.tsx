@@ -14,7 +14,7 @@ export default function PayrollPage() {
   const data = useData<{
     month: string; months: string[]; closed: boolean; attendanceLocked: boolean; approved: boolean; closedOn: string | null; missing: string[];
     rows: PayView[]; view: PayView[]; canClose: boolean; canStructures: boolean;
-  }>(`/api/payroll${toQueryString(searchParams)}`);
+  }>(`/api/v1/payroll${toQueryString(searchParams)}`);
   if (!data) return <PageLoading />;
   const { month, months, closed, attendanceLocked, approved, rows, view } = data;
   const missing = data.missing.map((fullName) => ({ fullName }));
@@ -71,7 +71,7 @@ export default function PayrollPage() {
           <summary className="btn" style={{ listStyle: "none" }}><Icon name="download" size={15} />{t("Export")}</summary>
           <div className="menu" style={{ minWidth: 220 }}>
             {[["bank", t("Bank transfer file")], ["ecr", t("PF ECR")], ["pt", t("Professional tax summary")], ["tds", t("TDS summary")], ["register", t("Payroll register")]].map(([fileKind, label]) => (
-              <a key={fileKind} href={`/api/payroll/export?month=${month}&type=${fileKind}`} download>{label}</a>
+              <a key={fileKind} href={`/api/v1/payroll/export?month=${month}&type=${fileKind}`} download>{label}</a>
             ))}
           </div>
         </details>

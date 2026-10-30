@@ -2,19 +2,19 @@
 import type { ActionResult } from "@/lib/action";
 import { apiAction } from "@/lib/api";
 
-// Announcements run in the Spring Boot API (/api/announcements).
+// Announcements run in the Spring Boot API (/api/v1/announcements).
 const PAGES = ["/manage-announcements", "/announcements", "/home", "/overview", "/notifications"];
 
 export interface AnnouncementInput { title: string; body: string; audience: string; pinned: boolean; expiresOn: string }
 
 export async function createAnnouncement(input: AnnouncementInput): Promise<ActionResult<{ id: string }>> {
-  return apiAction("POST", "/api/announcements", input, PAGES);
+  return apiAction("POST", "/api/v1/announcements", input, PAGES);
 }
 
 export async function updateAnnouncement(id: string, input: AnnouncementInput): Promise<ActionResult> {
-  return apiAction("PUT", `/api/announcements/${encodeURIComponent(id)}`, input, PAGES);
+  return apiAction("PUT", `/api/v1/announcements/${encodeURIComponent(id)}`, input, PAGES);
 }
 
 export async function setAnnouncementStatus(id: string, status: "PUBLISHED" | "UNPUBLISHED"): Promise<ActionResult> {
-  return apiAction("PUT", `/api/announcements/${encodeURIComponent(id)}/status`, { status }, PAGES);
+  return apiAction("PUT", `/api/v1/announcements/${encodeURIComponent(id)}/status`, { status }, PAGES);
 }

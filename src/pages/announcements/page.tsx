@@ -9,7 +9,7 @@ import { PageLoading, useData, usePage } from "@/lib/page";
 /** Every active announcement for the signed-in user, pinned first. */
 export default function AnnouncementsPage() {
   const { user, t } = usePage();
-  const items = useData<Announcement[]>("/api/announcements");
+  const items = useData<Announcement[]>("/api/v1/announcements");
   if (!items) return <PageLoading />;
 
   return (
