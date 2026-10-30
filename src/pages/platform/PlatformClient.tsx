@@ -11,7 +11,7 @@ import { formatRupees } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import { phoneProblem, splitPhone } from "@/lib/phone";
 import {
-  addBusinessRole, addOwner, addSubscription, cancelSubscription, createBusiness, grantModule, removeBusinessRole, revokeModule, setBusinessStatus, setOwnerAccess, syncBusinessRole, updateBusiness,
+  addBusinessRole, addOwner, addSubscription, cancelSubscription, changeBusinessSlug, createBusiness, grantModule, removeBusinessRole, revokeModule, setBusinessStatus, setOwnerAccess, syncBusinessRole, updateBusiness,
   type BusinessInput, type GrantInput, type OwnerInput, type SubscriptionInput,
 } from "./actions";
 
@@ -37,7 +37,7 @@ function ProfileFields({ form, set, lockPrefix, lockCode, errors }: { form: Busi
         <label className="field">{t("Legal name")} <span className="hint">{t("optional")}</span><input value={fieldValue("legalName")} onChange={onFieldChange("legalName")} maxLength={160} placeholder="Acme Advisors LLP" /></label>
       </div>
       <div className="grid3">
-        <label className="field">{t("Short name")} <span className="hint">{lockCode ? t("Fixed once the business is created") : t("auto if empty")}</span><input value={fieldValue("code")} onChange={onFieldChange("code")} maxLength={40} placeholder="acme-advisors" disabled={lockCode} /></label>
+        <label className="field">{t("Short name")} <span className="hint">{lockCode ? t("Changed only with “Change web address”") : t("auto if empty")}</span><input value={fieldValue("code")} onChange={onFieldChange("code")} maxLength={40} placeholder="acme-advisors" disabled={lockCode} /></label>
         <label className="field">{t("Employee ID prefix")} <span className="hint">{t("2–5 letters")}</span>
           <input value={fieldValue("employeePrefix")} onChange={onFieldChange("employeePrefix")} maxLength={5} placeholder="AA" disabled={lockPrefix} title={lockPrefix ? t("Fixed once the business has people") : undefined} aria-invalid={errors?.employeePrefix ? true : undefined} />
           <FieldError message={errors?.employeePrefix} />
@@ -263,6 +263,48 @@ export function EditBusinessButton({ id, profile, hasPeople }: { id: string; pro
           footer={<><button className="btn btn-ghost" onClick={() => setOpen(false)}>{t("Cancel")}</button><button className="btn btn-gold" disabled={busy} onClick={save}>{busy ? t("Saving…") : t("Save")}</button></>}>
           <div className="col" style={{ gap: 14 }}>
             <ProfileFields form={editedBusiness} set={(updatedBusiness) => { setEditedBusiness(updatedBusiness); setErr(""); }} lockPrefix={hasPeople} lockCode />
+            {err && <div className="err" role="alert">{err}</div>}
+          </div>
+        </Modal>
+      )}
+    </>
+  );
+}
+
+export function ChangeWebAddressButton({ id, name, currentSlug }: { id: string; name: string; currentSlug: string }) {
+  const toast = useToast();
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const [newSlug, setNewSlug] = useState("");
+  const [understood, setUnderstood] = useState(false);
+  const [err, setErr] = useState("");
+  const [busy, start] = useTransition();
+  const close = () => { setOpen(false); setNewSlug(""); setUnderstood(false); setErr(""); };
+  const change = () => start(async () => {
+    const changeResult = await changeBusinessSlug(id, newSlug.trim().toLowerCase());
+    if (changeResult.ok) { toast(changeResult.message!); close(); } else setErr(changeResult.error);
+  });
+  return (
+    <>
+      <button className="btn btn-ghost" onClick={() => setOpen(true)}><Icon name="edit" size={14} />{t("Change web address")}</button>
+      {open && (
+        <Modal title={t("Change web address")} eyebrow={name} maxWidth={560} onClose={close}
+          footer={<><button className="btn btn-ghost" onClick={close}>{t("Cancel")}</button><button className="btn btn-danger" disabled={busy || !understood || !newSlug.trim()} onClick={change}>{busy ? t("Changing…") : t("Change web address")}</button></>}>
+          <div className="col" style={{ gap: 14 }}>
+            <div className="err" role="note">
+              <b>{t("Think before you do this.")}</b>
+              <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+                <li>{t("Everybody of this business is signed out at once.")}</li>
+                <li>{t("Links with the old address stop working.")}</li>
+                <li>{t("The old address can never be used again, by this or any other business.")}</li>
+              </ul>
+            </div>
+            <div className="kv"><span className="muted">{t("Current address")}</span><b className="mono">{currentSlug}</b></div>
+            <label className="field">{t("New address")}<input value={newSlug} onChange={(e) => { setNewSlug(e.target.value); setErr(""); }} maxLength={40} placeholder="acme-advisors" autoComplete="off" spellCheck={false} /></label>
+            <label style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 13.5 }}>
+              <input type="checkbox" checked={understood} onChange={(e) => setUnderstood(e.target.checked)} style={{ marginTop: 3 }} />
+              <span>{t("I understand: everybody is signed out and {slug} is retired for good.", { slug: currentSlug })}</span>
+            </label>
             {err && <div className="err" role="alert">{err}</div>}
           </div>
         </Modal>
