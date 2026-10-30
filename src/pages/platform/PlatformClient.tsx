@@ -26,7 +26,7 @@ function FieldError({ message }: { message?: string }) {
   return message ? <small className="err" role="alert">{message}</small> : null;
 }
 
-function ProfileFields({ form, set, lockPrefix, errors }: { form: BusinessInput; set: (updatedProfile: BusinessInput) => void; lockPrefix?: boolean; errors?: FieldErrors }) {
+function ProfileFields({ form, set, lockPrefix, lockCode, errors }: { form: BusinessInput; set: (updatedProfile: BusinessInput) => void; lockPrefix?: boolean; lockCode?: boolean; errors?: FieldErrors }) {
   const t = useT();
   const fieldValue = (fieldName: keyof BusinessInput) => form[fieldName] ?? "";
   const onFieldChange = (fieldName: keyof BusinessInput) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => set({ ...form, [fieldName]: e.target.value });
@@ -37,7 +37,7 @@ function ProfileFields({ form, set, lockPrefix, errors }: { form: BusinessInput;
         <label className="field">{t("Legal name")} <span className="hint">{t("optional")}</span><input value={fieldValue("legalName")} onChange={onFieldChange("legalName")} maxLength={160} placeholder="Acme Advisors LLP" /></label>
       </div>
       <div className="grid3">
-        <label className="field">{t("Short name")} <span className="hint">{t("auto if empty")}</span><input value={fieldValue("code")} onChange={onFieldChange("code")} maxLength={40} placeholder="acme-advisors" /></label>
+        <label className="field">{t("Short name")} <span className="hint">{lockCode ? t("Fixed once the business is created") : t("auto if empty")}</span><input value={fieldValue("code")} onChange={onFieldChange("code")} maxLength={40} placeholder="acme-advisors" disabled={lockCode} /></label>
         <label className="field">{t("Employee ID prefix")} <span className="hint">{t("2–5 letters")}</span>
           <input value={fieldValue("employeePrefix")} onChange={onFieldChange("employeePrefix")} maxLength={5} placeholder="AA" disabled={lockPrefix} title={lockPrefix ? t("Fixed once the business has people") : undefined} aria-invalid={errors?.employeePrefix ? true : undefined} />
           <FieldError message={errors?.employeePrefix} />
@@ -262,7 +262,7 @@ export function EditBusinessButton({ id, profile, hasPeople }: { id: string; pro
         <Modal title={t("Business details")} eyebrow={profile.name} maxWidth={760} onClose={() => setOpen(false)}
           footer={<><button className="btn btn-ghost" onClick={() => setOpen(false)}>{t("Cancel")}</button><button className="btn btn-gold" disabled={busy} onClick={save}>{busy ? t("Saving…") : t("Save")}</button></>}>
           <div className="col" style={{ gap: 14 }}>
-            <ProfileFields form={editedBusiness} set={(updatedBusiness) => { setEditedBusiness(updatedBusiness); setErr(""); }} lockPrefix={hasPeople} />
+            <ProfileFields form={editedBusiness} set={(updatedBusiness) => { setEditedBusiness(updatedBusiness); setErr(""); }} lockPrefix={hasPeople} lockCode />
             {err && <div className="err" role="alert">{err}</div>}
           </div>
         </Modal>
