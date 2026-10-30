@@ -1,3 +1,4 @@
+import { BrandLockup } from "@/components/BrandLockup";
 import { Icon } from "@/components/Icon";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useT } from "@/lib/i18n/client";
@@ -9,7 +10,7 @@ export function AuthFrame({ children }: { children: React.ReactNode }) {
     <div className="login">
       <section className="login-form-wrap">
         <div className="brandmark">
-          <span className="monogram">J</span>JurisOne
+          <BrandLockup product="JURIS ONE" />
           <span style={{ marginLeft: "auto" }}><LanguageSwitcher /></span>
         </div>
         {children}

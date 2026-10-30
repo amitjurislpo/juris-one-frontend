@@ -7,7 +7,7 @@ export function subscriptionChip(subscription: SubscriptionCurrent | null): { cl
   if (subscription.state === "UPCOMING") return { className: "info", text: `Starts ${formatDayMonthYear(subscription.startsOn!)}` };
   if (subscription.state === "EXPIRED") return { className: "bad", text: `Ended ${formatDayMonthYear(subscription.endsOn!)}` };
   if (subscription.daysLeft !== null && subscription.daysLeft <= 7) return { className: "warn", text: subscription.daysLeft === 0 ? "Ends today" : `${subscription.daysLeft} day${subscription.daysLeft === 1 ? "" : "s"} left` };
-  return { className: "ok", text: `Until ${formatDayMonthYear(subscription.endsOn!)}` };
+  return { className: "ok", text: subscription.endsOn ? `Until ${formatDayMonthYear(subscription.endsOn)}` : "Active" };
 }
 
 /** Human names for plan modules. */

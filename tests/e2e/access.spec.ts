@@ -47,11 +47,12 @@ test.describe("shell", () => {
     await page.getByLabel("Command", { exact: true }).fill("direct");
     await page.keyboard.press("Enter");
     await expectLanded(page, "/directory");
-    await page.getByRole("button", { name: "Switch to dark theme" }).click();
-    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-    await page.reload();
-    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark"); // dark is the default
     await page.getByRole("button", { name: "Switch to light theme" }).click();
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    await page.reload();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light"); // the choice is remembered
+    await page.getByRole("button", { name: "Switch to dark theme" }).click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   });
 });

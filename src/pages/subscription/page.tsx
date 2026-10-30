@@ -15,7 +15,7 @@ export default function SubscriptionPage() {
   if (!data) return <PageLoading />;
   const subscription = data.subscription;
   const chip = subscriptionChip(subscription);
-  const chipText = subscription.state === "NONE" || !subscription ? t("No plan") : subscription.state === "UPCOMING" ? t("Starts {date}", { date: formatDayMonthYear(subscription.startsOn!) }) : subscription.state === "EXPIRED" ? t("Ended {date}", { date: formatDayMonthYear(subscription.endsOn!) }) : subscription.daysLeft !== null && subscription.daysLeft <= 7 ? (subscription.daysLeft === 0 ? t("Ends today") : t(subscription.daysLeft === 1 ? "{n} day left" : "{n} days left", { n: subscription.daysLeft })) : t("Until {date}", { date: formatDayMonthYear(subscription.endsOn!) });
+  const chipText = subscription.state === "NONE" || !subscription ? t("No plan") : subscription.state === "UPCOMING" ? t("Starts {date}", { date: formatDayMonthYear(subscription.startsOn!) }) : subscription.state === "EXPIRED" ? t("Ended {date}", { date: formatDayMonthYear(subscription.endsOn!) }) : subscription.daysLeft !== null && subscription.daysLeft <= 7 ? (subscription.daysLeft === 0 ? t("Ends today") : t(subscription.daysLeft === 1 ? "{n} day left" : "{n} days left", { n: subscription.daysLeft })) : subscription.endsOn ? t("Until {date}", { date: formatDayMonthYear(subscription.endsOn) }) : t("Active");
   const today = todayIn(user.timeZone);
 
   return (

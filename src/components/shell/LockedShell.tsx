@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { BrandLockup } from "@/components/BrandLockup";
 import { Icon } from "@/components/Icon";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useT } from "@/lib/i18n/client";
@@ -16,7 +17,7 @@ export function LockedShell({ employeeName, children }: { employeeName: string; 
       <div className="shell">
         <div className="main">
           <header className="top locked-top">
-            <span className="locked-brand"><span className="monogram">J</span><b>JurisOne</b></span>
+            <span className="locked-brand"><BrandLockup product="JURIS ONE" /></span>
             <div className="grow"></div>
             <span className="locked-name">{employeeName}</span>
             <LanguageSwitcher />
