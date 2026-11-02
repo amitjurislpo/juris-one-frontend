@@ -21,8 +21,10 @@ async function ledger(code: string, type: string) {
 
 async function pickRange(page: Page, firstDay: number, lastDay: number) {
   const picker = page.locator(".drp");
-  await picker.getByRole("button", { name: "Next month" }).click(); // November 2026
-  await expect(picker.locator(".drp-h b")).toHaveText("November 2026");
+  // the picker opens on the current month; walk forward to November 2026 (the seeded holidays and requests are dated then)
+  const heading = picker.locator(".drp-h b");
+  for (let i = 0; i < 12 && (await heading.textContent()) !== "November 2026"; i++) await picker.getByRole("button", { name: "Next month" }).click();
+  await expect(heading).toHaveText("November 2026");
   await picker.locator(".drp-g button", { hasText: new RegExp(`^${firstDay}$`) }).click();
   await picker.locator(".drp-g button", { hasText: new RegExp(`^${lastDay}$`) }).click();
 }

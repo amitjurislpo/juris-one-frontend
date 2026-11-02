@@ -31,7 +31,7 @@ export function AttendanceSummary() {
     <div className="col" style={{ gap: 24 }}>
       {requesting && <RegularizationRequestModal date={workDate} onClose={() => setRequesting(false)} />}
       <PageHeader eyebrow={t("Attendance")} title={t(MONTH_NAMES[Number(month.slice(5)) - 1])} emphasis={month.slice(0, 4)} sub={t("Tap any day to see its check-in, check-out and how it counts.")}>
-        {!readOnly && <button className="btn btn-gold" onClick={() => setRequesting(true)}>{t("Request regularization")}</button>}
+        {!readOnly && !locked && <button className="btn btn-gold" onClick={() => setRequesting(true)}>{t("Request regularization")}</button>}
         {prev >= minMonth ? <Link className="icon-btn" href={`/attendance?month=${prev}`} aria-label={t("Previous month")}><Icon name="chevL" /></Link> : <span className="icon-btn" aria-disabled="true" style={{ opacity: 0.4 }}><Icon name="chevL" /></span>}
         {next <= workDate.slice(0, 7) ? <Link className="icon-btn" href={`/attendance?month=${next}`} aria-label={t("Next month")}><Icon name="chevR" /></Link> : <span className="icon-btn" aria-disabled="true" style={{ opacity: 0.4 }}><Icon name="chevR" /></span>}
       </PageHeader>
