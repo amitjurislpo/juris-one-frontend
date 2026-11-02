@@ -51,6 +51,7 @@ export function useTrackContext(trackUser: TrackUser): TrackContextValue {
     Link: ModuleLink,
     toast,
     isReadOnly,
+    areEmployeesAddedInHost: true, // JurisOne is where people are added; JurisTrack refuses it for a linked business
     // the same rule as the Home greeting (JurisOne says "Working late" before 05:00)
     greetingFor: (hour) => (hour < 5 ? "Working late, {name}" : hour < 12 ? "Good morning, {name}" : hour < 17 ? "Good afternoon, {name}" : "Good evening, {name}"),
     // the JurisOne session is what counts: ask "who am I?" (this renews it, or sends the user to sign-in) and repeat the request if it is still valid
