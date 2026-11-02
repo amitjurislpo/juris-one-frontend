@@ -28,8 +28,8 @@ export function DecideButtons({ id, kind, who }: { id: string; kind: "leave" | "
       <button className="btn btn-danger" disabled={busy} onClick={() => setDeclining(true)}>{t("Decline")}</button>
       <button className="btn btn-gold" disabled={busy} onClick={() => decide(true)} aria-label={t("Approve {who}", { who })}><Icon name="ok" size={16} />{t("Approve")}</button>
       {declining && (
-        <ConfirmDialog title={t("Decline request")} danger confirm={t("Decline")} busy={busy} onClose={() => setDeclining(false)} body={declineBody} onConfirm={() => decide(false)}>
-          <label className="field" style={{ marginTop: 14 }}>{t("Note to the employee")} <span className="hint">{t("optional")}</span><input value={note} maxLength={300} onChange={(e) => setNote(e.target.value)} placeholder={t("e.g. Please apply after the filing deadline")} /></label>
+        <ConfirmDialog title={t("Decline request")} danger confirm={t("Decline")} busy={busy || (kind === "reg" && !note.trim())} onClose={() => setDeclining(false)} body={declineBody} onConfirm={() => decide(false)}>
+          <label className="field" style={{ marginTop: 14 }}>{t("Note to the employee")} {kind === "reg" ? "*" : <span className="hint">{t("optional")}</span>}<input value={note} maxLength={300} onChange={(e) => setNote(e.target.value)} placeholder={t("e.g. Please apply after the filing deadline")} /></label>
         </ConfirmDialog>
       )}
     </div>

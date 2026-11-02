@@ -11,7 +11,7 @@ export async function decideLeave(input: { id: string; approve: boolean; note?: 
   return apiAction("PUT", `/api/v1/leave/requests/${enc(input.id)}/decision`, { approve: input.approve, note: input.note }, PAGES);
 }
 
-/** Regularization goes to HR, Finance and Admin together (`appr.reg`); the first decision is final. */
+/** Regularization goes to Admin and HR together (`appr.reg`); the first decision is final and a rejection needs remarks. */
 export async function decideRegularization(input: { id: string; approve: boolean; note?: string }): Promise<ActionResult> {
   return apiAction("PUT", `/api/v1/attendance/regularizations/${enc(input.id)}/decision`, { approve: input.approve, note: input.note }, PAGES);
 }

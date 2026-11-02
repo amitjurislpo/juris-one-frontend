@@ -92,33 +92,34 @@ test.describe("leave & approvals", () => {
     await expect(page.locator(".chip", { hasText: "Casual leave" }).first()).toBeVisible();
   });
 
-  test("regularization: Finance approves a missed check-out; the first decision wins", async ({ page, browser }) => {
-    await login(page, "JC-018"); // Finance Executive — attendance queue only
+  test("regularization: HR approves a missed check-out; the first decision wins (Admin is second)", async ({ page, browser }) => {
+    await login(page, "JC-012"); // HR Manager
     await expectLanded(page, "/home");
-    await page.goto("/approvals");
-    await expect(page.getByRole("button", { name: /^Leave/ })).toHaveCount(0);
+    await page.goto("/approvals?tab=regularizations");
     const card = page.locator("article.req", { hasText: "Siddharth Krishna" });
     await expect(card).toContainText("asks to set check-out to 4:36 AM");
 
-    // HR has the same request open in another browser
-    const hrPage = await browser.newPage();
-    await login(hrPage, "JC-012");
-    await expectLanded(hrPage, "/home");
-    await hrPage.goto("/approvals?tab=regularizations");
-    const hrCard = hrPage.locator("article.req", { hasText: "Siddharth Krishna" });
-    await expect(hrCard).toBeVisible();
+    // Admin has the same request open in another browser
+    const adminPage = await browser.newPage();
+    await login(adminPage, OWNER);
+    await expectLanded(adminPage, "/overview");
+    await adminPage.goto("/approvals?tab=regularizations");
+    const adminCard = adminPage.locator("article.req", { hasText: "Siddharth Krishna" });
+    await expect(adminCard).toBeVisible();
 
     await card.getByRole("button", { name: /Approve/ }).click();
     await expect(toast(page)).toContainText("Approved Siddharth Krishna");
     const punches = await sql(`SELECT 1 FROM punches WHERE source = 'REGULARIZATION' AND created_at >= $1`, [TEST_START_TIME]);
     expect(punches.length).toBe(1);
 
-    await hrCard.getByRole("button", { name: "Decline" }).click();
-    await hrPage.getByRole("dialog").getByRole("button", { name: "Decline" }).click();
-    await expect(hrPage.locator(".toast").last()).toContainText("already decided");
-    await hrPage.close();
+    await adminCard.getByRole("button", { name: "Decline" }).click();
+    const dialog = adminPage.getByRole("dialog");
+    await dialog.getByLabel(/Note to the employee/).fill("Too late");
+    await dialog.getByRole("button", { name: "Decline" }).click();
+    await expect(adminPage.locator(".toast").last()).toContainText("decided");
+    await adminPage.close();
     const [regularization] = await sql<{ status: string; decided_role: string }>(`SELECT status, decided_role FROM regularization_requests WHERE kind = 'MISSED_CHECKOUT' AND work_date = '2026-10-01'`);
-    expect(regularization).toEqual({ status: "APPROVED", decided_role: "Finance Executive" });
+    expect(regularization).toEqual({ status: "APPROVED", decided_role: "HR Manager" });
   });
 
   test("holiday work earns a comp-off; Admin can approve too", async ({ page }) => {
