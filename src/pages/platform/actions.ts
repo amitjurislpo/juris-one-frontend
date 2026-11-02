@@ -1,6 +1,6 @@
 
 import type { ActionResult } from "@/lib/action";
-import { apiAction } from "@/lib/api";
+import { apiAction, apiData } from "@/lib/api";
 
 // The super admin's console runs in the Spring Boot API (/api/v1/platform).
 const enc = encodeURIComponent;
@@ -98,4 +98,11 @@ export async function syncBusinessRole(businessId: string, roleId: string): Prom
 /** Only the super admin: the business's web address changes, the old one is retired for good and everybody of the business is signed out. */
 export async function changeBusinessSlug(id: string, slug: string): Promise<ActionResult> {
   return apiAction("POST", `/api/v1/platform/businesses/${enc(id)}/slug-changes`, { slug }, [...PAGES, `/platform/${id}`]);
+}
+
+export interface SlugAvailability { slug: string; available: boolean; reason: "INVALID" | "RESERVED" | "TAKEN" | "RETIRED" | null; message: string; suggestions: string[] }
+
+/** Whether a short name can be used for a new business (super admin only); the answer also offers up to 5 free alternatives. */
+export function checkBusinessSlug(slug: string): Promise<SlugAvailability> {
+  return apiData<SlugAvailability>(`/api/v1/platform/business-slug-availabilities?slug=${enc(slug)}`);
 }

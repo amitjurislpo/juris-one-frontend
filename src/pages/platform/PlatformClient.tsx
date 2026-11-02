@@ -2,6 +2,7 @@
 import Link from "@/lib/link";
 import { useRouter } from "@/lib/router";
 import { useState, useTransition } from "react";
+import { suggestSlugFromName } from "@/lib/businessSlug";
 import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
@@ -14,6 +15,7 @@ import {
   addBusinessRole, addOwner, addSubscription, cancelSubscription, changeBusinessSlug, createBusiness, grantModule, removeBusinessRole, revokeModule, setBusinessStatus, setOwnerAccess, syncBusinessRole, updateBusiness,
   type BusinessInput, type GrantInput, type OwnerInput, type SubscriptionInput,
 } from "./actions";
+import { ShortNameField, type SlugCheckState } from "./ShortNameField";
 
 const TIME_ZONES = ["Asia/Kolkata", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles"];
 
@@ -26,7 +28,7 @@ function FieldError({ message }: { message?: string }) {
   return message ? <small className="err" role="alert">{message}</small> : null;
 }
 
-function ProfileFields({ form, set, lockPrefix, lockCode, errors }: { form: BusinessInput; set: (updatedProfile: BusinessInput) => void; lockPrefix?: boolean; lockCode?: boolean; errors?: FieldErrors }) {
+function ProfileFields({ form, set, lockPrefix, lockCode, errors, shortNameField }: { form: BusinessInput; set: (updatedProfile: BusinessInput) => void; lockPrefix?: boolean; lockCode?: boolean; errors?: FieldErrors; shortNameField?: React.ReactNode }) {
   const t = useT();
   const fieldValue = (fieldName: keyof BusinessInput) => form[fieldName] ?? "";
   const onFieldChange = (fieldName: keyof BusinessInput) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => set({ ...form, [fieldName]: e.target.value });
@@ -37,7 +39,7 @@ function ProfileFields({ form, set, lockPrefix, lockCode, errors }: { form: Busi
         <label className="field">{t("Legal name")} <span className="hint">{t("optional")}</span><input value={fieldValue("legalName")} onChange={onFieldChange("legalName")} maxLength={160} placeholder="Acme Advisors LLP" /></label>
       </div>
       <div className="grid3">
-        <label className="field">{t("Short name")} <span className="hint">{lockCode ? t("Changed only with “Change web address”") : t("auto if empty")}</span><input value={fieldValue("code")} onChange={onFieldChange("code")} maxLength={40} placeholder="acme-advisors" disabled={lockCode} /></label>
+        {shortNameField ?? <label className="field">{t("Short name")} <span className="hint">{lockCode ? t("Changed only with “Change web address”") : t("auto if empty")}</span><input value={fieldValue("code")} onChange={onFieldChange("code")} maxLength={40} placeholder="acme-advisors" disabled={lockCode} /></label>}
         <label className="field">{t("Employee ID prefix")} <span className="hint">{t("2–5 letters")}</span>
           <input value={fieldValue("employeePrefix")} onChange={onFieldChange("employeePrefix")} maxLength={5} placeholder="AA" disabled={lockPrefix} title={lockPrefix ? t("Fixed once the business has people") : undefined} aria-invalid={errors?.employeePrefix ? true : undefined} />
           <FieldError message={errors?.employeePrefix} />
@@ -126,15 +128,25 @@ export function NewBusinessButton({ plans, templates }: { plans: PlanRow[]; temp
   const [roles, setRoles] = useState<string[]>([]);
   const [err, setErr] = useState("");
   const [isTried, setIsTried] = useState(false);
+  const [slugState, setSlugState] = useState<SlugCheckState>("idle");
+  // the short name follows the business name until the super admin edits it by hand
+  const [isCodeEdited, setIsCodeEdited] = useState(false);
+  const changeProfile = (updatedProfile: BusinessInput) => {
+    setBusinessInput(!isCodeEdited && updatedProfile.name !== businessInput.name ? { ...updatedProfile, code: suggestSlugFromName(updatedProfile.name) } : updatedProfile);
+    setErr("");
+  };
+  const changeCode = (code: string) => { setIsCodeEdited(true); setBusinessInput({ ...businessInput, code }); setErr(""); };
+  const isSlugBlocking = slugState === "checking" || slugState === "unavailable";
   // once Create was pressed the fields are checked on every edit, so each message goes as soon as its own field is right
   const fieldErrors = isTried ? newBusinessProblems(businessInput, ownerInput, t) : {};
   const [busy, start] = useTransition();
-  const close = () => { setOpen(false); setErr(""); setIsTried(false); setBusinessInput(blankProfile); setSubscriptionInput({ planId: "" }); setOwnerInput({ name: "", email: "" }); setRoles([]); };
+  const close = () => { setOpen(false); setErr(""); setIsTried(false); setBusinessInput(blankProfile); setIsCodeEdited(false); setSlugState("idle"); setSubscriptionInput({ planId: "" }); setOwnerInput({ name: "", email: "" }); setRoles([]); };
   const save = () => start(async () => {
     setIsTried(true);
     if (Object.keys(newBusinessProblems(businessInput, ownerInput, t)).length) { setErr(t("Check the highlighted fields.")); return; }
     const bad = businessPhoneProblem(businessInput);
     if (bad) { setErr(bad); return; }
+    if (isSlugBlocking) return;
     const createResult = await createBusiness({ business: clean(businessInput), subscription: subscriptionInput.planId ? clean(subscriptionInput) : undefined, owner: ownerInput.name || ownerInput.email ? clean(ownerInput) : undefined, roles });
     if (createResult.ok) { toast(createResult.message!); close(); router.push(`/platform/${createResult.data!.id}`); } else setErr(createResult.error);
   });
@@ -143,9 +155,9 @@ export function NewBusinessButton({ plans, templates }: { plans: PlanRow[]; temp
       <button className="btn btn-gold btn-lg" onClick={() => setOpen(true)}><Icon name="plus" size={16} />{t("New business")}</button>
       {open && (
         <Modal title={t("New business")} eyebrow={t("Platform")} maxWidth={760} onClose={close}
-          footer={<><button className="btn btn-ghost" onClick={close}>{t("Cancel")}</button><button className="btn btn-gold" disabled={busy} onClick={save}>{busy ? t("Creating…") : t("Create business")}</button></>}>
+          footer={<><button className="btn btn-ghost" onClick={close}>{t("Cancel")}</button><button className="btn btn-gold" disabled={busy || isSlugBlocking} onClick={save}>{busy ? t("Creating…") : t("Create business")}</button></>}>
           <div className="col" style={{ gap: 14 }}>
-            <ProfileFields form={businessInput} set={(x) => { setBusinessInput(x); setErr(""); }} errors={fieldErrors} />
+            <ProfileFields form={businessInput} set={changeProfile} errors={fieldErrors} shortNameField={<ShortNameField value={businessInput.code ?? ""} onChange={changeCode} onStateChange={setSlugState} />} />
             <h4 style={{ margin: "6px 0 0" }}>{t("Subscription")}</h4>
             <SubscriptionFields subscription={subscriptionInput} set={(updatedInput) => { setSubscriptionInput(updatedInput); setErr(""); }} plans={plans} />
             <h4 style={{ margin: "6px 0 0" }}>{t("Sub admin")} <span className="hint muted">{t("— runs the business; optional, can be added later. If you fill one field, fill both.")}</span></h4>
