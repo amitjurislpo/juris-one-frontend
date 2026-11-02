@@ -344,4 +344,6 @@ export const hindiApiMessages: Record<string, string> = {
   "Invalid file name.": "अमान्य फ़ाइल नाम।",
   "This day is already regularized.": "यह दिन पहले ही नियमित हो चुका है।",
   "Request withdrawn": "अनुरोध वापस लिया गया",
+  "The last day can't be before the first day.": "अंतिम दिन पहले दिन से पहले का नहीं हो सकता।",
+  "A range can cover at most 31 days.": "एक अवधि अधिकतम 31 दिन की हो सकती है।",
 };

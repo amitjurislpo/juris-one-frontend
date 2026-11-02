@@ -13,7 +13,7 @@ export interface HomeCardsData {
   myLeaves: { id: string; type: string; from: string; to: string; days: number; status: string }[] | null;
   team: { id: string; photo?: number | null; name: string; title: string; status: { label: string; tone: "ok" | "info" | "warn" | "gold" | "neutral" } }[] | null;
   approvals: { leaveToo: boolean; count: number } | null;
-  payroll: { month: string; status: "Closed" | "Approved" | "In review"; proofs: number | null; regularizations: number } | null;
+  payroll: { month: string; status: "Closed" | "Approved" | "In review"; proofs: number | null; regularizations: number | null } | null;
   payslip: { month: string; ready: boolean } | null;
 }
 
@@ -71,7 +71,7 @@ export function HomeCards({ cards, firstCardIndex }: { cards: HomeCardsData; fir
           <div className="card-h"><h3>{t("Payroll")} · {formatMonthLabel(cards.payroll.month).split(" ")[0]}</h3><span className={`chip ${cards.payroll.status === "Closed" ? "ok" : "warn"}`}>{t(cards.payroll.status)}</span></div>
           <p className="muted" style={{ margin: "0 0 16px", fontSize: 13.5 }}>
             {cards.payroll.proofs !== null && `${t("{n} investment proof(s) waiting for verification.", { n: cards.payroll.proofs })} `}
-            {t("{n} regularization(s) may change LOP.", { n: cards.payroll.regularizations })}
+            {cards.payroll.regularizations !== null && t("{n} regularization(s) may change LOP.", { n: cards.payroll.regularizations })}
           </p>
           <div style={{ display: "flex", gap: 8 }}>
             <Link className="btn btn-gold" style={{ flex: 1 }} href="/payroll">{t("Open payroll")}</Link>
