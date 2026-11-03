@@ -87,7 +87,11 @@ export interface FormOptions {
 }
 
 export async function getFormOptions(editId?: string): Promise<ActionResult<FormOptions>> {
-  return (await apiCall<FormOptions>("GET", `/api/v1/people/form-options${editId ? `?id=${enc(editId)}` : ""}`)).body;
+  const { body } = await apiCall<FormOptions>("GET", `/api/v1/people/form-options${editId ? `?id=${enc(editId)}` : ""}`);
+  if (!body.ok || !body.data) return body;
+  // the API sends null for the optional attributes that are not set; the forms work with empty strings
+  const { defaults } = body.data;
+  return { ...body, data: { ...body.data, defaults: { ...defaults, employmentType: defaults.employmentType ?? "", paymentType: defaults.paymentType ?? "", gender: defaults.gender ?? "", employeeCode: defaults.employeeCode ?? "" } } };
 }
 
 export async function saveEmployee(input: EmployeeInput, editId?: string): Promise<ActionResult<{ id: string; code: string }>> {

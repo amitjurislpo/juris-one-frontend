@@ -36,9 +36,8 @@ export function EmployeeForm({ editId, photo, onClose }: { editId?: string; phot
     getFormOptions(editId).then((optionsResult) => {
       if (!alive) return;
       if (optionsResult.ok) {
-        const { defaults } = optionsResult.data!;
         setOpt(optionsResult.data!);
-        setForm({ ...defaults, employmentType: defaults.employmentType ?? "", paymentType: defaults.paymentType ?? "", gender: defaults.gender ?? "", employeeCode: "" });
+        setForm(optionsResult.data!.defaults);
         setIsCodeCustom(optionsResult.data!.codeSeriesMode === "MANUAL");
       }
       else setLoadErr(optionsResult.error);
