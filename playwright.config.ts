@@ -13,7 +13,8 @@ import { e2ePorts } from "./scripts/e2e-slot.mjs";
 // With per-business addresses the tests call the API at <business code>.localhost; Node cannot resolve that name on Windows (the browser can), so
 // the worker processes preload a small resolver (set before they are started).
 if (isTenantHostRun) {
-  const preload = `--require "${path.join(import.meta.dirname, "scripts", "e2e-localhost-dns.cjs")}"`;
+  // NODE_OPTIONS reads backslashes as escapes: give it forward slashes
+  const preload = `--require "${path.join(import.meta.dirname, "scripts", "e2e-localhost-dns.cjs").replaceAll("\\\\", "/")}"`;
   process.env.NODE_OPTIONS = [process.env.NODE_OPTIONS, preload].filter(Boolean).join(" ");
 }
 
