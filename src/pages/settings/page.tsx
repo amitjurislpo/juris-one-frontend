@@ -126,7 +126,7 @@ function AttendancePolicy() {
   if (!data) return <PageLoading />;
   const { policy: attendancePolicy, shifts, locked } = data;
   const grc = shifts[0]?.graceMinutes ?? attendancePolicy.graceMinutes;
-  const formatClockTime = (clockTime: string) => { const [hours, minutes] = clockTime.split(":").map(Number); return `${((hours + 11) % 12) + 1}:${String(minutes).padStart(2, "0")} ${hours < 12 ? "AM" : "PM"}`; };
+  const formatClockTime = (clockTime: string) => { const [hours, minutes] = clockTime.split(":").map(Number); return `${((hours + 11) % 12) + 1}:${String(minutes).padStart(2, "0")} ${translate(hours < 12 ? "AM" : "PM")}`; };
   const grace = (startTime: string, graceMinutesToAdd: number) => { const [startHours, startMinutes] = startTime.split(":").map(Number); const totalMinutes = startHours * 60 + startMinutes + graceMinutesToAdd; return formatClockTime(`${Math.floor(totalMinutes / 60) % 24}:${totalMinutes % 60}`); };
   const days = [translate("Sunday"), translate("Monday"), translate("Tuesday"), translate("Wednesday"), translate("Thursday"), translate("Friday"), translate("Saturday")];
   return (
