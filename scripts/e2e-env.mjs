@@ -11,10 +11,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { backendRepo, devSettings } from "./backend-config.mjs";
+import { e2eBuildFolder, e2eDatabaseSuffix, e2ePorts, e2eWorkFolderName } from "./e2e-slot.mjs";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const win = process.platform === "win32";
-const E2E = { api: 8081, web: 3006 };
+const E2E = e2ePorts;
 
 function run(cmd, args, opts) {
   const r = spawnSync(cmd, args, { stdio: "inherit", shell: win, ...opts });
@@ -29,7 +30,7 @@ const newest = (dir) => readdirSync(dir, { withFileTypes: true }).reduce((m, e) 
 /** postgresql://u:p@host:port/db → the same server, database "db_e2e". */
 function e2eDatabaseUrl(devUrl) {
   const url = new URL(devUrl);
-  url.pathname = `/${url.pathname.replace(/^\//, "")}_e2e`;
+  url.pathname = `/${url.pathname.replace(/^\//, "")}${e2eDatabaseSuffix}`;
   url.search = "";
   return url;
 }
@@ -66,7 +67,7 @@ async function backend() {
   const url = e2eDatabaseUrl(devUrl);
   await ensureDatabase(devUrl, url);
   // run a copy: rebuilding the backend while the tests run must not touch the jar in use
-  const dir = path.join(os.tmpdir(), "jurisone-e2e");
+  const dir = path.join(os.tmpdir(), e2eWorkFolderName);
   mkdirSync(dir, { recursive: true });
   const copy = path.join(dir, "backend.jar");
   copyFileSync(apiJar(), copy);
@@ -96,7 +97,7 @@ async function backend() {
 }
 
 function frontend() {
-  const dist = "dist-e2e";
+  const dist = e2eBuildFolder;
   const env = { ...process.env, BACKEND_URL: `http://127.0.0.1:${E2E.api}`, WEB_PORT: String(E2E.web), BUILD_DIR: dist, VITE_DEV_OTP_CODE: "000000" };
   const built = path.join(root, dist, "index.html");
   const sources = Math.max(newest(path.join(root, "src")), statSync(path.join(root, "index.html")).mtimeMs, statSync(path.join(root, "vite.config.ts")).mtimeMs);

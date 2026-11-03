@@ -24,7 +24,7 @@ export default function ApprovalsPage() {
   return (
     <div className="col" style={{ gap: 24 }}>
       <PageHeader eyebrow={t("Approvals")} title={<><span className="num">{total}</span> {total === 1 ? t("request") : t("requests")}</>} emphasis={t("awaiting you")}
-        sub={tab === "regularizations" ? t("Regularizations go to HR, Finance and Admin — the first decision counts and updates LOP in payroll.") : t("Approving leave updates the employee's balance and calendar instantly.")}>
+        sub={tab === "regularizations" ? t("Regularizations go to Admin and HR — the first decision counts and updates LOP in payroll.") : t("Approving leave updates the employee's balance and calendar instantly.")}>
         {tabs.length > 1 && <SegmentedFilter name="tab" dflt={canLeave ? "leave" : "regularizations"} label={t("Queue")} options={tabs} />}
       </PageHeader>
       <div className="toolbar enter"><SearchBox placeholder={t("Search by employee")} label={t("Search requests")} /></div>
@@ -48,7 +48,7 @@ export default function ApprovalsPage() {
             <span className="spot" aria-hidden="true"></span>
             <span className={`avatar lg ${avatarColorClass(initials(regularizationCard.name))}`}>{initials(regularizationCard.name)}</span>
             <div className="body">
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}><b style={{ fontSize: 16 }}>{regularizationCard.name}</b><span className="chip gold">{t(regularizationCard.kind)}</span><span className="faint" style={{ fontSize: 12.5 }}>{t("{dept} · sent to HR, Finance & Admin", { dept: regularizationCard.department })}</span></div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}><b style={{ fontSize: 16 }}>{regularizationCard.name}</b><span className="chip gold">{t(regularizationCard.kind)}</span><span className="faint" style={{ fontSize: 12.5 }}>{t("{dept} · sent to Admin & HR", { dept: regularizationCard.department })}</span></div>
               <span style={{ fontSize: 14.5 }}>{regularizationCard.date} · {regularizationCard.detail}</span>
               <span className="muted" style={{ fontSize: 13.5 }}>{regularizationCard.reason ? `“${regularizationCard.reason}”` : t("No reason given")}</span>
             </div>
