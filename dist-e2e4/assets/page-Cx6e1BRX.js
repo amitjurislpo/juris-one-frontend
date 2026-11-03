@@ -1,1 +1,0 @@
-import{T as e}from"./useBaseQuery-BA_575Az.js";import{t}from"./AuditTable-4CHJ9I3x.js";var n=e();function r(){return(0,n.jsx)(t,{platform:!0})}export{r as default};
