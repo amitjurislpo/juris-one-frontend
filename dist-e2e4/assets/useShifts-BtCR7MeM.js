@@ -1,1 +1,0 @@
-import{t as e}from"./usePage-DoC2UrkR.js";function t(t={}){let n=t.isActive===void 0?``:`?isActive=${t.isActive}`,r=e(`/shifts${n}`);return r?Array.isArray(r)?r:r.rows:[]}export{t};

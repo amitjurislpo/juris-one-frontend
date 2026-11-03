@@ -11,8 +11,8 @@ const dev = devSettings();
 /** Same rule as scripts/e2e-slot.mjs: slot 0 is "_e2e", slot N is "_e2eN". */
 const e2eDatabaseSuffix = Number(process.env.E2E_SLOT ?? 0) === 0 ? "_e2e" : `_e2e${Number(process.env.E2E_SLOT)}`;
 
-/** JC-002 owns the demo business (its sub admin): the business admin. */
-export const OWNER = "JC-002";
+/** JC002 owns the demo business (its sub admin): the business admin. */
+export const OWNER = "JC002";
 /** The platform super admin (no business). */
 export const ADMIN_EMAIL = dev.superAdminEmail;
 
@@ -35,7 +35,7 @@ export async function sql<T = unknown>(query: string, params: unknown[] = []): P
   }
 }
 
-/** Sign-in is by email: a demo employee code (e.g. JC-072) is looked up. */
+/** Sign-in is by email: a demo employee code (e.g. JC072) is looked up. */
 export async function emailOf(codeOrEmail: string) {
   if (codeOrEmail.includes("@")) return codeOrEmail;
   const [employee] = await sql<{ email: string }>("SELECT email FROM employees WHERE upper(code) = upper($1) AND business_id IS NOT NULL", [codeOrEmail]);

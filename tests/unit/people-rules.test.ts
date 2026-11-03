@@ -78,7 +78,7 @@ describe("status and reporting lines", () => {
 });
 
 describe("form validation", () => {
-  const base: EmployeeInput = { firstName: "Meera", middleName: "", lastName: "Joshi", fatherName: "Prakash Joshi", email: "meera.joshi@jurislpo.com", phoneCountry: "+91", phone: "9876543210", location: "IN_IST", joiningOffice: "", pan: "ABCDE1234F", aadhaar: "2345 6789 0123", uan: "", address: "", designation: "Associate", departmentId: "x", managerId: "y", dateOfJoining: "2026-10-12", shift: "IN_NIGHT", roleId: "r" };
+  const base: EmployeeInput = { firstName: "Meera", middleName: "", lastName: "Joshi", fatherName: "Prakash Joshi", email: "meera.joshi@jurislpo.com", phoneCountry: "+91", phone: "9876543210", location: "IN_IST", joiningOffice: "", pan: "ABCDE1234F", aadhaar: "2345 6789 0123", uan: "", address: "", designation: "Associate", departmentId: "x", managerId: "y", dateOfJoining: "2026-10-12", shift: "IN_NIGHT", roleId: "r", employmentType: "", paymentType: "BANK_TRANSFER", gender: "", employeeCode: "" };
   it("PAN and Aadhaar are optional, but checked when given", () => {
     expect(stepErrors(2, { ...base, pan: "", aadhaar: "" }, false)).toEqual({});
     expect(stepErrors(2, { ...base, pan: "abcde1234f" }, false).pan).toBeUndefined();
@@ -104,5 +104,26 @@ describe("form validation", () => {
     expect(validAadhaar("2345 6789 0123")).toBe(true);
     expect(validAadhaar("1234 1234 1234")).toBe(true);
     expect(validAadhaar("1234 1234 123")).toBe(false);
+  });
+});
+
+describe("slim add-employee form", () => {
+  const added: EmployeeInput = { firstName: "Meera", middleName: "", lastName: "Joshi", fatherName: "", email: "meera.joshi@jurislpo.com", phoneCountry: "+91", phone: "9876543210", location: "", joiningOffice: "", pan: "", aadhaar: "", uan: "", address: "", designation: "", departmentId: "", managerId: "", dateOfJoining: "", shift: "IN_NIGHT", roleId: "", employmentType: "", paymentType: "CASH", gender: "", employeeCode: "" };
+  it("needs only first name, last name, email, phone and payment type when adding", () => {
+    for (const step of [1, 2, 3] as const) expect(stepErrors(step, added, false)).toEqual({});
+    expect(stepErrors(1, { ...added, paymentType: "" }, false).paymentType).toBe("Choose how the employee is paid");
+    expect(stepErrors(1, { ...added, phone: "" }, false).phone).toBeDefined();
+    expect(stepErrors(1, { ...added, fatherName: "P" }, false).fatherName).toBeDefined();
+  });
+  it("keeps the full rules when editing", () => {
+    expect(Object.keys(stepErrors(3, added, true, true)).sort()).toEqual(["dateOfJoining", "departmentId", "designation", "managerId", "roleId"]);
+    expect(stepErrors(1, added, true).fatherName).toBeDefined();
+    expect(stepErrors(1, { ...added, paymentType: "" }, true)).not.toHaveProperty("paymentType");
+  });
+  it("needs a typed employee code in a Manual series and checks the shape of any typed code", () => {
+    expect(stepErrors(1, added, false, false, true).employeeCode).toBe("Type the employee code");
+    expect(stepErrors(1, { ...added, employeeCode: "JSC07" }, false, false, true)).toEqual({});
+    expect(stepErrors(1, { ...added, employeeCode: "jsc07" }, false).employeeCode).toBeUndefined();
+    for (const bad of ["JSC-07", "07", "JSC", "J S C 7", "JSC1234567"]) expect(stepErrors(1, { ...added, employeeCode: bad }, false).employeeCode).toBeDefined();
   });
 });

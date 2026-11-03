@@ -18,7 +18,7 @@ test.describe("assets & announcements", () => {
   test.afterAll(cleanup);
 
   test("HR adds an asset, assigns it, the employee sees it, HR takes it back", async ({ page, browser }) => {
-    await login(page, "JC-012"); // HR manager
+    await login(page, "JC012"); // HR manager
     await expectLanded(page, "/home");
     await page.goto("/assets");
     await page.getByRole("button", { name: "Add asset" }).click();
@@ -42,7 +42,7 @@ test.describe("assets & announcements", () => {
 
     await row.getByRole("button", { name: "Assign" }).click();
     const assign = page.getByRole("dialog", { name: `Assign ${TAG}` });
-    await assign.getByLabel(/Employee/).selectOption({ label: "Naman Tyagi (JC-049)" });
+    await assign.getByLabel(/Employee/).selectOption({ label: "Naman Tyagi (JC049)" });
     await assign.getByLabel(/Notes/).fill("With charger");
     await assign.getByRole("button", { name: "Assign" }).click();
     await expect(row.locator(".chip")).toHaveText("Assigned");
@@ -51,7 +51,7 @@ test.describe("assets & announcements", () => {
     // the employee: My assets + a notification
     const ctx = await browser.newContext();
     const emp = await ctx.newPage();
-    await login(emp, "JC-049");
+    await login(emp, "JC049");
     await expectLanded(emp, "/home");
     await emp.getByRole("complementary", { name: "Main menu" }).getByRole("link", { name: "My assets" }).click();
     await expectLanded(emp, "/my-assets");
@@ -90,7 +90,7 @@ test.describe("assets & announcements", () => {
 
     const ctx = await browser.newContext();
     const emp = await ctx.newPage();
-    await login(emp, "JC-049");
+    await login(emp, "JC049");
     await expectLanded(emp, "/home");
     await expect(emp.getByText(TITLE).first()).toBeVisible();
     await emp.goto("/notifications");
@@ -108,7 +108,7 @@ test.describe("assets & announcements", () => {
   });
 
   test("an ordinary employee cannot open the asset register or the announcement editor", async ({ page }) => {
-    await login(page, "JC-049");
+    await login(page, "JC049");
     await expectLanded(page, "/home");
     for (const path of ["/assets", "/manage-announcements"]) {
       await page.goto(path);

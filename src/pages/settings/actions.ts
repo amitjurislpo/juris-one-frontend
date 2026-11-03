@@ -18,3 +18,10 @@ export interface AttendancePolicyInput {
 export async function updateAttendancePolicy(input: AttendancePolicyInput): Promise<ActionResult> {
   return apiAction("PUT", "/api/v1/settings/attendance", input, ["/settings", "/home", "/attendance", "/register", "/team"]);
 }
+
+export type CodeSeriesMode = "AUTO" | "MANUAL";
+
+/** How new employees get their code: Auto (the next number) or Manual (HR types it). */
+export async function updateEmployeeCodeSeries(mode: CodeSeriesMode): Promise<ActionResult> {
+  return apiAction("PUT", "/api/v1/settings/employee-code-series", { mode }, ["/settings", "/employees"]);
+}

@@ -5,13 +5,13 @@ const cardHeading = (page: Page, name: string | RegExp) => page.getByRole("headi
 
 /** REQUIREMENTS §8 demo IDs → where they land and which Home cards they get (§5.12). */
 const ROLES: { id: string; who: string; cards: (string | RegExp)[]; not: (string | RegExp)[] }[] = [
-  { id: "JC-004", who: "Finance Manager", cards: [/^Payroll ·/, /payslip$/], not: ["Approvals", "My leave requests"] },
-  { id: "JC-018", who: "Finance Executive", cards: [/^Payroll ·/, /payslip$/], not: ["Approvals", "My leave requests"] },
-  { id: "JC-012", who: "HR Manager", cards: ["Approvals", "Your team right now", /payslip$/], not: [/^Payroll ·/, "My leave requests"] },
-  { id: "JC-015", who: "HR Executive", cards: ["Approvals", /payslip$/], not: [/^Payroll ·/, "My leave requests"] },
-  { id: "JC-035", who: "Employee with a team", cards: ["Your team right now", /payslip$/], not: ["Approvals", /^Payroll ·/, "My leave requests"] },
-  { id: "JC-049", who: "Employee", cards: ["My leave requests", /payslip$/], not: ["Approvals", /^Payroll ·/, "Your team right now"] },
-  { id: "JC-090", who: "US employee", cards: ["My leave requests"], not: [/payslip$/, /^Payroll ·/, "Approvals"] },
+  { id: "JC004", who: "Finance Manager", cards: [/^Payroll ·/, /payslip$/], not: ["Approvals", "My leave requests"] },
+  { id: "JC018", who: "Finance Executive", cards: [/^Payroll ·/, /payslip$/], not: ["Approvals", "My leave requests"] },
+  { id: "JC012", who: "HR Manager", cards: ["Approvals", "Your team right now", /payslip$/], not: [/^Payroll ·/, "My leave requests"] },
+  { id: "JC015", who: "HR Executive", cards: ["Approvals", /payslip$/], not: [/^Payroll ·/, "My leave requests"] },
+  { id: "JC035", who: "Employee with a team", cards: ["Your team right now", /payslip$/], not: ["Approvals", /^Payroll ·/, "My leave requests"] },
+  { id: "JC049", who: "Employee", cards: ["My leave requests", /payslip$/], not: ["Approvals", /^Payroll ·/, "Your team right now"] },
+  { id: "JC090", who: "US employee", cards: ["My leave requests"], not: [/payslip$/, /^Payroll ·/, "Approvals"] },
 ];
 
 test.describe("home & overview for every demo role", () => {
@@ -33,8 +33,8 @@ test.describe("home & overview for every demo role", () => {
     });
   }
 
-  test("Admin (JC-002) lands on the company overview", async ({ page }) => {
-    await login(page, "JC-002");
+  test("Admin (JC002) lands on the company overview", async ({ page }) => {
+    await login(page, "JC002");
     await expectLanded(page, "/overview");
     await expect(page.getByText("Headcount")).toBeVisible();
     await expect(page.getByText("Checked in now")).toBeVisible();
@@ -85,7 +85,7 @@ test.describe("responsive & keyboard", () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
   test("phone: sidebar is a drawer, pages don't scroll sideways", async ({ page }) => {
-    await login(page, "JC-074");
+    await login(page, "JC074");
     await expectLanded(page, "/home");
     const menu = page.getByRole("complementary", { name: "Main menu" });
     await expect(menu).not.toBeInViewport();
@@ -104,7 +104,7 @@ test.describe("responsive & keyboard", () => {
   });
 
   test("keyboard: skip link jumps to the page content", async ({ page }) => {
-    await login(page, "JC-049");
+    await login(page, "JC049");
     await expectLanded(page, "/home");
     // fresh load: after the sign-in redirect Chrome keeps its Tab start point where the form was
     await page.goto("/home", { waitUntil: "networkidle" });

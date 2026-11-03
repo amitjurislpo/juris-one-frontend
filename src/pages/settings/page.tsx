@@ -9,9 +9,10 @@ import { pick } from "@/lib/list";
 import { PERMISSIONS } from "@/lib/permissions";
 import type { SettingValue } from "@/lib/api-types";
 import { AttendancePolicyForm } from "./AttendancePolicyForm";
+import { EmployeeCodeSeries } from "./EmployeeCodeSeries";
 
 
-const TABS = ["access", "leave", "holidays", "attendance"] as const;
+const TABS = ["access", "leave", "holidays", "attendance", "codes"] as const;
 const num = (d: number | null) => (d == null ? 0 : d);
 
 interface LeaveTypeView { code: string; name: string; annualQuota: number; accrualPerMonth: number; carryForwardCap: number; maxStretch: number | null; encashPerYear: number; encashAfterMonths: number; expiryDays: number | null }
@@ -24,12 +25,13 @@ export default function SettingsPage() {
   return (
     <div className="col">
       <PageHeader eyebrow={t("Administration")} title={t("Rules &")} emphasis={t("settings")} sub={t("Who can see what, and the rules the portal runs on.")}>
-        <SegmentedFilter name="tab" dflt="access" label={t("Policy section")} options={[{ value: "access", label: t("Access") }, { value: "leave", label: t("Leave policy") }, { value: "holidays", label: t("Holidays") }, { value: "attendance", label: t("Attendance") }]} />
+        <SegmentedFilter name="tab" dflt="access" label={t("Policy section")} options={[{ value: "access", label: t("Access") }, { value: "leave", label: t("Leave policy") }, { value: "holidays", label: t("Holidays") }, { value: "attendance", label: t("Attendance") }, { value: "codes", label: t("Employee codes") }]} />
       </PageHeader>
       {tab === "access" && <AccessMatrix />}
       {tab === "leave" && <LeavePolicy />}
       {tab === "holidays" && <HolidayList />}
       {tab === "attendance" && <AttendancePolicy />}
+      {tab === "codes" && <EmployeeCodeSeries />}
     </div>
   );
 }

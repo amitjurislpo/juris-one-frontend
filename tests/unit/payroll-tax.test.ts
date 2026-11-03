@@ -15,7 +15,7 @@ const OLD: TaxYearConfig = {
 const CAPS = { c80C: 150000, c80CCD1B: 50000, c80DSelf: 25000, c80DParents: 25000, c80DParentsSenior: 50000, c24B: 200000, c80TTA: 10000 };
 const JC074: Structure = { basic: 7_500_000, hra: 3_000_000, lta: 750_000, special: 3_750_000 }; // ₹1,50,000 / month
 
-describe("golden case — JC-074 Amit Jaspal, September 2026 (REQUIREMENTS §7)", () => {
+describe("golden case — JC074 Amit Jaspal, September 2026 (REQUIREMENTS §7)", () => {
   it("joined 8 Sep with 1 LOP → 22 of 30 paid days", () => {
     const elig = eligibleDays("2026-09", "2026-09-08", null);
     expect(elig).toBe(23);

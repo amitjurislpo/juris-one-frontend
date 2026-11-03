@@ -6,8 +6,8 @@ import { expectLanded, login, OWNER, sql } from "./helpers";
  * menu), both assignees and their rights, comments with mentions and the bell, Team tasks, attachments, read-only after
  * the subscription ends, the phone layout and Hindi.
  *
- * The flow builds its own private project "E2E Ops" (the Owner creates it; Nazneen JC-035 owns it with him, Siddharth
- * JC-072 — one of her reports — and Riya JC-012 are members). Checks that need the demo task seed (backend plan §16:
+ * The flow builds its own private project "E2E Ops" (the Owner creates it; Nazneen JC035 owns it with him, Siddharth
+ * JC072 — one of her reports — and Riya JC012 are members). Checks that need the demo task seed (backend plan §16:
  * People operations PEO, Website relaunch WEB, Payroll October PAY) run only when that seed is there. Rows this file
  * creates carry "E2E" in their title, name or key and are removed afterwards.
  */
@@ -112,8 +112,8 @@ test.describe.serial("task management", () => {
   });
 
   test("2. a manager creates a task with both assignees and a past due time; it shows on the board and in her My tasks", async ({ page }) => {
-    const [assignee] = await sql<{ time_zone: string }>("SELECT time_zone FROM employees WHERE code = 'JC-072' AND business_id IS NOT NULL");
-    await login(page, "JC-035");
+    const [assignee] = await sql<{ time_zone: string }>("SELECT time_zone FROM employees WHERE code = 'JC072' AND business_id IS NOT NULL");
+    await login(page, "JC035");
     await expectLanded(page, "/home");
     await openBoard(page, PROJECT_NAME);
     await page.getByRole("button", { name: "New task" }).click();
@@ -148,7 +148,7 @@ test.describe.serial("task management", () => {
   });
 
   test("3. the assignee sees it overdue, moves it with the keyboard, drags another card, comments with a mention, ticks a checklist item", async ({ page }) => {
-    await login(page, "JC-072");
+    await login(page, "JC072");
     await expectLanded(page, "/home");
     const myTasks = menu(page).getByRole("link", { name: /^My tasks/ });
     await expect(myTasks.locator(".badge")).toBeVisible();
@@ -195,7 +195,7 @@ test.describe.serial("task management", () => {
   });
 
   test("4. the manager gets the mention in the bell and sees the task in Team tasks; the depth switch is in the URL", async ({ page }) => {
-    await login(page, "JC-035");
+    await login(page, "JC035");
     await expectLanded(page, "/home");
     await page.getByRole("button", { name: /^Notifications \(/ }).click();
     await expect(page.locator(".menu.notif").getByText(new RegExp(`mentioned you on ${taskKey}`))).toBeVisible();
@@ -209,7 +209,7 @@ test.describe.serial("task management", () => {
   });
 
   test("5. someone outside a private project gets Not found and does not see it listed", async ({ page }) => {
-    await login(page, "JC-058");
+    await login(page, "JC058");
     await expectLanded(page, "/home");
     await page.goto(`/tasks/${taskKey}`);
     await expect(page.getByText("Not found", { exact: true })).toBeVisible();
@@ -221,7 +221,7 @@ test.describe.serial("task management", () => {
 
   test("6. HR has no special view; a non-member reads and comments on a company-wide project without moving cards", async ({ page, browser }) => {
     test.skip(!(await hasDemoTaskSeed()), "needs the demo task seed (backend T1b)");
-    await login(page, "JC-012");
+    await login(page, "JC012");
     await expectLanded(page, "/home");
     await page.goto("/projects");
     await expect(page.getByRole("link", { name: /People operations/ })).toBeVisible();
@@ -229,7 +229,7 @@ test.describe.serial("task management", () => {
 
     const context = await browser.newContext();
     const employee = await context.newPage();
-    await login(employee, "JC-072"); // not a member of People operations
+    await login(employee, "JC072"); // not a member of People operations
     await expectLanded(employee, "/home");
     await openBoard(employee, "People operations");
     const firstCard = employee.locator(".board").getByRole("listitem").first();
@@ -243,7 +243,7 @@ test.describe.serial("task management", () => {
 
   test("7. the accountable person (not a member) changes status and priority and can reassign, but not edit the title or delete", async ({ page }) => {
     test.skip(!(await hasDemoTaskSeed()), "needs the demo task seed (backend T1b)");
-    await login(page, "JC-004");
+    await login(page, "JC004");
     await expectLanded(page, "/home");
     await page.goto("/projects");
     await expect(page.getByRole("heading", { name: "Projects" })).toBeVisible();
@@ -264,11 +264,11 @@ test.describe.serial("task management", () => {
   });
 
   test("8. after the subscription ends task pages open but nothing can be changed", async ({ page }) => {
-    const business = "(SELECT business_id FROM employees WHERE code = 'JC-072' AND business_id IS NOT NULL)";
+    const business = "(SELECT business_id FROM employees WHERE code = 'JC072' AND business_id IS NOT NULL)";
     const saved = await sql<{ id: string; starts_on: string; ends_on: string }>(`SELECT id::text, starts_on::text, ends_on::text FROM business_subscriptions WHERE business_id = ${business}`);
     await sql(`UPDATE business_subscriptions SET starts_on = current_date - 400, ends_on = current_date - 10 WHERE business_id = ${business}`);
     try {
-      await login(page, "JC-072");
+      await login(page, "JC072");
       await expectLanded(page, "/home");
       await page.goto("/my-tasks");
       await expect(page.getByRole("heading", { name: "My tasks" })).toBeVisible();
@@ -286,7 +286,7 @@ test.describe.serial("task management", () => {
 
   test("9. on a phone My tasks and the board fit the screen; the board shows one step at a time", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await login(page, "JC-072");
+    await login(page, "JC072");
     await expectLanded(page, "/home");
     const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     await page.goto("/my-tasks");
@@ -305,7 +305,7 @@ test.describe.serial("task management", () => {
   });
 
   test("10. the assignee attaches a picture; a file of another kind is refused", async ({ page }) => {
-    await login(page, "JC-072");
+    await login(page, "JC072");
     await expectLanded(page, "/home");
     await page.goto(`/tasks/${taskKey}`);
     await expect(page.getByRole("button", { name: "Edit title" })).toHaveText(TASK_TITLE);
@@ -327,7 +327,7 @@ test.describe.serial("task management", () => {
   });
 
   test("11. in Hindi the Tasks menu and My tasks are translated", async ({ page }) => {
-    await login(page, "JC-072");
+    await login(page, "JC072");
     await expectLanded(page, "/home");
     await page.getByLabel("Language").selectOption({ label: "हिन्दी" });
     const sidebar = page.getByRole("complementary");
@@ -341,8 +341,8 @@ test.describe.serial("task management", () => {
   });
 
   test("12. the extra reminder is set next to the due date, kept after a reload, shown in Hindi, and needs a due date", async ({ page }) => {
-    const [assignee] = await sql<{ time_zone: string }>("SELECT time_zone FROM employees WHERE code = 'JC-072' AND business_id IS NOT NULL");
-    await login(page, "JC-035");
+    const [assignee] = await sql<{ time_zone: string }>("SELECT time_zone FROM employees WHERE code = 'JC072' AND business_id IS NOT NULL");
+    await login(page, "JC035");
     await expectLanded(page, "/home");
     await openBoard(page, PROJECT_NAME);
 

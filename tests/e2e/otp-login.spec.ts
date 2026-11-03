@@ -31,7 +31,7 @@ test.describe("email code sign-in", () => {
 
   test("the code page shows the masked address, six boxes and the dev hint", async ({ page }) => {
     await openLogin(page);
-    await requestCode(page, await emailOf("JC-049"));
+    await requestCode(page, await emailOf("JC049"));
     await expect(page.getByText("n•••")).toBeVisible(); // the address is masked
     for (let boxNumber = 1; boxNumber <= 6; boxNumber++) await expect(box(page, boxNumber)).toBeVisible();
     await expect(box(page, 1)).toBeFocused();
@@ -41,7 +41,7 @@ test.describe("email code sign-in", () => {
 
   test("typing moves between boxes, Backspace goes back, and the sixth digit signs in", async ({ page }) => {
     await openLogin(page);
-    await requestCode(page, await emailOf("JC-049"));
+    await requestCode(page, await emailOf("JC049"));
     await page.keyboard.type("00");
     await expect(box(page, 3)).toBeFocused();
     await page.keyboard.press("Backspace");
@@ -61,7 +61,7 @@ test.describe("email code sign-in", () => {
 
   test("a wrong code shows an error and clears the boxes; the right code then works", async ({ page }) => {
     await openLogin(page);
-    await requestCode(page, await emailOf("JC-049"));
+    await requestCode(page, await emailOf("JC049"));
     await box(page, 1).fill("123456");
     await expect(page.locator(".err")).toHaveText(BAD);
     await expect(box(page, 1)).toHaveValue("");
@@ -75,7 +75,7 @@ test.describe("email code sign-in", () => {
     await requestCode(page, "wrong.address@example.com");
     await page.getByRole("button", { name: "Change email" }).click();
     await expect(page.getByLabel("Email")).toHaveValue("wrong.address@example.com"); // filled in, ready to edit
-    await page.getByLabel("Email").fill(await emailOf("JC-049"));
+    await page.getByLabel("Email").fill(await emailOf("JC049"));
     await page.getByRole("button", { name: "Login", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
     await page.getByRole("button", { name: "Back" }).click();
