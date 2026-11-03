@@ -78,3 +78,11 @@ export function minutesBetweenLocal(checkIn: string, checkOut: string): number |
   const minutes = Math.round((Date.parse(`${checkOut}:00Z`) - Date.parse(`${checkIn}:00Z`)) / 60000);
   return Number.isFinite(minutes) && minutes > 0 ? minutes : null;
 }
+
+/**
+ * What a form field shows once the day's preview arrives from the server: the server's value, unless the user has already typed in the
+ * field since the day changed (then their value stays, so a slow preview never wipes it).
+ */
+export function prefillUnlessTouched<Value>(typed: Value, fromServer: Value, isTouched: boolean): Value {
+  return isTouched ? typed : fromServer;
+}

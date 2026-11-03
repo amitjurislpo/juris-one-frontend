@@ -1,4 +1,4 @@
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useToast } from "@/components/shell/Toasts";
 import { Modal } from "@/components/ui/Modal";
 import { apiData } from "@/lib/api";
@@ -6,7 +6,7 @@ import { formatDayMonthYear, formatHours, todayIn } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import { usePage } from "@/lib/page";
 import { requestRegularization, type DayOutcome } from "./actions";
-import { KIND_LABEL, minutesBetweenLocal, type DayPreview, type RegularizationKind, type RegularizationRules } from "./regularization";
+import { KIND_LABEL, minutesBetweenLocal, prefillUnlessTouched, type DayPreview, type RegularizationKind, type RegularizationRules } from "./regularization";
 
 /**
  * The Request Regularization form: the request type, the day, the real check-in and check-out (live total hours), a reason from the
@@ -24,6 +24,8 @@ export function RegularizationRequestModal({ date: initialDate, onClose }: { dat
   const [kind, setKind] = useState<RegularizationKind | "">("");
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
+  // fields the user has edited since the day (or employee) last changed: a late preview must not overwrite them
+  const touched = useRef({ kind: false, checkIn: false, checkOut: false });
   const [reasonId, setReasonId] = useState("");
   const [description, setDescription] = useState("");
   const [attachment, setAttachment] = useState<File | null>(null);
@@ -49,13 +51,14 @@ export function RegularizationRequestModal({ date: initialDate, onClose }: { dat
   // the day (or the employee) changes → what is recorded for it (prefill) and the month's remaining requests
   useEffect(() => {
     let current = true;
+    touched.current = { kind: false, checkIn: false, checkOut: false };
     setPreview(null);
     apiData<DayPreview>(`/api/v1/attendance/mine/days/${date}${employeeId ? `?employeeId=${employeeId}` : ""}`).then((day) => {
       if (!current) return;
       setPreview(day);
-      setKind(day.eligibleKinds[0] ?? "");
-      setCheckIn(day.checkInLocal ?? "");
-      setCheckOut(day.checkOutLocal ?? "");
+      setKind((typed) => prefillUnlessTouched(typed, day.eligibleKinds[0] ?? "", touched.current.kind));
+      setCheckIn((typed) => prefillUnlessTouched(typed, day.checkInLocal ?? "", touched.current.checkIn));
+      setCheckOut((typed) => prefillUnlessTouched(typed, day.checkOutLocal ?? "", touched.current.checkOut));
     }).catch(() => { if (current) setPreview({ date, status: "", label: "", checkInLocal: null, checkOutLocal: null, workedMinutes: 0, eligibleKinds: [] }); });
     apiData<RegularizationRules>(`/api/v1/attendance/regularization-rules?month=${date.slice(0, 7)}`).then((loaded) => { if (current) setRules(loaded); }).catch(() => {});
     return () => { current = false; };
@@ -132,22 +135,22 @@ export function RegularizationRequestModal({ date: initialDate, onClose }: { dat
               onChange={(e) => e.target.value && setDate(e.target.value)} />
           </label>
           <label className="field">{t("Until date")} <span className="hint">{t("optional")}</span>
-            <input type="date" value={toDate} min={date} max={today} onChange={(e) => { setToDate(e.target.value); if (!kind) setKind("ABSENT"); }} />
+            <input type="date" value={toDate} min={date} max={today} onChange={(e) => { setToDate(e.target.value); if (!kind) { touched.current.kind = true; setKind("ABSENT"); } }} />
           </label>
         </div>
         {toDate && toDate !== date && <p className="faint" style={{ fontSize: 12.5, margin: 0 }}>{t("One request is made for each day, with the same times. Days that do not fit are skipped and listed.")}</p>}
         <label className="field">{t("Request type")}
-          <select value={kind} disabled={!preview?.eligibleKinds.length && !toDate} onChange={(e) => setKind(e.target.value as RegularizationKind)}>
+          <select value={kind} disabled={!preview?.eligibleKinds.length && !toDate} onChange={(e) => { touched.current.kind = true; setKind(e.target.value as RegularizationKind); }}>
             {(toDate && toDate !== date ? Object.keys(KIND_LABEL) as RegularizationKind[] : preview?.eligibleKinds ?? []).map((option) => <option key={option} value={option}>{t(KIND_LABEL[option])}</option>)}
           </select>
         </label>
         {preview && !preview.eligibleKinds.length && <div className="chip neutral" style={{ height: "auto", padding: "10px 12px", whiteSpace: "normal" }}>{t("This day has nothing to regularize.")}</div>}
         <div className="grid2">
           <label className="field">{t("Check-in")} {needsCheckIn ? "*" : <span className="hint">{t("optional")}</span>}
-            <input type="datetime-local" value={checkIn} max={`${today}T23:59`} onChange={(e) => setCheckIn(e.target.value)} />
+            <input type="datetime-local" value={checkIn} max={`${today}T23:59`} onChange={(e) => { touched.current.checkIn = true; setCheckIn(e.target.value); }} />
           </label>
           <label className="field">{t("Check-out")} {needsCheckOut ? "*" : <span className="hint">{t("optional")}</span>}
-            <input type="datetime-local" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} />
+            <input type="datetime-local" value={checkOut} onChange={(e) => { touched.current.checkOut = true; setCheckOut(e.target.value); }} />
           </label>
         </div>
         <div className="kv"><span className="muted">{t("Total hours")}</span><b className="num">{minutes === null ? "—" : formatHours(minutes / 60)}</b></div>

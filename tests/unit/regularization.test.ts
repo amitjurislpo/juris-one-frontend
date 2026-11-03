@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatMinutes, minutesBetweenLocal } from "@/pages/attendance/regularization";
+import { formatMinutes, minutesBetweenLocal, prefillUnlessTouched } from "@/pages/attendance/regularization";
 
 describe("regularization helpers", () => {
   it("formats minutes as H:mm", () => {
@@ -16,5 +16,11 @@ describe("regularization helpers", () => {
   it("gives nothing until both times are there and in order", () => {
     expect(minutesBetweenLocal("", "2026-10-05T18:45")).toBeNull();
     expect(minutesBetweenLocal("2026-10-05T18:45", "2026-10-05T09:30")).toBeNull();
+  });
+
+  it("prefills from the server only the fields the user has not typed in", () => {
+    expect(prefillUnlessTouched("", "2026-10-05T09:30", false)).toBe("2026-10-05T09:30");
+    expect(prefillUnlessTouched("2026-10-05T10:00", "2026-10-05T09:30", true)).toBe("2026-10-05T10:00");
+    expect(prefillUnlessTouched("", "", true)).toBe("");
   });
 });
