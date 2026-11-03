@@ -11,6 +11,7 @@ import { useCurrentUser, useReadOnly } from "@/lib/session";
 import { formatDayMonthYear, formatRupees, INDIA_TIME_ZONE, todayIn } from "@/lib/format";
 import { shiftLabel } from "@/lib/shifts";
 import { EmployeeForm } from "./EmployeeForm";
+import { AdditionalRolesSection } from "./AdditionalRolesSection";
 import { OnboardingStatusChip } from "./OnboardingStatusChip";
 import { getProfile, confirmEmployee, markExited, revealContact, toggleAccess, type Profile } from "./actions";
 import { Avatar } from "@/components/Avatar";
@@ -178,6 +179,7 @@ function ProfileDrawer({ id, onboardingStatus, onClose, onEdit }: { id: string; 
               })}>{t("Make permanent")}</button>
             </div>
           )}
+          <AdditionalRolesSection employeeId={profile.id} />
           {onboardingStatus && onboardingStatus !== "NOT_REQUIRED" && (
             <div className="access-row">
               <div><b>{t("Onboarding")}</b><div style={{ marginTop: 4 }}><OnboardingStatusChip status={onboardingStatus} /></div></div>

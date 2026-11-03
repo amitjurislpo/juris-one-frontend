@@ -93,3 +93,28 @@ export async function saveEmployee(input: EmployeeInput, editId?: string): Promi
     ? apiAction("PUT", `/api/v1/people/${enc(editId)}`, input, PAGES)
     : apiAction("POST", "/api/v1/people", input, PAGES);
 }
+
+// ───────────────────────── additional roles ─────────────────────────
+
+interface RoleSummary {
+  id: string;
+  key: string;
+  name: string;
+}
+
+/** The main role, the additional roles, and (for the admin and HR) the roles that could be added. */
+export interface AdditionalRoles {
+  mainRole: RoleSummary;
+  additionalRoles: RoleSummary[];
+  offeredRoles: RoleSummary[];
+  canChange: boolean;
+}
+
+export async function getAdditionalRoles(id: string): Promise<ActionResult<AdditionalRoles>> {
+  return (await apiCall<AdditionalRoles>("GET", `/api/v1/people/${enc(id)}/additional-roles`)).body;
+}
+
+/** Replaces the additional roles with exactly these ones (an empty list removes them all). */
+export async function saveAdditionalRoles(id: string, roleIds: string[]): Promise<ActionResult<AdditionalRoles>> {
+  return apiAction("PUT", `/api/v1/people/${enc(id)}/additional-roles`, { roleIds }, PAGES);
+}
