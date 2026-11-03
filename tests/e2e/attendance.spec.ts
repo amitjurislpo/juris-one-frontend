@@ -104,6 +104,8 @@ test.describe("attendance", () => {
     await page.getByRole("button", { name: "Request regularization" }).first().click();
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel(/^Date/).fill("2026-10-05");
+    // the form prefills from the chosen day once it has loaded: type only after that
+    await expect(dialog.getByLabel("Request type")).toHaveValue("ABSENT");
     await dialog.getByLabel(/^Check-in/).fill("2026-10-05T19:35");
     await dialog.getByLabel(/^Check-out/).fill("2026-10-06T04:35");
     await dialog.getByLabel(/^Reason/).selectOption({ label: "System / biometric issue" });
@@ -116,7 +118,7 @@ test.describe("attendance", () => {
     expect(new Date(regularization.proposed_in).toISOString()).toBe("2026-10-05T14:05:00.000Z");
     await page.getByRole("button", { name: "Withdraw request" }).click();
     await expect(toast(page)).toContainText("withdrawn");
-    await expect(page.getByRole("button", { name: "Request regularization" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Request regularization" }).first()).toBeVisible();
   }
 
   test("holidays: HR adds by region; duplicates blocked; India and US see their own", async ({ page }) => {
