@@ -2032,7 +2032,6 @@ export const hindiMessages: Record<string, string> = {
   "{n} of {total} requests added": "{total} में से {n} अनुरोध जोड़े गए",
   "Result for each day": "हर दिन का परिणाम",
   "leave empty for yourself": "अपने लिए खाली छोड़ें",
-  "Change": "बदलें",
   "Until date": "अंतिम तारीख़",
   "One request is made for each day, with the same times. Days that do not fit are skipped and listed.": "हर दिन के लिए एक अनुरोध बनता है, समान समय के साथ। जो दिन मेल नहीं खाते उन्हें छोड़कर सूची में दिखाया जाता है।",
 };
