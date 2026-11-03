@@ -73,7 +73,7 @@ export function useReadOnly(): boolean {
 export const can = (u: CurrentUser | null, ...perms: Permission[]) => !!u && perms.some((p) => u.perms.has(p));
 
 export function allowedNav(user: CurrentUser) {
-  return NAV.filter((item) => navAllowed(item, user.perms, user.hasReports) && (!item.module || user.modules.includes(item.module)));
+  return NAV.filter((item) => !item.isHiddenFromMenu && navAllowed(item, user.perms, user.hasReports) && (!item.module || user.modules.includes(item.module)));
 }
 
 export function landingPath(user: CurrentUser) {

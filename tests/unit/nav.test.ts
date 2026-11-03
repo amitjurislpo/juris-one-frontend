@@ -64,3 +64,12 @@ describe("navigation access", () => {
     expect(visible(ADMIN)).toContain("letters");
   });
 });
+
+describe("pages without a sidebar link", () => {
+  it("keeps Onboard employee out of the menu but reachable by its path", async () => {
+    const { isHiddenFromMenu, navIdForPath } = await import("@/lib/nav");
+    expect(isHiddenFromMenu("onboard-employee")).toBe(true);
+    expect(isHiddenFromMenu("employees")).toBe(false);
+    expect(navIdForPath("/onboarding/hires/123")).toBe("onboard-employee");
+  });
+});

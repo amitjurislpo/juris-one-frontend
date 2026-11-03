@@ -54,7 +54,7 @@ test.describe("leave & approvals", () => {
   });
 
   test("apply: holidays skipped, live summary, max stretch, then cancel", async ({ page }) => {
-    await login(page, "JC-072");
+    await login(page, "JC072");
     await expectLanded(page, "/home");
     await page.goto("/leave?apply=1");
     const dialog = page.getByRole("dialog", { name: "Apply for leave" });
@@ -82,7 +82,7 @@ test.describe("leave & approvals", () => {
   });
 
   test("short balance turns the rest into loss of pay", async ({ page }) => {
-    await login(page, "JC-074"); // ~1.77 CL accrued, 1 held by a pending request
+    await login(page, "JC074"); // ~1.77 CL accrued, 1 held by a pending request
     await expectLanded(page, "/home");
     await page.goto("/leave?apply=1");
     const dialog = page.getByRole("dialog", { name: "Apply for leave" });
@@ -91,8 +91,8 @@ test.describe("leave & approvals", () => {
   });
 
   test("HR approves leave: ledger, notification and email; nobody decides their own", async ({ page }) => {
-    const before = await ledger("JC-049", "CL");
-    await login(page, "JC-015"); // HR Executive
+    const before = await ledger("JC049", "CL");
+    await login(page, "JC015"); // HR Executive
     await expectLanded(page, "/home");
     await page.goto("/approvals?tab=leave");
     const card = page.locator("article.req", { hasText: "Naman Tyagi" });
@@ -101,12 +101,12 @@ test.describe("leave & approvals", () => {
     await card.getByRole("button", { name: /Approve/ }).click();
     await expect(toast(page)).toContainText("Approved Naman Tyagi’s casual leave");
     await expect(page.getByText("Decided · last 30 days")).toBeVisible();
-    expect(await ledger("JC-049", "CL")).toBeCloseTo(before - 2, 2);
+    expect(await ledger("JC049", "CL")).toBeCloseTo(before - 2, 2);
     const mail = await sql(`SELECT 1 FROM email_outbox WHERE "to" = 'naman.tyagi@jurislpo.com' AND subject LIKE 'Casual leave%approved' AND created_at >= $1`, [TEST_START_TIME]);
     expect(mail.length).toBe(1);
 
     await page.context().clearCookies();
-    await login(page, "JC-049");
+    await login(page, "JC049");
     await expectLanded(page, "/home");
     await page.getByRole("button", { name: /Notifications/ }).click();
     await expect(page.locator(".notif")).toContainText("Casual leave (21 Oct – 22 Oct) approved by Pooja Nair");
@@ -115,7 +115,7 @@ test.describe("leave & approvals", () => {
   });
 
   test("regularization: HR approves a missed check-out; the first decision wins (Admin is second)", async ({ page, browser }) => {
-    await login(page, "JC-012"); // HR Manager
+    await login(page, "JC012"); // HR Manager
     await expectLanded(page, "/home");
     await page.goto("/approvals?tab=regularizations");
     const card = page.locator("article.req", { hasText: "Siddharth Krishna" });
@@ -145,7 +145,7 @@ test.describe("leave & approvals", () => {
   });
 
   test("holiday work earns a comp-off; Admin can approve too", async ({ page }) => {
-    const before = await ledger("JC-049", "CO");
+    const before = await ledger("JC049", "CO");
     await login(page, OWNER);
     await expectLanded(page, "/overview");
     await page.goto("/approvals?tab=regularizations");
@@ -153,11 +153,11 @@ test.describe("leave & approvals", () => {
     await expect(card).toContainText("Worked 8h 40m on Gandhi Jayanti");
     await card.getByRole("button", { name: /Approve/ }).click();
     await expect(toast(page)).toContainText("1 comp-off credited");
-    expect(await ledger("JC-049", "CO")).toBe(before + 1);
+    expect(await ledger("JC049", "CO")).toBe(before + 1);
   });
 
   test("approvals are permission-gated", async ({ page }) => {
-    await login(page, "JC-074");
+    await login(page, "JC074");
     await expectLanded(page, "/home");
     await page.goto("/approvals");
     await expectLanded(page, "/home");
