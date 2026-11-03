@@ -14,7 +14,7 @@ import { e2ePorts } from "./scripts/e2e-slot.mjs";
 // the worker processes preload a small resolver (set before they are started).
 if (isTenantHostRun) {
   // NODE_OPTIONS reads backslashes as escapes: give it forward slashes
-  const preload = `--require "${path.join(import.meta.dirname, "scripts", "e2e-localhost-dns.cjs").replaceAll("\\\\", "/")}"`;
+  const preload = `--require "${path.join(import.meta.dirname, "scripts", "e2e-localhost-dns.cjs").replaceAll("\\", "/")}"`;
   process.env.NODE_OPTIONS = [process.env.NODE_OPTIONS, preload].filter(Boolean).join(" ");
 }
 
