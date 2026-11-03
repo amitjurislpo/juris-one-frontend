@@ -1,0 +1,1 @@
+import{t as e}from"./usePage-DoC2UrkR.js";import{r as t}from"./useTimeState-Dqndhdw8.js";function n(n){let r=e(`/me/schedule?from=${n}&to=${t(n,13)}`);return r?(`days`in r?r:r.rows[0])?.days??[]:[]}export{n as t};

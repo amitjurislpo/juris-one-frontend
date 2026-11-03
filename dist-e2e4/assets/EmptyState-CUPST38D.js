@@ -1,0 +1,1 @@
+import{T as e}from"./useBaseQuery-BA_575Az.js";var t=e();function n({title:e,text:n,children:r}){return(0,t.jsxs)(`div`,{className:`empty`,style:{border:0},children:[(0,t.jsx)(`b`,{children:e}),n&&(0,t.jsx)(`span`,{className:`muted`,children:n}),r]})}export{n as t};

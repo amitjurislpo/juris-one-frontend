@@ -33,7 +33,9 @@ test.describe("server-side page permissions", () => {
   test("finance manager sees the finance group", async ({ page }) => {
     await login(page, "JC-004");
     await expectLanded(page, "/home");
-    for (const name of ["Payroll", "Salary structures", "Tax & TDS", "Investment proofs", "Approvals"]) await expect(page.getByRole("complementary", { name: "Main menu" }).getByRole("link", { name })).toBeVisible();
+    for (const name of ["Payroll", "Salary structures", "Tax & TDS", "Investment proofs"]) await expect(page.getByRole("complementary", { name: "Main menu" }).getByRole("link", { name })).toBeVisible();
+    // Finance lost appr.reg (only Admin and HR approve regularizations) and never held appr.leave, so the Approvals link is gone
+    await expect(page.getByRole("complementary", { name: "Main menu" }).getByRole("link", { name: "Approvals" })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "Attendance register" })).toHaveCount(0);
   });
 });

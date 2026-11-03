@@ -1,0 +1,1 @@
+import{T as e}from"./useBaseQuery-BA_575Az.js";import{s as t}from"./usePage-DoC2UrkR.js";var n=e();function r(e){let{Link:r}=t();return(0,n.jsx)(r,{...e})}export{r as t};
