@@ -27,52 +27,121 @@ async function holdMonthsOpen() {
   };
 }
 
+/**
+ * Makes the casual leave JC074 can still take (ledger balance minus what pending requests hold) exactly the given number of days. The
+ * accrual job credits a month more every month, so the real balance moves with today's date. The adjustment row is removed by restore().
+ */
+async function setAvailableCasualLeave(code: string, availableDays: number) {
+  const [state] = await sql<{ balance: number; held: number }>(`SELECT
+      COALESCE((SELECT sum(l.delta) FROM leave_ledger l WHERE l.employee_id = e.id AND l.leave_type = 'CL'), 0)::float8 AS balance,
+      COALESCE((SELECT sum(r.days - r.lop_days) FROM leave_requests r WHERE r.employee_id = e.id AND r.leave_type = 'CL' AND r.status = 'PENDING'), 0)::float8 AS held
+    FROM employees e WHERE e.code = $1 AND e.business_id IS NOT NULL`, [code]);
+  const adjustment = Math.round((availableDays - (state.balance - state.held)) * 100) / 100;
+  await sql(`INSERT INTO leave_ledger (id, employee_id, leave_type, delta, reason, note)
+    SELECT gen_random_uuid(), e.id, 'CL', $2::numeric, 'ADJUSTMENT', 'e2e: fixed balance' FROM employees e WHERE e.code = $1 AND e.business_id IS NOT NULL`, [code, adjustment]);
+}
+
+/** Picks the first two working days in a row (enabled, consecutive dates) of the month after the current one, so the dates are never in the past. */
+async function pickTwoWorkingDaysNextMonth(page: Page) {
+  const picker = page.locator(".drp");
+  await picker.getByRole("button", { name: "Next month" }).click();
+  const buttons = picker.locator(".drp-g button:not([disabled])");
+  await expect(buttons.first()).toBeVisible();
+  const days = (await buttons.allTextContents()).map(Number);
+  const index = days.findIndex((day, position) => days[position + 1] === day + 1);
+  expect(index, "two working days in a row in next month").toBeGreaterThanOrEqual(0);
+  await buttons.nth(index).click();
+  await buttons.nth(index + 1).click();
+}
+
 async function ledger(code: string, type: string) {
   const [balance] = await sql<{ total: string | null }>(`SELECT sum(l.delta)::text total FROM leave_ledger l JOIN employees e ON e.id = l.employee_id WHERE e.code = $1 AND l.leave_type = $2`, [code, type]);
   return Number(balance.total ?? 0);
 }
 
-async function pickRange(page: Page, firstDay: number, lastDay: number) {
+const TEST_HOLIDAY_NAME = "E2E Test Holiday";
+const MONTH_ABBREVIATIONS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+const addDays = (isoDate: string, count: number) => new Date(Date.parse(`${isoDate}T00:00:00Z`) + count * 86400000).toISOString().slice(0, 10);
+const weekdayOf = (isoDate: string) => new Date(`${isoDate}T00:00:00Z`).getUTCDay(); // 0 = Sunday
+const dayOf = (isoDate: string) => Number(isoDate.slice(8));
+const shortDate = (isoDate: string) => `${dayOf(isoDate)} ${MONTH_ABBREVIATIONS[Number(isoDate.slice(5, 7)) - 1]}`;
+
+/** The month after the current one (always in the future, so the picker allows every working day in it). */
+function nextMonthStart() {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)).toISOString().slice(0, 10);
+}
+
+/** Opens the picker on next month and clicks the first and last day of the range. */
+async function pickRangeNextMonth(page: Page, first: string, last: string) {
   const picker = page.locator(".drp");
-  // the picker opens on the current month; walk forward to November 2026 (the seeded holidays and requests are dated then)
   const heading = picker.locator(".drp-h b");
-  for (let i = 0; i < 12 && (await heading.textContent()) !== "November 2026"; i++) await picker.getByRole("button", { name: "Next month" }).click();
-  await expect(heading).toHaveText("November 2026");
-  await picker.locator(".drp-g button", { hasText: new RegExp(`^${firstDay}$`) }).click();
-  await picker.locator(".drp-g button", { hasText: new RegExp(`^${lastDay}$`) }).click();
+  const opening = await heading.textContent();
+  await picker.getByRole("button", { name: "Next month" }).click();
+  await expect(heading).not.toHaveText(opening ?? "");
+  await clickDay(page, first);
+  await clickDay(page, last);
+}
+
+async function clickDay(page: Page, isoDate: string) {
+  await page.locator(".drp-g button", { hasText: new RegExp(`^${dayOf(isoDate)}$`) }).click();
 }
 
 test.describe("leave & approvals", () => {
   let putPolicyBack: () => Promise<void>;
+  let frozenDays: { id: string }[] = [];
   test.beforeAll(async () => {
     await restore();
     putPolicyBack = await holdMonthsOpen();
   });
   test.afterAll(async () => {
+    if (frozenDays.length) await sql(`UPDATE attendance_days SET locked = true WHERE work_date IN ('2026-10-21', '2026-10-22') AND employee_id = $1`, [frozenDays[0].id]);
+    await sql(`DELETE FROM holidays WHERE name = $1`, [TEST_HOLIDAY_NAME]);
     await putPolicyBack();
     await restore();
   });
 
   test("apply: holidays skipped, live summary, max stretch, then cancel", async ({ page }) => {
+    // The dates are worked out from next month's calendar so the test never expires: Fri → Tue over a weekend and a test holiday on the
+    // Monday (2 working days), a Mon–Fri week with no holiday (5 days: over the 3-day limit of casual leave), and two days in a row to apply for.
+    const monthStart = nextMonthStart();
+    const monthEnd = addDays(new Date(Date.UTC(Number(monthStart.slice(0, 4)), Number(monthStart.slice(5, 7)), 1)).toISOString().slice(0, 10), -1);
+    const existing = new Set((await sql<{ date: string }>(`SELECT to_char(date, 'YYYY-MM-DD') AS date FROM holidays WHERE date >= $1 AND date <= $2`, [monthStart, monthEnd])).map((row) => row.date));
+    const isFree = (first: string, count: number) => Array.from({ length: count }, (_, i) => addDays(first, i)).every((day) => !existing.has(day));
+    const weeks = (weekday: number) => {
+      const found: string[] = [];
+      for (let day = monthStart; day <= monthEnd; day = addDays(day, 1)) if (weekdayOf(day) === weekday && addDays(day, 4) <= monthEnd) found.push(day);
+      return found;
+    };
+    const friday = weeks(5).find((candidate) => isFree(candidate, 5));
+    expect(friday, "a Friday with a free week after it next month").toBeDefined();
+    const holidayRange = { first: friday!, holiday: addDays(friday!, 3), last: addDays(friday!, 4) };
+    const week = weeks(1).find((monday) => isFree(monday, 5) && (addDays(monday, 4) < holidayRange.first || monday > holidayRange.last));
+    expect(week, "a free Monday–Friday week next month").toBeDefined();
+    const twoDays = { first: addDays(week!, 1), last: addDays(week!, 2) };
+    await sql(`DELETE FROM holidays WHERE name = $1`, [TEST_HOLIDAY_NAME]);
+    await sql(`INSERT INTO holidays (id, date, name, region, business_id) SELECT gen_random_uuid(), $1::date, $2, 'ALL', e.business_id FROM employees e WHERE e.code = 'JC072'`, [holidayRange.holiday, TEST_HOLIDAY_NAME]);
+
     await login(page, "JC072");
     await expectLanded(page, "/home");
     await page.goto("/leave?apply=1");
     const dialog = page.getByRole("dialog", { name: "Apply for leave" });
     await expect(dialog).toBeVisible();
-    // Fri 6 → Tue 10 Nov: Sat/Sun skipped, Mon 9 is Govardhan Puja → 2 working days
-    await pickRange(page, 6, 10);
+    // Friday → Tuesday: Sat/Sun skipped, the Monday is a holiday → 2 working days
+    await pickRangeNextMonth(page, holidayRange.first, holidayRange.last);
     await expect(dialog.locator(".summary div").first()).toContainText("2");
-    await expect(dialog.getByText(/Holidays skipped: Govardhan Puja/)).toBeVisible();
+    await expect(dialog.getByText(new RegExp(`Holidays skipped: ${TEST_HOLIDAY_NAME}`))).toBeVisible();
     // casual leave is max 3 days at a stretch
-    await dialog.locator(".drp-g button", { hasText: /^16$/ }).click();
-    await dialog.locator(".drp-g button", { hasText: /^20$/ }).click();
+    await clickDay(page, week!);
+    await clickDay(page, addDays(week!, 4));
     await expect(dialog.getByText("Casual leave can be taken for at most 3 days at a stretch.")).toBeVisible();
     await expect(dialog.getByRole("button", { name: "Apply leave" })).toBeDisabled();
-    await dialog.locator(".drp-g button", { hasText: /^11$/ }).click();
-    await dialog.locator(".drp-g button", { hasText: /^12$/ }).click();
+    await clickDay(page, twoDays.first);
+    await clickDay(page, twoDays.last);
     await dialog.getByLabel(/Reason/).fill("E2E family visit");
     await dialog.getByRole("button", { name: "Apply leave" }).click();
-    await expect(toast(page)).toContainText("Casual leave for 2 days (11 Nov – 12 Nov) sent to HR");
+    await expect(toast(page)).toContainText(`Casual leave for 2 days (${shortDate(twoDays.first)} – ${shortDate(twoDays.last)}) sent to HR`);
     const row = page.locator("tbody tr", { hasText: "E2E family visit" });
     await expect(row.locator(".chip")).toHaveText("Pending");
     await row.getByRole("button", { name: "Cancel" }).click();
@@ -82,15 +151,21 @@ test.describe("leave & approvals", () => {
   });
 
   test("short balance turns the rest into loss of pay", async ({ page }) => {
-    await login(page, "JC074"); // ~1.77 CL accrued, 1 held by a pending request
+    // 0.77 days left after the pending request: half-day steps pay 0.5 of the two days, so 1.5 are unpaid (whatever month it is today)
+    await setAvailableCasualLeave("JC074", 0.77);
+    await login(page, "JC074");
     await expectLanded(page, "/home");
     await page.goto("/leave?apply=1");
     const dialog = page.getByRole("dialog", { name: "Apply for leave" });
-    await pickRange(page, 3, 4);
+    await pickTwoWorkingDaysNextMonth(page);
     await expect(dialog.getByText(/You don't have enough casual leave — 1\.5 day\(s\) will be unpaid/)).toBeVisible();
   });
 
   test("HR approves leave: ledger, notification and email; nobody decides their own", async ({ page }) => {
+    // once October has been locked by the monthly job its days are frozen and a later approval cannot show; open 21–22 Oct again (put back in afterAll)
+    frozenDays = await sql<{ id: string }>(`SELECT d.employee_id AS id FROM attendance_days d JOIN employees e ON e.id = d.employee_id
+      WHERE e.code = 'JC049' AND d.work_date IN ('2026-10-21', '2026-10-22') AND d.locked`);
+    await sql(`UPDATE attendance_days SET locked = false WHERE work_date IN ('2026-10-21', '2026-10-22') AND employee_id IN (SELECT id FROM employees WHERE code = 'JC049')`);
     const before = await ledger("JC049", "CL");
     await login(page, "JC015"); // HR Executive
     await expectLanded(page, "/home");
