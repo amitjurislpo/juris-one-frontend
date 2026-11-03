@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import { businessOrigin, DEMO_BUSINESS_CODE } from "./scripts/e2e-hosts.mjs";
 import { e2ePorts } from "./scripts/e2e-slot.mjs";
 
 /**
@@ -15,7 +16,7 @@ export default defineConfig({
   retries: 0,
   timeout: 90_000,
   reporter: [["list"]],
-  use: { baseURL: `http://localhost:${e2ePorts.web}`, trace: "retain-on-failure" },
+  use: { baseURL: businessOrigin(DEMO_BUSINESS_CODE), trace: "retain-on-failure" },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
     { command: "node scripts/e2e-env.mjs backend", url: `http://127.0.0.1:${e2ePorts.api}/actuator/health`, reuseExistingServer: false, timeout: 600_000 },

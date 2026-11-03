@@ -8,6 +8,18 @@ const { devSettings } = (await import(pathToFileURL(path.join(import.meta.dirnam
   devSettings: () => { databaseUrl: string; superAdminEmail: string };
 };
 const dev = devSettings();
+const { businessOrigin, DEMO_BUSINESS_CODE } = (await import(pathToFileURL(path.join(import.meta.dirname, "..", "..", "scripts", "e2e-hosts.mjs")).href)) as {
+  businessOrigin: (businessCode: string) => string;
+  DEMO_BUSINESS_CODE: string;
+};
+/** The platform console (super admin) is the address with the label "admin" below the base domain; the bare address when per-business addresses are off. */
+const adminOrigin = businessOrigin("admin");
+
+/**
+ * The address the API is reached at for the demo business (a browser write carries it as its Origin). With E2E_TENANT_HOST=1 it is
+ * http://juris-consultants.localhost:<port>, otherwise http://localhost:<port>.
+ */
+export const WEB_ORIGIN = businessOrigin(DEMO_BUSINESS_CODE);
 /** Same rule as scripts/e2e-slot.mjs: slot 0 is "_e2e", slot N is "_e2eN". */
 const e2eDatabaseSuffix = Number(process.env.E2E_SLOT ?? 0) === 0 ? "_e2e" : `_e2e${Number(process.env.E2E_SLOT)}`;
 
@@ -43,12 +55,31 @@ export async function emailOf(codeOrEmail: string) {
   return employee.email;
 }
 
+const signedInAt = new WeakMap<Page, string>();
+
+/** The address this page signed in at (the demo business's address until it signs in): use it for API calls made with `page.request`. */
+export function originOfPage(page: Page) {
+  return signedInAt.get(page) ?? WEB_ORIGIN;
+}
+
+/** The address a person signs in at: the platform console for the super admin, else the address of their business (the same one without per-business addresses). */
+async function originOf(email: string) {
+  if (email === ADMIN_EMAIL) return adminOrigin;
+  const [business] = await sql<{ code: string }>("SELECT b.code FROM employees e JOIN businesses b ON b.id = e.business_id WHERE e.email = $1", [email]);
+  return businessOrigin(business?.code ?? DEMO_BUSINESS_CODE);
+}
+
 /** In the e2e environment every emailed sign-in code is this fixed value (OTP_FIXED_CODE, see scripts/e2e-env.mjs). */
 export const OTP = "000000";
 
 /** Asks for a sign-in code for this employee and types it. Filling the first box with all six digits submits the form. */
 export async function loginWithCode(page: Page, id: string, code: string) {
   const email = await emailOf(id);
+  const origin = await originOf(email);
+  // a later page.goto("/…") of this page stays on the address it signed in at (each address has its own cookies)
+  signedInAt.set(page, origin);
+  const goto = page.goto.bind(page);
+  page.goto = (url, options) => goto(url.startsWith("/") ? origin + url : url, options);
   // wait for hydration — a click can otherwise beat React to the form
   await page.goto("/login", { waitUntil: "networkidle" });
   await page.getByLabel("Email").fill(email);
