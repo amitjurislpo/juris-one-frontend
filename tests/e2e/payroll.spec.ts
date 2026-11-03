@@ -4,6 +4,17 @@ import { expectLanded, login, sql } from "./helpers";
 const toast = (page: Page) => page.locator(".toast").last();
 const TEST_START_TIME = new Date().toISOString();
 const SEP = "2026-09";
+const ORIGIN = { Origin: "http://localhost:3006" };
+
+/** Net pay and TDS (paise) of the signed-in employee's closed September payslip, from /api/v1/payslips. */
+async function septemberFigures(page: Page) {
+  const response = await page.request.get("/api/v1/payslips");
+  expect(response.status()).toBe(200);
+  const body = (await response.json()) as { data: { months: { month: string; closed: boolean; snapshot?: { net: number; tds: number } }[] } };
+  const september = body.data.months.find((month) => month.month === SEP && month.closed);
+  expect(september?.snapshot).toBeDefined();
+  return { net: september!.snapshot!.net, tds: september!.snapshot!.tds };
+}
 
 async function cleanup() {
   await sql(`DELETE FROM payslips WHERE run_id IN (SELECT id FROM payroll_runs WHERE month = $1)`, [SEP]);
@@ -92,14 +103,30 @@ test.describe("payroll", () => {
     await expect(page.locator("tbody tr").first()).toContainText("Locked");
     const [{ payslipCount }] = await sql<{ payslipCount: string }>(`SELECT count(*)::text AS "payslipCount" FROM payslips p JOIN payroll_runs r ON r.id = p.run_id WHERE r.month = $1`, [SEP]);
     expect(payslipCount).toBe("11");
-    const [snap] = await sql<{ net: number; tds: number }>(`SELECT (snapshot->>'net')::int net, (snapshot->>'tds')::int tds FROM payslips p JOIN employees e ON e.id = p.employee_id JOIN payroll_runs r ON r.id = p.run_id WHERE r.month = $1 AND e.code = 'JC074'`, [SEP]);
-    expect(snap).toEqual({ net: 9_307_400, tds: 1_492_600 });
+    // the closed payslip as the employee's own payslips API returns it (the stored snapshot is encrypted, so it is not read from the database)
+    await page.context().clearCookies();
+    await login(page, "JC074");
+    await expectLanded(page, "/home");
+    expect(await septemberFigures(page)).toEqual({ net: 9_307_400, tds: 1_492_600 });
 
-    // a later structure change does not touch the closed payslip
-    await sql(`UPDATE salary_structures SET basic = basic + 100000 WHERE employee_id = (SELECT id FROM employees WHERE code = 'JC074')`);
-    const [again] = await sql<{ net: number }>(`SELECT (snapshot->>'net')::int net FROM payslips p JOIN employees e ON e.id = p.employee_id JOIN payroll_runs r ON r.id = p.run_id WHERE r.month = $1 AND e.code = 'JC074'`, [SEP]);
-    expect(again.net).toBe(9_307_400);
-    await sql(`UPDATE salary_structures SET basic = basic - 100000 WHERE employee_id = (SELECT id FROM employees WHERE code = 'JC074')`);
+    // a later structure change does not touch the closed payslip: Finance adds a revision after the closed month (through the app), the figures stay, then it is removed again
+    await page.context().clearCookies();
+    await login(page, "JC004");
+    await expectLanded(page, "/home");
+    const [{ id: employeeId }] = await sql<{ id: string }>(`SELECT id::text AS id FROM employees WHERE code = 'JC074'`);
+    try {
+      const revision = await page.request.post("/api/v1/structures", { headers: ORIGIN, data: { employeeId, effectiveFrom: "2026-11-01", reason: "APPRAISAL", basic: 60000, hra: 30000, lta: 5000, special: 25000 } });
+      expect(revision.status()).toBe(201);
+      await page.context().clearCookies();
+      await login(page, "JC074");
+      await expectLanded(page, "/home");
+      expect(await septemberFigures(page)).toEqual({ net: 9_307_400, tds: 1_492_600 });
+    } finally {
+      await sql(`DELETE FROM salary_structures WHERE employee_id = $1::uuid AND effective_from = '2026-11-01'`, [employeeId]);
+    }
+    await page.context().clearCookies();
+    await login(page, "JC004");
+    await expectLanded(page, "/home");
 
     // exports
     const bank = await page.request.get(`/api/v1/payroll/export?month=${SEP}&type=bank`);
