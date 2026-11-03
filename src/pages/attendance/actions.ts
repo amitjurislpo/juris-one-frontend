@@ -41,7 +41,7 @@ export async function decideRegularizations(input: { ids: string[]; approve: boo
   return apiAction("POST", "/api/v1/attendance/regularization-decisions", input, ["/attendance"]);
 }
 
-export async function saveRegularizationRules(input: { backDateLimitDays: number; monthlyLimit: number; attachmentMandatory: boolean }): Promise<ActionResult> {
+export async function saveRegularizationRules(input: { backDateLimitDays: number; monthlyLimit: number; attachmentMandatory: boolean; autoApprove: boolean }): Promise<ActionResult> {
   return apiAction("PUT", "/api/v1/attendance/regularization-rules", input, ["/attendance"]);
 }
 

@@ -13,6 +13,7 @@ export function RegularizationRulesModal({ rules, onClose }: { rules: Regulariza
   const [backDateLimitDays, setBackDateLimitDays] = useState(String(rules.backDateLimitDays));
   const [monthlyLimit, setMonthlyLimit] = useState(String(rules.monthlyLimit));
   const [attachmentMandatory, setAttachmentMandatory] = useState(rules.attachmentMandatory);
+  const [autoApprove, setAutoApprove] = useState(rules.autoApprove);
   const [newLabel, setNewLabel] = useState("");
   const [newNeedsDescription, setNewNeedsDescription] = useState(false);
   const report = (result: { ok: boolean; message?: string; error?: string }) => toast(result.ok ? result.message! : result.error!, result.ok ? "ok" : "bad");
@@ -21,7 +22,7 @@ export function RegularizationRulesModal({ rules, onClose }: { rules: Regulariza
     <Modal title={t("Regularization settings")} eyebrow={t("Attendance")} size="sm" onClose={onClose}
       footer={<><span></span><div className="row" style={{ gap: 10 }}>
         <button className="btn btn-ghost" onClick={onClose}>{t("Close")}</button>
-        <button className="btn btn-gold" disabled={busy} onClick={() => start(async () => report(await saveRegularizationRules({ backDateLimitDays: Number(backDateLimitDays), monthlyLimit: Number(monthlyLimit), attachmentMandatory })))}>{t("Save rules")}</button>
+        <button className="btn btn-gold" disabled={busy} onClick={() => start(async () => report(await saveRegularizationRules({ backDateLimitDays: Number(backDateLimitDays), monthlyLimit: Number(monthlyLimit), attachmentMandatory, autoApprove })))}>{t("Save rules")}</button>
       </div></>}>
       <div className="col" style={{ gap: 14 }}>
         <div className="grid2">
@@ -29,6 +30,7 @@ export function RegularizationRulesModal({ rules, onClose }: { rules: Regulariza
           <label className="field">{t("Requests per month")}<input type="number" min={1} max={1000} value={monthlyLimit} onChange={(e) => setMonthlyLimit(e.target.value)} /></label>
         </div>
         <label className="row" style={{ gap: 8, alignItems: "center" }}><input type="checkbox" checked={attachmentMandatory} onChange={(e) => setAttachmentMandatory(e.target.checked)} />{t("An attachment is mandatory")}</label>
+        <label className="row" style={{ gap: 8, alignItems: "flex-start" }}><input type="checkbox" checked={autoApprove} onChange={(e) => setAutoApprove(e.target.checked)} />{t("Approve at once the requests that Admin or HR raise for an employee")}</label>
         <div>
           <b style={{ fontSize: 14 }}>{t("Reasons")}</b>
           <div className="col" style={{ gap: 6, marginTop: 8 }}>
