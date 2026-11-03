@@ -83,6 +83,9 @@ export const NAV: NavItem[] = [
 /** Where the sidebar link of a nav item goes. */
 export const navPath = (item: { id: string }) => NAV.find((navItem) => navItem.id === item.id)?.path ?? `/${item.id}`;
 
+/** True for a page that is reached from another page and has no sidebar link. */
+export const isHiddenFromMenu = (id: string): boolean => NAV.some((item) => item.id === id && item.isHiddenFromMenu === true);
+
 /** The nav item a page with its own `path` belongs to (e.g. `/onboarding/hires/123` is "Onboard employee"), if any. */
 export const navIdForPath = (pathname: string): NavId | undefined =>
   NAV.find((item) => item.path && (pathname === item.path || pathname.startsWith(`${item.path}/`)))?.id;

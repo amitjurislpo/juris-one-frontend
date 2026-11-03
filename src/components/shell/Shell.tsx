@@ -13,7 +13,7 @@ import { Avatar } from "@/components/Avatar";
 import { BrandLockup } from "@/components/BrandLockup";
 import { formatWeekdayDayMonthYear } from "@/lib/format";
 import { useCurrentUser } from "@/lib/session";
-import { navIdForPath, navPath, PAGE_TITLES, type NavId } from "@/lib/nav";
+import { isHiddenFromMenu, navIdForPath, navPath, PAGE_TITLES, type NavId } from "@/lib/nav";
 import { ToastProvider } from "./Toasts";
 import { currentTheme, setTheme, type Theme } from "./theme";
 
@@ -47,7 +47,9 @@ const FOLD_KEY = "jo_rail_folded";
 interface PaletteAction { group: string; label: string; icon: string; run: () => void; position: number }
 
 export function Shell(props: ShellProps) {
-  const { currentUser: signedInUser, groups, badges, notes, landing, canSelf } = props;
+  const { currentUser: signedInUser, badges, notes, landing, canSelf } = props;
+  // pages reached from another page (not from the sidebar) are left out of the menu and the command palette
+  const groups = useMemo(() => props.groups.map((group) => ({ ...group, items: group.items.filter((item) => !isHiddenFromMenu(item.id)) })).filter((group) => group.items.length > 0), [props.groups]);
   const t = useT();
   const translateNotification = useNotificationText();
   const { user } = useCurrentUser();
