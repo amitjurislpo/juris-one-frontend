@@ -1,5 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
-import { businessOrigin, DEMO_BUSINESS_CODE } from "./scripts/e2e-hosts.mjs";
+import path from "node:path";
+import { businessOrigin, DEMO_BUSINESS_CODE, isTenantHostRun } from "./scripts/e2e-hosts.mjs";
 import { e2ePorts } from "./scripts/e2e-slot.mjs";
 
 /**
@@ -8,6 +9,13 @@ import { e2ePorts } from "./scripts/e2e-slot.mjs";
  * it. Development data is never touched. `E2E_BUILD=1` rebuilds the API jar and the SPA first. BACKEND_REPO points at
  * the backend checkout (default: ../JurisOne).
  */
+
+// With per-business addresses the tests call the API at <business code>.localhost; Node cannot resolve that name on Windows (the browser can), so
+// the worker processes preload a small resolver (set before they are started).
+if (isTenantHostRun) {
+  const preload = `--require "${path.join(import.meta.dirname, "scripts", "e2e-localhost-dns.cjs")}"`;
+  process.env.NODE_OPTIONS = [process.env.NODE_OPTIONS, preload].filter(Boolean).join(" ");
+}
 
 export default defineConfig({
   testDir: "tests/e2e",
