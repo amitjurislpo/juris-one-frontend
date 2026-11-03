@@ -42,6 +42,13 @@ export const hindiNotificationTemplates: Record<string, string> = {
   "A letter was issued to you: {subject} ({reference})": "आपको एक पत्र जारी किया गया: {subject} ({reference})",
   "{name} submitted their onboarding details — ready for review": "{name} ने अपना ऑनबोर्डिंग विवरण जमा किया — समीक्षा के लिए तैयार",
 
+  "{name} submitted their onboarding for review": "{name} ने ऑनबोर्डिंग समीक्षा के लिए जमा की",
+  "Your onboarding was approved by {name}": "आपकी ऑनबोर्डिंग को {name} ने स्वीकृत किया",
+  "Your onboarding needs changes: {comment}": "आपकी ऑनबोर्डिंग में बदलाव ज़रूरी हैं: {comment}",
+  "{name} raised a regularization request for you for {date}": "{name} ने {date} के लिए आपकी ओर से नियमितीकरण अनुरोध किया",
+  "{name} raised a regularization request for {employee} for {date}": "{name} ने {employee} के लिए {date} का नियमितीकरण अनुरोध किया",
+  "{name} asked to regularize attendance for {date}": "{name} ने {date} की उपस्थिति नियमित करने का अनुरोध किया",
+
   // payroll, people, tax (PayrollOperationsService, PeopleService, TaxOperationsService)
   "Your {month} payslip is ready": "आपकी {month} की वेतन पर्ची तैयार है",
   "{name} ({code}) joined — salary structure pending": "{name} ({code}) ने कार्यभार संभाला — वेतन संरचना लंबित है",
