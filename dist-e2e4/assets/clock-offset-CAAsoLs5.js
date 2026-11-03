@@ -1,0 +1,1 @@
+function e(e,t,n){let r=Date.parse(e);return Number.isNaN(r)?0:Math.round(r-(t+n)/2)}function t(e,t=Date.now()){return t+e}export{t as n,e as t};

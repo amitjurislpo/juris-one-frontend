@@ -1,0 +1,1 @@
+import{t as e}from"./usePage-DoC2UrkR.js";import{u as t}from"./Icon--R_pjjRX.js";import{i as n}from"./list-query-D3birTHZ.js";var r=100;function i(){return(e(`/employees${n({role:`MANAGER,ADMIN`,status:`active`,sort:`name`,pageSize:r})}`)?.rows??[]).map(e=>({id:e.id,name:t(e)}))}export{i as t};

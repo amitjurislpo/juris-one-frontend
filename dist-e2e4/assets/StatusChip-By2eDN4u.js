@@ -1,0 +1,1 @@
+import{T as e}from"./useBaseQuery-BA_575Az.js";var t=e();function n({isGood:e,label:n}){return(0,t.jsx)(`span`,{className:`chip ${e?`ok`:`bad`}`,children:n})}export{n as t};

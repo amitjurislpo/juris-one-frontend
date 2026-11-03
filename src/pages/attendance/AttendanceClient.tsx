@@ -1,13 +1,14 @@
 
 import { useState, useTransition } from "react";
 import { useToast } from "@/components/shell/Toasts";
-import { Modal } from "@/components/ui/Modal";
 import { weekdayOf } from "@/lib/attendance/engine";
 import { formatWeekdayDayMonthYear, formatHours } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import { useReadOnly } from "@/lib/session";
 import type { T } from "@/lib/i18n/translate";
-import { cancelRegularization, requestRegularization, type RegularizationInput } from "./actions";
+import { cancelRegularization } from "./actions";
+import { KIND_LABEL, type RegularizationKind } from "./regularization";
+import { RegularizationRequestModal } from "./RegularizationRequestModal";
 
 export interface CalendarDay {
   date: string;
@@ -41,8 +42,6 @@ const shortLabel = (status: string, label: string) => {
   return code ? (rest ? `${code} · ½` : code) : label;
 };
 
-const KIND: Record<string, string> = { ABSENT: "Absent", LATE_CHECKIN: "Late check-in", MISSED_CHECKOUT: "Missed check-out", HOLIDAY_WORK: "Holiday work (comp-off)" };
-
 function countsAs(day: CalendarDay, t: T) {
   if (day.future) return "—";
   switch (day.status) {
@@ -58,7 +57,7 @@ function countsAs(day: CalendarDay, t: T) {
 }
 
 function explain(day: CalendarDay, t: T) {
-  if (day.status === "ABSENT") return day.missedCheckout ? t("Check-out is missing, so the hours don't add up to a working day. Ask for a regularization with your real check-out time.") : t("No check-in and no leave applied. It stays loss of pay unless HR, Finance or Admin approves a regularization before payroll locks.");
+  if (day.status === "ABSENT") return day.missedCheckout ? t("Check-out is missing, so the hours don't add up to a working day. Ask for a regularization with your real check-out time.") : t("No check-in and no leave applied. It stays loss of pay unless Admin or HR approves a regularization before payroll locks.");
   if (day.status === "HALF_DAY") return t("Between 4 and 8 hours worked, so half the day is loss of pay.");
   if (day.late) return t("Checked in after the grace period. Three late marks in a month count as half a day of loss of pay.");
   if (day.lateWaived) return t("A late check-in here was regularized — it doesn't count as a late mark.");
@@ -81,15 +80,14 @@ export function AttendanceCalendar({ days, regs, initialSel, locked, monthLabel 
   const pending = dayRegs.find((r) => r.status === "PENDING");
   const settled = dayRegs.find((r) => r.status === "APPROVED" || r.status === "DECLINED");
 
-  const kinds: RegularizationInput["kind"][] = [];
+  const kinds: RegularizationKind[] = [];
   if (selectedDay.status === "ABSENT" || selectedDay.status === "HALF_DAY") kinds.push("ABSENT");
   if (selectedDay.missedCheckout) kinds.push("MISSED_CHECKOUT");
   if (selectedDay.late) kinds.push("LATE_CHECKIN");
   if (selectedDay.offDayWork) kinds.push("HOLIDAY_WORK");
   const canRequest = !readOnly && !locked && !selectedDay.future && !selectedDay.live && kinds.length > 0 && !pending;
 
-  const [form, setForm] = useState<RegularizationInput>({ date: selectedDay.date, kind: kinds[0] ?? "ABSENT", proposedIn: "", proposedOut: "", reason: "" });
-  const openForm = () => { setForm({ date: selectedDay.date, kind: kinds[0], proposedIn: "", proposedOut: "", reason: "" }); setOpen(true); };
+  const openForm = () => setOpen(true);
 
   return (
     <>
@@ -129,15 +127,15 @@ export function AttendanceCalendar({ days, regs, initialSel, locked, monthLabel 
           <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.65, margin: "14px 0" }}>{selectedDay.future ? t("This day hasn't happened yet.") : explain(selectedDay, t)}</p>
           {pending && (
             <div className="col" style={{ gap: 8 }}>
-              <div className="chip warn" style={{ height: "auto", padding: "10px 12px", whiteSpace: "normal" }}>{t("{kind} regularization pending — waiting for HR, Finance or Admin", { kind: t(KIND[pending.kind]) })}</div>
+              <div className="chip warn" style={{ height: "auto", padding: "10px 12px", whiteSpace: "normal" }}>{t("{kind} regularization pending — waiting for Admin or HR", { kind: t(KIND_LABEL[pending.kind]) })}</div>
               {!readOnly && <button className="btn btn-sm btn-ghost" style={{ alignSelf: "flex-start" }} disabled={busy} onClick={() => start(async () => { const result = await cancelRegularization(pending.id); toast(result.ok ? result.message! : result.error, result.ok ? "ok" : "bad"); })}>{t("Withdraw request")}</button>}
             </div>
           )}
           {!pending && settled && (
             <div className={`chip ${settled.status === "APPROVED" ? "ok" : "bad"}`} style={{ height: "auto", padding: "10px 12px", whiteSpace: "normal", marginBottom: 10 }}>
               {settled.status === "APPROVED"
-                ? (settled.decidedBy ? t("{kind} regularization approved by {by}", { kind: t(KIND[settled.kind]), by: settled.decidedBy }) : t("{kind} regularization approved", { kind: t(KIND[settled.kind]) }))
-                : (settled.decidedBy ? t("{kind} regularization declined by {by}", { kind: t(KIND[settled.kind]), by: settled.decidedBy }) : t("{kind} regularization declined", { kind: t(KIND[settled.kind]) }))}
+                ? (settled.decidedBy ? t("{kind} regularization approved by {by}", { kind: t(KIND_LABEL[settled.kind]), by: settled.decidedBy }) : t("{kind} regularization approved", { kind: t(KIND_LABEL[settled.kind]) }))
+                : (settled.decidedBy ? t("{kind} regularization declined by {by}", { kind: t(KIND_LABEL[settled.kind]), by: settled.decidedBy }) : t("{kind} regularization declined", { kind: t(KIND_LABEL[settled.kind]) }))}
             </div>
           )}
           {canRequest && <button className="btn btn-gold" style={{ width: "100%" }} onClick={openForm}>{t("Request regularization")}</button>}
@@ -145,32 +143,7 @@ export function AttendanceCalendar({ days, regs, initialSel, locked, monthLabel 
         </section>
       </div>
 
-      {open && (
-        <Modal title={t("Regularize this day")} eyebrow={formatWeekdayDayMonthYear(selectedDay.date)} size="sm" onClose={() => setOpen(false)}
-          footer={<>
-            <span className="faint" style={{ fontSize: 12.5 }}>{t("Goes to HR, Finance and Admin — any one can approve.")}</span>
-            <div className="row" style={{ gap: 10 }}>
-              <button className="btn btn-ghost" onClick={() => setOpen(false)}>{t("Cancel")}</button>
-              <button className="btn btn-gold" disabled={busy} onClick={() => start(async () => {
-                const result = await requestRegularization(form);
-                if (result.ok) { toast(result.message!); setOpen(false); } else toast(result.error, "bad");
-              })}>{busy ? t("Sending…") : t("Send for approval")}</button>
-            </div>
-          </>}>
-          <div className="col" style={{ gap: 14 }}>
-            <label className="field">{t("Request type")}
-              <select value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value as RegularizationInput["kind"] })}>{kinds.map((kindOption) => <option key={kindOption} value={kindOption}>{t(KIND[kindOption])}</option>)}</select>
-            </label>
-            {(form.kind === "ABSENT" || form.kind === "MISSED_CHECKOUT" || form.kind === "LATE_CHECKIN") && (
-              <div className="grid2">
-                <label className="field">{t("Actual check-in")} <span className="hint">{t("optional")}</span><input type="time" value={form.proposedIn} onChange={(e) => setForm({ ...form, proposedIn: e.target.value })} /></label>
-                <label className="field">{t("Actual check-out")} {form.kind === "MISSED_CHECKOUT" ? "*" : <span className="hint">{t("optional")}</span>}<input type="time" value={form.proposedOut} onChange={(e) => setForm({ ...form, proposedOut: e.target.value })} /></label>
-              </div>
-            )}
-            <label className="field">{t("What happened?")} <span className="hint">{t("optional")}</span><textarea value={form.reason} maxLength={500} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder={t("e.g. Was on a client call, forgot to check in")} /></label>
-          </div>
-        </Modal>
-      )}
+      {open && <RegularizationRequestModal date={selectedDay.date} onClose={() => setOpen(false)} />}
     </>
   );
 }

@@ -8,6 +8,8 @@ const { devSettings } = (await import(pathToFileURL(path.join(import.meta.dirnam
   devSettings: () => { databaseUrl: string; superAdminEmail: string };
 };
 const dev = devSettings();
+/** Same rule as scripts/e2e-slot.mjs: slot 0 is "_e2e", slot N is "_e2eN". */
+const e2eDatabaseSuffix = Number(process.env.E2E_SLOT ?? 0) === 0 ? "_e2e" : `_e2e${Number(process.env.E2E_SLOT)}`;
 
 /** JC-002 owns the demo business (its sub admin): the business admin. */
 export const OWNER = "JC-002";
@@ -17,7 +19,7 @@ export const ADMIN_EMAIL = dev.superAdminEmail;
 /** The e2e database (never the development one): same server, database "<db>_e2e". */
 function e2eDatabaseUrl() {
   const url = new URL(dev.databaseUrl);
-  url.pathname = `/${url.pathname.replace(/^\//, "")}_e2e`;
+  url.pathname = `/${url.pathname.replace(/^\//, "")}${e2eDatabaseSuffix}`;
   url.search = "";
   return url.toString();
 }
