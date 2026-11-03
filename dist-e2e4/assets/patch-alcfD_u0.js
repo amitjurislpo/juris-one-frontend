@@ -1,1 +1,0 @@
-var e=(e,t)=>{if(typeof e!=`string`)return e;let n=e.trim();return t&&n===``?null:n},t=(e,t)=>Array.isArray(e)&&Array.isArray(t)?e.length===t.length&&e.every((e,n)=>e===t[n]):e===t;function n(n,r,i=[]){let a={};for(let o of Object.keys(r)){let s=i.includes(o),c=e(r[o],s);t(e(n[o],s),c)||(a[o]=c)}return a}export{n as t};

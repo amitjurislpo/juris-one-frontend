@@ -1,1 +1,0 @@
-import{E as e,O as t}from"./useBaseQuery-BA_575Az.js";var n=t(e(),1);function r(e,t){return e.length!==t.length||t.some((t,n)=>!Object.is(t,e[n]))}function i(e,t,...i){let a=(0,n.useRef)(i);(0,n.useEffect)(()=>{let n=r(a.current,i);a.current=i,n&&e&&t()})}export{i as t};
