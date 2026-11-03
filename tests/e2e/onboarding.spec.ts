@@ -2,7 +2,6 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { expect, test, type BrowserContext, type Locator, type Page } from "@playwright/test";
-import { e2eWorkFolderName } from "../../scripts/e2e-slot.mjs";
 import { expectLanded, login, sql } from "./helpers";
 
 const NEW_EMAIL = "e2e.onboarding.hire@jurislpo.com";
@@ -13,7 +12,9 @@ const ACCOUNTS_COMMENT = "Bank name is missing.";
 /** Set ONBOARDING_SHOTS to a folder to save full-page screenshots of every step (layout review). */
 const SHOTS_DIRECTORY = process.env.ONBOARDING_SHOTS ?? "";
 /** The e2e API stores uploads here (JURISONE_STORAGE_DIR in scripts/e2e-env.mjs). */
-const STORAGE_DIRECTORY = path.join(os.tmpdir(), e2eWorkFolderName, "files");
+/** Same rule as scripts/e2e-slot.mjs: slot 0 is "jurisone-e2e", slot N is "jurisone-e2eN". */
+const E2E_WORK_FOLDER = Number(process.env.E2E_SLOT ?? 0) === 0 ? "jurisone-e2e" : `jurisone-e2e${Number(process.env.E2E_SLOT)}`;
+const STORAGE_DIRECTORY = path.join(os.tmpdir(), E2E_WORK_FOLDER, "files");
 
 async function cleanup() {
   await sql(`DELETE FROM email_outbox WHERE "to" LIKE 'e2e.onboarding.%'`);
