@@ -5,7 +5,7 @@ import { useToast } from "@/components/shell/Toasts";
 import { PhotoField } from "@/components/PhotoField";
 import { Modal } from "@/components/ui/Modal";
 import { PhoneInput } from "@/components/ui/PhoneInput";
-import { stepErrors, type EmployeeInput, type StepErrors } from "@/lib/employee-schema";
+import { EMPLOYMENT_TYPES, EMPLOYMENT_TYPE_LABELS, GENDERS, GENDER_LABELS, PAYMENT_TYPES, PAYMENT_TYPE_LABELS, stepErrors, type EmployeeInput, type StepErrors } from "@/lib/employee-schema";
 import { LOCATIONS } from "@/lib/people-rules";
 import { SHIFT_OPTIONS } from "@/lib/shifts";
 import { useT } from "@/lib/i18n/client";
@@ -28,19 +28,27 @@ export function EmployeeForm({ editId, photo, onClose }: { editId?: string; phot
   const [pendingPhoto, setPendingPhoto] = useState<Blob | null>(null);
   const [savedPhoto, setSavedPhoto] = useState<number | null | undefined>(photo);
   const [photoBusy, setPhotoBusy] = useState(false);
+  // the employee code: the business's next number (Auto) or one HR types (Custom); a Manual business series always needs a typed code
+  const [isCodeCustom, setIsCodeCustom] = useState(false);
 
   useEffect(() => {
     let alive = true;
     getFormOptions(editId).then((optionsResult) => {
       if (!alive) return;
-      if (optionsResult.ok) { setOpt(optionsResult.data!); setForm(optionsResult.data!.defaults); }
+      if (optionsResult.ok) {
+        const { defaults } = optionsResult.data!;
+        setOpt(optionsResult.data!);
+        setForm({ ...defaults, employmentType: defaults.employmentType ?? "", paymentType: defaults.paymentType ?? "", gender: defaults.gender ?? "", employeeCode: "" });
+        setIsCodeCustom(optionsResult.data!.codeSeriesMode === "MANUAL");
+      }
       else setLoadErr(optionsResult.error);
     });
     return () => { alive = false; };
   }, [editId]);
 
   const editing = !!opt?.editing;
-  const errs: StepErrors = form ? stepErrors(step, form, editing, opt?.editing?.hadManager) : {};
+  const isCodeTyped = !editing && isCodeCustom;
+  const errs: StepErrors = form ? stepErrors(step, form, editing, opt?.editing?.hadManager, isCodeTyped) : {};
   const india = !form?.location || form.location === "IN_IST";
   const set = <FieldName extends keyof EmployeeInput>(fieldName: FieldName, fieldValue: EmployeeInput[FieldName]) => {
     setServerErr("");
@@ -55,7 +63,7 @@ export function EmployeeForm({ editId, photo, onClose }: { editId?: string; phot
       return next;
     });
   };
-  const err = (fieldName: keyof EmployeeInput) => (tried && errs[fieldName] ? <span className="err">{errs[fieldName]}</span> : null);
+  const err = (fieldName: keyof EmployeeInput) => (tried && errs[fieldName] ? <span className="err">{t(errs[fieldName])}</span> : null);
   const onFile = (lastFourDigits: string | null | undefined) => (lastFourDigits ? t("On file · ends {l4} — leave blank to keep", { l4: lastFourDigits }) : undefined);
 
   const next = () => {
@@ -64,7 +72,7 @@ export function EmployeeForm({ editId, photo, onClose }: { editId?: string; phot
     setTried(false);
     if (step < 3) { setStep((step + 1) as 2 | 3); return; }
     start(async () => {
-      const saveResult = await saveEmployee(form, editId);
+      const saveResult = await saveEmployee({ ...form, employeeCode: isCodeTyped ? form.employeeCode.trim().toUpperCase() : "" }, editId);
       if (saveResult.ok) {
         toast(saveResult.message!);
         if (!editId && pendingPhoto) {
@@ -129,13 +137,38 @@ export function EmployeeForm({ editId, photo, onClose }: { editId?: string; phot
                 <label className="field">{t("Last name *")}<input value={form.lastName} onChange={(e) => set("lastName", e.target.value)} placeholder={t("e.g. Joshi")} maxLength={60} />{err("lastName")}</label>
               </div>
               <div className="grid2">
-                <label className="field">{t("Father’s name *")}<input value={form.fatherName} onChange={(e) => set("fatherName", e.target.value)} placeholder={t("e.g. Prakash Joshi")} maxLength={120} />{err("fatherName")}</label>
+                <label className="field">{editing ? t("Father’s name *") : <>{t("Father’s name")} <span className="hint">{t("optional")}</span></>}<input value={form.fatherName} onChange={(e) => set("fatherName", e.target.value)} placeholder={t("e.g. Prakash Joshi")} maxLength={120} />{err("fatherName")}</label>
                 <label className="field">{t("Work email *")}<input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="meera.joshi@company.com" maxLength={200} />{err("email")}</label>
                 <div className="field">{t("Phone")} {editing ? "" : "*"}
                   <PhoneInput code={form.phoneCountry || "+91"} number={form.phone} placeholder={onFile(opt.editing?.last4.phone)}
                     onChange={(c, n) => { set("phoneCountry", c); set("phone", n); }} />
                   {err("phone")}
                 </div>
+                <label className="field">{t("Payment type *")}
+                  <select value={form.paymentType} onChange={(e) => set("paymentType", e.target.value as EmployeeInput["paymentType"])}>
+                    <option value="" disabled>{t("Select how they are paid")}</option>
+                    {PAYMENT_TYPES.map((paymentType) => <option key={paymentType} value={paymentType}>{t(PAYMENT_TYPE_LABELS[paymentType])}</option>)}
+                  </select>
+                  {err("paymentType")}
+                </label>
+                <label className="field">{t("Gender")} <span className="hint">{t("optional")}</span>
+                  <select value={form.gender} onChange={(e) => set("gender", e.target.value as EmployeeInput["gender"])}>
+                    <option value="">{t("Not set")}</option>
+                    {GENDERS.map((gender) => <option key={gender} value={gender}>{t(GENDER_LABELS[gender])}</option>)}
+                  </select>
+                </label>
+                {!editing && (
+                  <div className="field">{t("Employee code")}{opt.codeSeriesMode === "MANUAL" ? " *" : ""}
+                    {opt.codeSeriesMode !== "MANUAL" && (
+                      <div className="row" role="radiogroup" aria-label={t("Employee code")} style={{ gap: 8 }}>
+                        <button type="button" role="radio" aria-checked={!isCodeCustom} className={`btn${!isCodeCustom ? " btn-gold" : ""}`} onClick={() => setIsCodeCustom(false)}>{t("Auto")} · {opt.nextCode}</button>
+                        <button type="button" role="radio" aria-checked={isCodeCustom} className={`btn${isCodeCustom ? " btn-gold" : ""}`} onClick={() => setIsCodeCustom(true)}>{t("Custom")}</button>
+                      </div>
+                    )}
+                    {isCodeCustom && <input aria-label={t("Employee code")} value={form.employeeCode} onChange={(e) => set("employeeCode", e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))} placeholder={opt.nextCode} maxLength={16} style={{ textTransform: "uppercase" }} autoComplete="off" />}
+                    {err("employeeCode")}
+                  </div>
+                )}
                 <label className="field">{t("Joining office")} <span className="hint">{t("optional")}</span>
                   <input value={form.joiningOffice} onChange={(e) => set("joiningOffice", e.target.value)} placeholder={t("e.g. Noida office")} maxLength={120} />
                 </label>
@@ -169,23 +202,29 @@ export function EmployeeForm({ editId, photo, onClose }: { editId?: string; phot
           {step === 3 && (
             <div className="col" style={{ gap: 16, animation: "enter .4s both" }}>
               <div className="grid2">
-                <label className="field">{t("Designation *")}<input value={form.designation} onChange={(e) => set("designation", e.target.value)} placeholder={t("e.g. Associate — Contract Review")} maxLength={120} />{err("designation")}</label>
-                <label className="field">{t("Department *")}
+                <label className="field">{editing ? t("Designation *") : <>{t("Designation")} <span className="hint">{t("optional")}</span></>}<input value={form.designation} onChange={(e) => set("designation", e.target.value)} placeholder={t("e.g. Associate — Contract Review")} maxLength={120} />{err("designation")}</label>
+                <label className="field">{editing ? t("Department *") : <>{t("Department")} <span className="hint">{t("optional")}</span></>}
                   <select value={form.departmentId} disabled={!!opt.lockedDepartmentId} onChange={(e) => set("departmentId", e.target.value)}>
-                    <option value="" disabled>{t("Select a department")}</option>
+                    <option value="" disabled={editing}>{editing ? t("Select a department") : t("No department yet")}</option>
                     {opt.departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
                   </select>
                   {opt.lockedDepartmentId && <span className="hint">{t("You can add people to your own department only")}</span>}
                   {err("departmentId")}
                 </label>
-                <label className="field">{t("Reporting manager")} {opt.editing && !opt.editing.hadManager ? "" : "*"}
+                <label className="field">{t("Reporting manager")} {!editing || !opt.editing?.hadManager ? "" : "*"}
                   <select value={form.managerId} onChange={(e) => set("managerId", e.target.value)}>
-                    <option value="">{opt.editing && !opt.editing.hadManager ? t("No manager") : t("Select a manager")}</option>
+                    <option value="">{!editing || !opt.editing?.hadManager ? t("No manager") : t("Select a manager")}</option>
                     {opt.managers.map((m) => <option key={m.id} value={m.id}>{m.name} — {m.title}</option>)}
                   </select>
                   {err("managerId")}
                 </label>
-                <label className="field">{t("Date of joining *")}<input type="date" value={form.dateOfJoining} onChange={(e) => set("dateOfJoining", e.target.value)} />{err("dateOfJoining")}</label>
+                <label className="field">{editing ? t("Date of joining *") : <>{t("Date of joining")} <span className="hint">{t("optional · today if not set")}</span></>}<input type="date" value={form.dateOfJoining} onChange={(e) => set("dateOfJoining", e.target.value)} />{err("dateOfJoining")}</label>
+                <label className="field">{t("Employment type")} <span className="hint">{t("optional")}</span>
+                  <select value={form.employmentType} onChange={(e) => set("employmentType", e.target.value as EmployeeInput["employmentType"])}>
+                    <option value="">{t("Not set")}</option>
+                    {EMPLOYMENT_TYPES.map((employmentType) => <option key={employmentType} value={employmentType}>{t(EMPLOYMENT_TYPE_LABELS[employmentType])}</option>)}
+                  </select>
+                </label>
                 <label className="field">{t("Shift")}
                   <select value={form.shift} disabled={!india} onChange={(e) => set("shift", e.target.value as EmployeeInput["shift"])}>
                     {(india ? SHIFT_OPTIONS.IN : SHIFT_OPTIONS.US).map((shiftOption) => <option key={shiftOption.value} value={shiftOption.value}>{t(shiftOption.label)}</option>)}
@@ -193,7 +232,7 @@ export function EmployeeForm({ editId, photo, onClose }: { editId?: string; phot
                 </label>
               </div>
               <div>
-                <div className="field" style={{ marginBottom: 10 }}>{t("Role")} <span className="hint">{t("decides what they can see after signing in")}</span></div>
+                <div className="field" style={{ marginBottom: 10 }}>{t("Role")} <span className="hint">{editing ? t("decides what they can see after signing in") : t("decides what they can see after signing in · Employee if not chosen")}</span></div>
                 <div className="ltypes" role="radiogroup" aria-label={t("Role")}>
                   {opt.roles.map((role) => (
                     <button key={role.id} type="button" role="radio" aria-checked={form.roleId === role.id} className={`ltype${form.roleId === role.id ? " on" : ""}`} onClick={() => set("roleId", role.id)}>

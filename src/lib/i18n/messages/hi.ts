@@ -3,12 +3,14 @@ import { hindiOnboardingWizardMessages } from "./hi-onboarding";
 import { hindiOnboardingFamilyMessages } from "./hi-onboarding-family";
 import { hindiOnboardingSummaryMessages } from "./hi-onboarding-summary";
 import { hindiOnboardingHrMessages } from "./hi-onboarding-hr";
+import { hindiOnboardingFlowMessages } from "./hi-onboarding-flow";
 
 export const hindiMessages: Record<string, string> = {
   ...hindiOnboardingWizardMessages, // onboarding wizard shell and steps 1 to 3
   ...hindiOnboardingFamilyMessages, // onboarding Family/Nominations; entries below win on duplicates
   ...hindiOnboardingSummaryMessages, // onboarding Attachments/Summary/Success and the HR onboarding view
   ...hindiOnboardingHrMessages, // HR onboarding list, wizard page and review panel
+  ...hindiOnboardingFlowMessages, // Add employee form, employee-code series, Initiate onboarding
   // shell, navigation groups and pages
   "Platform": "प्लेटफ़ॉर्म",
   "My workspace": "मेरा कार्यक्षेत्र",

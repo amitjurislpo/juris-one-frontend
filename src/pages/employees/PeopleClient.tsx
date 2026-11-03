@@ -11,6 +11,7 @@ import { useCurrentUser, useReadOnly } from "@/lib/session";
 import { formatDayMonthYear, formatRupees, INDIA_TIME_ZONE, todayIn } from "@/lib/format";
 import { shiftLabel } from "@/lib/shifts";
 import { EmployeeForm } from "./EmployeeForm";
+import { InitiateOnboardingDialog } from "./InitiateOnboardingDialog";
 import { OnboardingStatusChip } from "./OnboardingStatusChip";
 import { getProfile, confirmEmployee, markExited, revealContact, toggleAccess, type Profile } from "./actions";
 import { Avatar } from "@/components/Avatar";
@@ -61,16 +62,36 @@ function AccessSwitch({ id, name, isEnabled, disabled, onDone }: { id: string; n
   );
 }
 
-export function PeopleTable({ rows }: { rows: PersonRow[] }) {
+/** Onboarding can be initiated for current employees who are not yet with HR or approved (older employees have no onboarding at all). */
+const INITIATABLE_STATUSES = ["NOT_REQUIRED", "NOT_STARTED", "IN_PROGRESS"];
+const canInitiate = (person: PersonRow) => person.status !== "EXITED" && (!person.onboardingStatus || INITIATABLE_STATUSES.includes(person.onboardingStatus));
+
+export function PeopleTable({ rows, canSelect = false }: { rows: PersonRow[]; canSelect?: boolean }) {
   const t = useT();
+  const readOnly = useReadOnly();
   const [open, setOpen] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [isInitiating, setIsInitiating] = useState(false);
+  const selectable = canSelect && !readOnly;
+  const eligible = rows.filter(canInitiate);
+  const chosen = selected.filter((id) => eligible.some((person) => person.id === id)); // a page or filter change drops what is no longer shown
+  const allChosen = eligible.length > 0 && chosen.length === eligible.length;
+  const toggle = (id: string) => setSelected(chosen.includes(id) ? chosen.filter((other) => other !== id) : [...chosen, id]);
   return (
     <>
+      {selectable && chosen.length > 0 && (
+        <div className="toolbar" role="region" aria-label={t("Selected employees")}>
+          <span className="tcount">{t("{n} selected", { n: chosen.length })}</span>
+          <button className="btn btn-gold" onClick={() => setIsInitiating(true)}><Icon name="inbox" size={15} />{t("Initiate onboarding")}</button>
+          <button className="btn btn-ghost" onClick={() => setSelected([])}>{t("Clear selection")}</button>
+        </div>
+      )}
       <div className="table-wrap">
         <table className="t">
           <thead>
             <tr>
+              {selectable && <th style={{ width: 36 }}><input type="checkbox" aria-label={t("Select all employees on this page")} checked={allChosen} disabled={!eligible.length} onChange={() => setSelected(allChosen ? [] : eligible.map((person) => person.id))} /></th>}
               <SortableHeader sortKey="name" dflt="name">{t("Employee")}</SortableHeader>
               <SortableHeader sortKey="department" dflt="name">{t("Department")}</SortableHeader>
               <SortableHeader sortKey="manager" dflt="name">{t("Reports to")}</SortableHeader>
@@ -84,6 +105,12 @@ export function PeopleTable({ rows }: { rows: PersonRow[] }) {
           <tbody>
             {rows.map((person, i) => (
               <tr key={person.id} onClick={() => setOpen(person.id)} style={{ cursor: "pointer", animationDelay: `${i * 30}ms` }} className={person.status === "EXITED" ? "dim" : undefined}>
+                {selectable && (
+                  <td onClick={(event) => event.stopPropagation()}>
+                    <input type="checkbox" aria-label={t("Select {who}", { who: person.name })} checked={chosen.includes(person.id)} disabled={!canInitiate(person)}
+                      title={canInitiate(person) ? undefined : t("Onboarding can't be initiated for this person")} onChange={() => toggle(person.id)} />
+                  </td>
+                )}
                 <td>
                   <div className="person">
                     <Avatar id={person.id} name={person.name} photo={person.photo} />
@@ -106,6 +133,7 @@ export function PeopleTable({ rows }: { rows: PersonRow[] }) {
         </table>
       </div>
       {!rows.length && <div className="empty"><b>{t("No one matches")}</b><span className="muted">{t("Try a different search or filter.")}</span><ClearFilters /></div>}
+      {isInitiating && <InitiateOnboardingDialog people={rows.filter((person) => chosen.includes(person.id))} onClose={() => setIsInitiating(false)} onDone={() => setSelected([])} />}
       {open && <ProfileDrawer id={open} onboardingStatus={rows.find((person) => person.id === open)?.onboardingStatus} onClose={() => setOpen(null)} onEdit={(id) => { setOpen(null); setEditId(id); }} />}
       {editId && <EmployeeForm editId={editId} photo={rows.find((person) => person.id === editId)?.photo} onClose={() => setEditId(null)} />}
     </>
@@ -181,7 +209,7 @@ function ProfileDrawer({ id, onboardingStatus, onClose, onEdit }: { id: string; 
           {onboardingStatus && onboardingStatus !== "NOT_REQUIRED" && (
             <div className="access-row">
               <div><b>{t("Onboarding")}</b><div style={{ marginTop: 4 }}><OnboardingStatusChip status={onboardingStatus} /></div></div>
-              <Link className="btn" href={`/onboarding/hires/${encodeURIComponent(profile.id)}`}>{t("View onboarding")}</Link>
+              <Link className="btn" href={`/onboarding/hires/${encodeURIComponent(profile.id)}`}>{onboardingStatus === "SUBMITTED" ? t("Review onboarding") : ["NOT_STARTED", "IN_PROGRESS", "CHANGES_REQUESTED"].includes(onboardingStatus) ? t("Complete onboarding") : t("View onboarding")}</Link>
             </div>
           )}
           <div>

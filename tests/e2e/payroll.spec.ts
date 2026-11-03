@@ -18,7 +18,7 @@ test.describe("payroll", () => {
   test.afterAll(cleanup);
 
   test("salary structures: add a revision; closed months are protected", async ({ page }) => {
-    await login(page, "JC-004");
+    await login(page, "JC004");
     await expectLanded(page, "/home");
     await page.goto("/structures?search=Pooja");
     const row = page.locator("tbody tr").first();
@@ -41,23 +41,23 @@ test.describe("payroll", () => {
   });
 
   test("HR never sees salary pages or exports", async ({ page }) => {
-    await login(page, "JC-012");
+    await login(page, "JC012");
     await expectLanded(page, "/home");
     for (const path of ["/payroll", "/structures"]) {
       await page.goto(path);
       await expectLanded(page, "/home");
     }
     expect((await page.request.get(`/api/v1/payroll/export?month=${SEP}&type=bank`)).status()).toBe(403);
-    expect((await page.request.get(`/api/v1/payslips/2026-08/JC-049`)).status()).toBe(403);
+    expect((await page.request.get(`/api/v1/payslips/2026-08/JC049`)).status()).toBe(403);
   });
 
   test("Finance Executive reviews and edits but can't close", async ({ page }) => {
-    await login(page, "JC-018");
+    await login(page, "JC018");
     await expectLanded(page, "/home");
     await page.goto("/payroll");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("September");
     await expect(page.getByText("Closing needs Finance Manager")).toBeVisible();
-    // golden case: JC-074 — 22/30 paid days, TDS ₹14,926
+    // golden case: JC074 — 22/30 paid days, TDS ₹14,926
     const amit = page.locator("tbody tr", { hasText: "Amit Jaspal" });
     await expect(amit.locator("td").nth(3)).toHaveText("22/30");
     await expect(amit.locator("td").nth(7)).toHaveText("₹14,926");
@@ -81,7 +81,7 @@ test.describe("payroll", () => {
   });
 
   test("Finance Manager approves & closes; payslips are frozen and published", async ({ page }) => {
-    await login(page, "JC-004");
+    await login(page, "JC004");
     await expectLanded(page, "/home");
     await page.goto("/payroll");
     await page.getByRole("button", { name: "Approve & close" }).click();
@@ -92,14 +92,14 @@ test.describe("payroll", () => {
     await expect(page.locator("tbody tr").first()).toContainText("Locked");
     const [{ payslipCount }] = await sql<{ payslipCount: string }>(`SELECT count(*)::text AS "payslipCount" FROM payslips p JOIN payroll_runs r ON r.id = p.run_id WHERE r.month = $1`, [SEP]);
     expect(payslipCount).toBe("11");
-    const [snap] = await sql<{ net: number; tds: number }>(`SELECT (snapshot->>'net')::int net, (snapshot->>'tds')::int tds FROM payslips p JOIN employees e ON e.id = p.employee_id JOIN payroll_runs r ON r.id = p.run_id WHERE r.month = $1 AND e.code = 'JC-074'`, [SEP]);
+    const [snap] = await sql<{ net: number; tds: number }>(`SELECT (snapshot->>'net')::int net, (snapshot->>'tds')::int tds FROM payslips p JOIN employees e ON e.id = p.employee_id JOIN payroll_runs r ON r.id = p.run_id WHERE r.month = $1 AND e.code = 'JC074'`, [SEP]);
     expect(snap).toEqual({ net: 9_307_400, tds: 1_492_600 });
 
     // a later structure change does not touch the closed payslip
-    await sql(`UPDATE salary_structures SET basic = basic + 100000 WHERE employee_id = (SELECT id FROM employees WHERE code = 'JC-074')`);
-    const [again] = await sql<{ net: number }>(`SELECT (snapshot->>'net')::int net FROM payslips p JOIN employees e ON e.id = p.employee_id JOIN payroll_runs r ON r.id = p.run_id WHERE r.month = $1 AND e.code = 'JC-074'`, [SEP]);
+    await sql(`UPDATE salary_structures SET basic = basic + 100000 WHERE employee_id = (SELECT id FROM employees WHERE code = 'JC074')`);
+    const [again] = await sql<{ net: number }>(`SELECT (snapshot->>'net')::int net FROM payslips p JOIN employees e ON e.id = p.employee_id JOIN payroll_runs r ON r.id = p.run_id WHERE r.month = $1 AND e.code = 'JC074'`, [SEP]);
     expect(again.net).toBe(9_307_400);
-    await sql(`UPDATE salary_structures SET basic = basic - 100000 WHERE employee_id = (SELECT id FROM employees WHERE code = 'JC-074')`);
+    await sql(`UPDATE salary_structures SET basic = basic - 100000 WHERE employee_id = (SELECT id FROM employees WHERE code = 'JC074')`);
 
     // exports
     const bank = await page.request.get(`/api/v1/payroll/export?month=${SEP}&type=bank`);
@@ -109,7 +109,7 @@ test.describe("payroll", () => {
   });
 
   test("employee sees and downloads only their own payslip", async ({ page }) => {
-    await login(page, "JC-074");
+    await login(page, "JC074");
     await expectLanded(page, "/home");
     await page.goto("/payslips");
     const sep = page.locator(".slip-card", { hasText: "September 2026" });
@@ -120,14 +120,14 @@ test.describe("payroll", () => {
     await expect(slip).toContainText("Rupees Ninety Three Thousand Seventy Four only");
     await expect(slip).toContainText("XXXXXX");
     await slip.getByRole("button", { name: "Close" }).click();
-    const pdf = await page.request.get("/api/v1/payslips/2026-09/JC-074");
+    const pdf = await page.request.get("/api/v1/payslips/2026-09/JC074");
     expect(pdf.status()).toBe(200);
     expect(pdf.headers()["content-type"]).toBe("application/pdf");
     expect((await pdf.body()).subarray(0, 4).toString()).toBe("%PDF");
-    expect((await page.request.get("/api/v1/payslips/2026-09/JC-049")).status()).toBe(403);
+    expect((await page.request.get("/api/v1/payslips/2026-09/JC049")).status()).toBe(403);
 
     await page.context().clearCookies();
-    await login(page, "JC-090"); // US
+    await login(page, "JC090"); // US
     await expectLanded(page, "/home");
     await page.goto("/payslips");
     await expect(page.getByText("US team pay statements come from the US payroll provider.")).toBeVisible();

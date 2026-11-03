@@ -75,6 +75,8 @@ export async function removeEmployeePhoto(id: string): Promise<ActionResult> {
 // ───────────────────────── add / edit ─────────────────────────
 
 export interface FormOptions {
+  /** AUTO: the next number is given; MANUAL: HR types every employee code */
+  codeSeriesMode: "AUTO" | "MANUAL";
   nextCode: string;
   departments: { id: string; name: string; headId: string | null }[];
   lockedDepartmentId: string | null;
@@ -92,4 +94,21 @@ export async function saveEmployee(input: EmployeeInput, editId?: string): Promi
   return editId
     ? apiAction("PUT", `/api/v1/people/${enc(editId)}`, input, PAGES)
     : apiAction("POST", "/api/v1/people", input, PAGES);
+}
+
+// ───────────────────────── onboarding ─────────────────────────
+
+export type FilledBy = "EMPLOYEE" | "HR";
+
+export interface InitiationResult {
+  filledBy: FilledBy;
+  initiated: number;
+  refused: number;
+  /** one per selected employee; a reason (English, translated by the screen) when it was refused */
+  outcomes: { employeeId: string; isInitiated: boolean; reason: string | null }[];
+}
+
+/** "Initiate onboarding" for the selected employees (at most 100): the employee fills the wizard (emailed link) or HR does. */
+export async function initiateOnboarding(employeeIds: string[], filledBy: FilledBy): Promise<ActionResult<InitiationResult>> {
+  return apiAction<InitiationResult>("POST", "/api/v1/onboarding/invitations", { employeeIds, filledBy }, PAGES);
 }
