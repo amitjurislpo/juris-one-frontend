@@ -1,1 +1,0 @@
-import{w as e,x as t}from"./router-a5EYCk8b.js";async function n(t){return e(`PUT`,`/api/v1/profile/photo`,t)}async function r(){return e(`DELETE`,`/api/v1/profile/photo`)}async function i(e){return t(`PUT`,`/api/v1/profile`,e,[`/profile`])}export{i as n,n as r,r as t};
