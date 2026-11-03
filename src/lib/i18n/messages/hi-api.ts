@@ -1,3 +1,5 @@
+import { hindiServerTextMessages } from "./hi-api-server";
+
 /** Hindi for the fixed messages the API sends back (errors and success notices). Merged into `hindiMessages`; the English text is the key. */
 export const hindiApiMessages: Record<string, string> = {
   "Roles are set up for your business by JurisOne.": "आपके बिज़नेस के रोल ज्यूरिसवन द्वारा तय किए जाते हैं।",
@@ -353,4 +355,5 @@ export const hindiApiMessages: Record<string, string> = {
   "Request withdrawn": "अनुरोध वापस लिया गया",
   "The last day can't be before the first day.": "अंतिम दिन पहले दिन से पहले का नहीं हो सकता।",
   "A range can cover at most 31 days.": "एक अवधि अधिकतम 31 दिन की हो सकती है।",
+  ...hindiServerTextMessages,
 };
