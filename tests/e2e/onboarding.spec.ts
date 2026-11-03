@@ -12,7 +12,9 @@ const ACCOUNTS_COMMENT = "Bank name is missing.";
 /** Set ONBOARDING_SHOTS to a folder to save full-page screenshots of every step (layout review). */
 const SHOTS_DIRECTORY = process.env.ONBOARDING_SHOTS ?? "";
 /** The e2e API stores uploads here (JURISONE_STORAGE_DIR in scripts/e2e-env.mjs). */
-const STORAGE_DIRECTORY = path.join(os.tmpdir(), "jurisone-e2e", "files");
+/** Same rule as scripts/e2e-slot.mjs: slot 0 is "jurisone-e2e", slot N is "jurisone-e2eN". */
+const E2E_WORK_FOLDER = Number(process.env.E2E_SLOT ?? 0) === 0 ? "jurisone-e2e" : `jurisone-e2e${Number(process.env.E2E_SLOT)}`;
+const STORAGE_DIRECTORY = path.join(os.tmpdir(), E2E_WORK_FOLDER, "files");
 
 async function cleanup() {
   await sql(`DELETE FROM email_outbox WHERE "to" LIKE 'e2e.onboarding.%'`);
@@ -153,9 +155,10 @@ test.describe("employee onboarding wizard", () => {
     test.setTimeout(420_000);
 
     // ---------- HR onboards the employee from the new menu item ----------
-    await login(page, "JC-012");
+    await login(page, "JC012");
     await expectLanded(page, "/home");
-    await page.getByRole("link", { name: "Onboard employee" }).click(); // needs the backend nav item "onboard-employee"
+    await expect(page.getByRole("link", { name: "Onboard employee" })).toHaveCount(0); // the separate menu item is gone: onboarding starts from Employees
+    await page.goto("/onboarding/hires");
     await expect(page).toHaveURL(/\/onboarding\/hires$/);
     await onboardHire(page, { firstName: "Onboarding", lastName: "Hire", email: NEW_EMAIL, phone: "9876511111" });
     await expect(toast(page)).toContainText(`Invitation sent to ${NEW_EMAIL}`);
@@ -441,7 +444,7 @@ test.describe("employee onboarding wizard", () => {
 
     const other = await browser.newContext();
     const otherPage = await other.newPage();
-    await login(otherPage, "JC-049"); // an ordinary employee (not HR)
+    await login(otherPage, "JC049"); // an ordinary employee (not HR)
     await expectLanded(otherPage, "/home");
     for (const url of [`/api/v1/onboarding/mine/attachments/${uploadedFileIds[0]}/file?download=false`, `/api/v1/people/${hireId}/onboarding/attachments/${uploadedFileIds[0]}/file?download=false`, `/api/v1/people/${hireId}/onboarding`]) {
       expect([403, 404], url).toContain((await otherPage.request.get(url)).status());
@@ -522,7 +525,7 @@ test.describe("employee onboarding wizard", () => {
   });
 
   test("HR reads the submitted form and its files, and asks for changes with flagged sections and a comment", async ({ page }) => {
-    await login(page, "JC-012");
+    await login(page, "JC012");
     await expectLanded(page, "/home");
     await page.goto("/onboarding/hires");
     await page.getByPlaceholder(/Search/).first().fill("Onboarding Hire");
@@ -601,7 +604,7 @@ test.describe("employee onboarding wizard", () => {
     await hire.goto("/leave");
     await expect(hire).toHaveURL(/\/onboarding$/);
 
-    await login(page, "JC-012");
+    await login(page, "JC012");
     await expectLanded(page, "/home");
     await page.goto(`/onboarding/hires/${hireId}`);
     await expect(page.getByRole("complementary", { name: "HR review" }).locator(".chip")).toHaveText("Submitted - needs review", { timeout: 15_000 });
@@ -633,7 +636,7 @@ test.describe("employee onboarding wizard", () => {
   });
 
   test("HR approves; the hire gets the normal menu and /leave opens", async ({ page }) => {
-    await login(page, "JC-012");
+    await login(page, "JC012");
     await expectLanded(page, "/home");
     await page.goto(`/onboarding/hires/${hireId}`);
     const panel = page.getByRole("complementary", { name: "HR review" });
@@ -666,7 +669,7 @@ test.describe("employee onboarding wizard", () => {
 
   test("HR fills an onboarding on the employee's behalf, submits it and approves it", async ({ page }) => {
     test.setTimeout(180_000);
-    await login(page, "JC-012");
+    await login(page, "JC012");
     await expectLanded(page, "/home");
     await page.goto("/onboarding/hires");
     await onboardHire(page, { firstName: "Behalf", lastName: "Hire", email: BEHALF_EMAIL, phone: "9876522333" });

@@ -33,6 +33,17 @@ test.describe.serial("a business on JurisOne, end to end", () => {
     await page.getByRole("button", { name: "New business" }).click();
     const dialog = page.getByRole("dialog", { name: "New business" });
     await dialog.getByLabel("Business name").fill(BUSINESS);
+    // the short name follows the business name and is checked live: a free one is "Available"
+    await expect(dialog.getByLabel("Short name")).toHaveValue(`e2e-advisors-${run}`);
+    await expect(dialog.getByRole("status").getByText("Available", { exact: true })).toBeVisible();
+    // a name another business already uses is refused, Create waits, and a suggestion fixes it
+    const [existing] = await sql<{ code: string }>("SELECT code FROM businesses LIMIT 1");
+    await dialog.getByLabel("Short name").fill(existing.code);
+    await expect(dialog.getByText("Not available: another business already uses it.")).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Create business" })).toBeDisabled();
+    await dialog.locator(".slug-suggestions .chip").first().click();
+    await expect(dialog.getByRole("status").getByText("Available", { exact: true })).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Create business" })).toBeEnabled();
     await dialog.getByLabel("Employee ID prefix").fill("EA");
     const [plan] = await sql<{ id: string }>("SELECT id::text FROM subscription_plans WHERE name = 'Standard'");
     await dialog.getByRole("combobox", { name: /^Plan/ }).selectOption(plan.id);
@@ -91,17 +102,18 @@ test.describe.serial("a business on JurisOne, end to end", () => {
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel("First name *").fill("Riya");
     await dialog.getByLabel("Last name *").fill("Sen");
-    await dialog.getByLabel("Father’s name *").fill("Amit Sen");
+    await dialog.getByLabel("Father’s name").fill("Amit Sen");
     await dialog.getByLabel("Work email *").fill(WORK_EMAIL);
+    await dialog.getByLabel("Payment type *").selectOption("BANK_TRANSFER");
     await dialog.getByLabel("Phone number", { exact: true }).fill("9810011223");
     await dialog.getByRole("button", { name: "Continue" }).click();
     await dialog.getByLabel(/PAN/).fill("ABCPS1234K");
     await dialog.getByLabel(/Aadhaar/).fill("2345 6789 0124");
     await dialog.getByRole("button", { name: "Continue" }).click();
-    await dialog.getByLabel("Designation *").fill("Associate");
-    await dialog.getByLabel("Department *").selectOption({ label: "Human Resources" });
+    await dialog.getByLabel("Designation").fill("Associate");
+    await dialog.getByLabel("Department").selectOption({ label: "Human Resources" });
     await dialog.getByLabel(/Reporting manager/).selectOption({ index: 1 });
-    await dialog.getByLabel("Date of joining *").fill("2026-10-01");
+    await dialog.getByLabel("Date of joining").fill("2026-10-01");
     await dialog.getByRole("button", { name: "Create employee" }).click();
     await expect(toast(page)).toContainText("Riya Sen added as");
   });

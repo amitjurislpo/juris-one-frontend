@@ -1,1 +1,0 @@
-import{x as e}from"./router-a5EYCk8b.js";var t=encodeURIComponent;function n(t){return e(`POST`,`/api/v1/onboardings`,t)}function r(n){return e(`POST`,`/api/v1/people/${t(n)}/onboarding/approvals`,{})}function i(n,r){return e(`POST`,`/api/v1/people/${t(n)}/onboarding/rejections`,r)}export{n,i as r,r as t};

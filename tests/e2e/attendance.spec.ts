@@ -8,14 +8,14 @@ type PunchRow = { id: string; employee_id: string; at: Date; kind: string; sourc
 let removed: PunchRow[] = [];
 
 /**
- * Keeps October 2026 an open month for JC-074 whatever day the suite runs on: the monthly lock (1st of the next month, 10:00 IST) has
+ * Keeps October 2026 an open month for JC074 whatever day the suite runs on: the monthly lock (1st of the next month, 10:00 IST) has
  * frozen October once the date passes it. The policy's lock day is pushed far out and the frozen row of 5 Oct is unfrozen; both are put back.
  */
 async function openOctoberForRegularization() {
   const [policy] = await sql<{ lockDay: string | null }>(`SELECT value->>'lockDayOfNextMonth' AS "lockDay" FROM settings WHERE key = 'attendance.policy'`);
-  const frozen = await sql<{ id: string }>(`SELECT d.employee_id AS id FROM attendance_days d JOIN employees e ON e.id = d.employee_id WHERE e.code = 'JC-074' AND d.work_date = '2026-10-05' AND d.locked`);
+  const frozen = await sql<{ id: string }>(`SELECT d.employee_id AS id FROM attendance_days d JOIN employees e ON e.id = d.employee_id WHERE e.code = 'JC074' AND d.work_date = '2026-10-05' AND d.locked`);
   await sql(`UPDATE settings SET value = jsonb_set(value, '{lockDayOfNextMonth}', '99') WHERE key = 'attendance.policy'`);
-  await sql(`UPDATE attendance_days SET locked = false WHERE work_date = '2026-10-05' AND employee_id IN (SELECT id FROM employees WHERE code = 'JC-074')`);
+  await sql(`UPDATE attendance_days SET locked = false WHERE work_date = '2026-10-05' AND employee_id IN (SELECT id FROM employees WHERE code = 'JC074')`);
   return async () => {
     if (policy?.lockDay == null) await sql(`UPDATE settings SET value = value - 'lockDayOfNextMonth' WHERE key = 'attendance.policy'`);
     else await sql(`UPDATE settings SET value = jsonb_set(value, '{lockDayOfNextMonth}', $1::jsonb) WHERE key = 'attendance.policy'`, [policy.lockDay]);
@@ -25,9 +25,9 @@ async function openOctoberForRegularization() {
 
 test.describe("attendance", () => {
   test.beforeAll(async () => {
-    // Make 5 Oct 2026 an unregularized absence for JC-074 (open month) — restored afterwards.
+    // Make 5 Oct 2026 an unregularized absence for JC074 (open month) — restored afterwards.
     removed = await sql<PunchRow>(`SELECT p.id, p.employee_id, p.at, p.kind, p.source FROM punches p JOIN employees e ON e.id = p.employee_id
-      WHERE e.code = 'JC-074' AND p.at >= '2026-10-05T13:00:00Z' AND p.at < '2026-10-06T06:00:00Z'`);
+      WHERE e.code = 'JC074' AND p.at >= '2026-10-05T13:00:00Z' AND p.at < '2026-10-06T06:00:00Z'`);
     if (removed.length) await sql(`DELETE FROM punches WHERE id = ANY($1::uuid[])`, [removed.map((r) => r.id)]);
   });
   test.afterAll(async () => {
@@ -39,7 +39,7 @@ test.describe("attendance", () => {
   });
 
   test("check in and check out from Home", async ({ page }) => {
-    await login(page, "JC-058");
+    await login(page, "JC058");
     await expectLanded(page, "/home");
     await expect(page.getByText("Night shift · 7:30 PM – 4:30 AM IST")).toBeVisible();
     await page.getByRole("button", { name: "Check in" }).click();
@@ -49,16 +49,16 @@ test.describe("attendance", () => {
     await expect(page.locator(".timeline")).toContainText("Web");
 
     // a stale second tab can't record a duplicate check-in
-    const again = await sql<{ n: string }>(`SELECT count(*)::text n FROM punches p JOIN employees e ON e.id = p.employee_id WHERE e.code = 'JC-058' AND p.created_at >= $1`, [TEST_START_TIME]);
+    const again = await sql<{ n: string }>(`SELECT count(*)::text n FROM punches p JOIN employees e ON e.id = p.employee_id WHERE e.code = 'JC058' AND p.created_at >= $1`, [TEST_START_TIME]);
     expect(again[0].n).toBe("1");
 
     // pretend the check-in was 2 hours ago, then check out
-    await sql(`UPDATE punches SET at = at - interval '2 hours' WHERE created_at >= $1 AND employee_id = (SELECT id FROM employees WHERE code = 'JC-058')`, [TEST_START_TIME]);
+    await sql(`UPDATE punches SET at = at - interval '2 hours' WHERE created_at >= $1 AND employee_id = (SELECT id FROM employees WHERE code = 'JC058')`, [TEST_START_TIME]);
     await page.reload();
     await page.getByRole("button", { name: "Check out" }).click();
     await expect(toast(page)).toContainText("Checked out — 2h");
     await expect(page.locator(".timecard .chip")).toHaveText("Checked out");
-    const rows = await sql<{ kind: string; ip: string | null }>(`SELECT kind, ip FROM punches WHERE created_at >= $1 AND employee_id = (SELECT id FROM employees WHERE code = 'JC-058') ORDER BY at`, [TEST_START_TIME]);
+    const rows = await sql<{ kind: string; ip: string | null }>(`SELECT kind, ip FROM punches WHERE created_at >= $1 AND employee_id = (SELECT id FROM employees WHERE code = 'JC058') ORDER BY at`, [TEST_START_TIME]);
     expect(rows.map((r) => r.kind)).toEqual(["IN", "OUT"]);
   });
 
@@ -70,7 +70,7 @@ test.describe("attendance", () => {
   });
 
   test("My attendance: locked September shows the golden-case figures", async ({ page }) => {
-    await login(page, "JC-074");
+    await login(page, "JC074");
     await expectLanded(page, "/home");
     await page.goto("/attendance?month=2026-09");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("September");
@@ -97,7 +97,7 @@ test.describe("attendance", () => {
   });
 
   async function regularizeAndWithdraw(page: Page) {
-    await login(page, "JC-074");
+    await login(page, "JC074");
     await expectLanded(page, "/home");
     await page.goto("/attendance?month=2026-10&date=2026-10-05");
     await expect(page.locator(".chip", { hasText: "Absent · LOP" }).first()).toBeVisible();
@@ -122,7 +122,7 @@ test.describe("attendance", () => {
   }
 
   test("holidays: HR adds by region; duplicates blocked; India and US see their own", async ({ page }) => {
-    await login(page, "JC-012");
+    await login(page, "JC012");
     await expectLanded(page, "/home");
     await page.goto("/holidays");
     await page.getByLabel("Date *").fill("2026-12-31");
@@ -139,7 +139,7 @@ test.describe("attendance", () => {
     await expect(page.getByRole("button", { name: /Remove Republic Day/ })).toHaveCount(0); // past → no delete
 
     await page.context().clearCookies();
-    await login(page, "JC-090"); // US, New York
+    await login(page, "JC090"); // US, New York
     await expectLanded(page, "/home");
     await page.goto("/attendance?month=2026-11"); // explicit months: the page opens on the current month, which moves with the date
     await expect(page.getByText("Thanksgiving Day")).toBeVisible();
@@ -147,7 +147,7 @@ test.describe("attendance", () => {
     await expect(page.getByRole("heading", { level: 1 })).toContainText("October");
     await expect(page.getByText("Dussehra")).toHaveCount(0);
     await page.context().clearCookies();
-    await login(page, "JC-049"); // India
+    await login(page, "JC049"); // India
     await expectLanded(page, "/home");
     await page.goto("/attendance?month=2026-10");
     await expect(page.getByText("Dussehra").first()).toBeVisible(); // calendar cell + holiday card
@@ -157,7 +157,7 @@ test.describe("attendance", () => {
   });
 
   test("register: time zones, (+1) marks, grid, export and access", async ({ page }) => {
-    await login(page, "JC-012");
+    await login(page, "JC012");
     await expectLanded(page, "/home");
     await page.goto("/register?date=2026-09-22&search=Amit");
     await expect(page.locator("tbody tr").first()).toContainText("On leave"); // leave without pay
@@ -176,7 +176,7 @@ test.describe("attendance", () => {
     expect(await exp.text()).toContain("Amit Jaspal");
 
     await page.context().clearCookies();
-    await login(page, "JC-074");
+    await login(page, "JC074");
     await expectLanded(page, "/home");
     await page.goto("/register");
     await expectLanded(page, "/home");

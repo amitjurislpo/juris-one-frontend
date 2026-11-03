@@ -2021,3 +2021,8 @@ input[type=search]{height:40px;padding:0 12px;border-radius:10px;border:1px soli
 .roster-actions{top:72px}
 /* a table that hides columns on a phone (hide-sm) also drops its desktop minimum width, so what stays fits the screen */
 @media (max-width:700px){table.t:has(.hide-sm){min-width:0}}
+/* the new-business form's live short-name check: green when free, red with clickable suggestions when not */
+.slug-status{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;min-height:20px}
+.slug-ok{color:var(--ok);font-weight:500}
+.slug-suggestions{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}
+.slug-suggestions .chip{cursor:pointer;font-family:inherit}

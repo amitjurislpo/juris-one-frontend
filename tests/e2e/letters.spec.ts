@@ -16,21 +16,21 @@ test.describe("HR letters", () => {
   test.afterAll(cleanup);
 
   test("HR issues an employment-verification letter; the employee finds it and downloads the PDF", async ({ page, browser }) => {
-    await login(page, "JC-012");
+    await login(page, "JC012");
     await expectLanded(page, "/home");
     await page.goto("/letters");
     const tpl = page.getByLabel("Template");
     const emp = page.getByLabel("Employee");
     await tpl.selectOption({ label: "Employment verification letter" });
-    await emp.selectOption({ label: "Siddharth Krishna · JC-072" });
+    await emp.selectOption({ label: "Siddharth Krishna · JC072" });
 
     await page.getByRole("button", { name: "Preview" }).click();
     await expect(page.getByText("Preview, nothing is saved yet")).toBeVisible();
-    await expect(page.getByText(/Siddharth Krishna \(employee ID JC-072\)/)).toBeVisible();
+    await expect(page.getByText(/Siddharth Krishna \(employee ID JC072\)/)).toBeVisible();
 
     await page.getByRole("button", { name: "Issue letter" }).click();
     await expect(toast(page)).toBeVisible();
-    const row = page.locator("tbody tr", { hasText: "JC-072" }).filter({ hasText: /HRL\// });
+    const row = page.locator("tbody tr", { hasText: "JC072" }).filter({ hasText: /HRL\// });
     await expect(row).toBeVisible();
     const reference = (await row.locator("td.mono").innerText()).trim();
     expect(reference.length).toBeGreaterThan(3);
@@ -39,7 +39,7 @@ test.describe("HR letters", () => {
     // the employee sees it under My letters and the PDF is a real PDF
     const ctx = await browser.newContext();
     const e = await ctx.newPage();
-    await login(e, "JC-072");
+    await login(e, "JC072");
     await expectLanded(e, "/home");
     await e.getByRole("complementary", { name: "Main menu" }).getByRole("link", { name: "My letters" }).click();
     await expectLanded(e, "/my-letters");
@@ -52,7 +52,7 @@ test.describe("HR letters", () => {
     // someone else's letter is not theirs to open
     const ctx2 = await browser.newContext();
     const other = await ctx2.newPage();
-    await login(other, "JC-049");
+    await login(other, "JC049");
     await expectLanded(other, "/home");
     expect((await other.request.get(href!)).status()).toBeGreaterThanOrEqual(400);
     await ctx.close();
@@ -60,7 +60,7 @@ test.describe("HR letters", () => {
   });
 
   test("HR cannot issue a letter that states salary", async ({ page }) => {
-    await login(page, "JC-012");
+    await login(page, "JC012");
     await expectLanded(page, "/home");
     await page.goto("/letters");
     const offer = page.getByLabel("Template").locator("option", { hasText: "Offer letter" });
@@ -69,7 +69,7 @@ test.describe("HR letters", () => {
 
     // and the API refuses it as well
     const [ids] = await sql<{ templateId: string; employeeId: string }>(
-      `SELECT t.id AS "templateId", e.id AS "employeeId" FROM letter_templates t JOIN employees e ON e.business_id = t.business_id WHERE t.name = 'Offer letter' AND e.code = 'JC-072'`);
+      `SELECT t.id AS "templateId", e.id AS "employeeId" FROM letter_templates t JOIN employees e ON e.business_id = t.business_id WHERE t.name = 'Offer letter' AND e.code = 'JC072'`);
     const response = await page.request.post("/api/v1/letters", { data: { templateId: ids.templateId, employeeId: ids.employeeId }, headers: ORIGIN });
     expect(response.status()).toBe(403);
     const issued = await sql(`SELECT 1 FROM issued_letters WHERE template_name = 'Offer letter' AND issued_at >= $1`, [TEST_START_TIME]);
@@ -77,7 +77,7 @@ test.describe("HR letters", () => {
   });
 
   test("the owner, who manages salary structures, can issue the offer letter", async ({ page }) => {
-    await login(page, "JC-002");
+    await login(page, "JC002");
     await expectLanded(page, "/overview");
     await page.goto("/letters");
     const offer = page.getByLabel("Template").locator("option", { hasText: "Offer letter" });
@@ -85,7 +85,7 @@ test.describe("HR letters", () => {
   });
 
   test("an ordinary employee cannot open HR letters", async ({ page }) => {
-    await login(page, "JC-049");
+    await login(page, "JC049");
     await expectLanded(page, "/home");
     await page.goto("/letters");
     await expectLanded(page, "/home");
