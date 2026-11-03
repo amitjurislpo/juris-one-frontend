@@ -25,6 +25,8 @@ export interface NavItem {
   group?: NavGroup;
   /** The page address when it is not `/<id>` (the page and everything under it belong to this item). */
   path?: string;
+  /** Not listed in the sidebar: the page is reached from another page (it still grants access by `perm`). */
+  isHiddenFromMenu?: boolean;
   /** Only for businesses whose plan or grant includes this module (else the page doesn't exist). */
   module?: string;
 }
@@ -61,7 +63,7 @@ export const NAV: NavItem[] = [
   { id: "register", label: "Attendance register", icon: "grid", perm: ["att.all"], group: "People ops" },
   { id: "approvals", label: "Approvals", icon: "check", perm: ["appr.leave", "appr.reg"], group: "People ops" },
   { id: "employees", label: "Employees", icon: "users", perm: ["people.view"], group: "People ops" },
-  { id: "onboard-employee", label: "Onboard employee", icon: "plus", perm: ["people.add"], group: "People ops", path: "/onboarding/hires" },
+  { id: "onboard-employee", label: "Onboard employee", icon: "plus", perm: ["people.add"], group: "People ops", path: "/onboarding/hires", isHiddenFromMenu: true },
   { id: "departments", label: "Departments", icon: "building", perm: ["dept.manage"], group: "People ops" },
   { id: "holidays", label: "Holiday calendar", icon: "sun", perm: ["holidays.manage"], group: "People ops" },
   { id: "assets", label: "Assets", icon: "layers", perm: ["assets.manage"], group: "People ops" },
@@ -80,6 +82,9 @@ export const NAV: NavItem[] = [
 
 /** Where the sidebar link of a nav item goes. */
 export const navPath = (item: { id: string }) => NAV.find((navItem) => navItem.id === item.id)?.path ?? `/${item.id}`;
+
+/** True for a page that is reached from another page and has no sidebar link. */
+export const isHiddenFromMenu = (id: string): boolean => NAV.some((item) => item.id === id && item.isHiddenFromMenu === true);
 
 /** The nav item a page with its own `path` belongs to (e.g. `/onboarding/hires/123` is "Onboard employee"), if any. */
 export const navIdForPath = (pathname: string): NavId | undefined =>

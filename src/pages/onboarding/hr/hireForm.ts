@@ -5,7 +5,7 @@ const FIELDS = ["firstName", "lastName", "email", "phone", "designation", "depar
 
 /** The "Onboard employee" dialog asks only these fields of the add-employee form, with the same checks and messages (the father's name is the employee's to fill in). */
 export function newHireErrors(form: EmployeeInput): StepErrors {
-  const all = { ...stepErrors(1, { ...form, fatherName: "n/a" }, false), ...stepErrors(3, form, false) };
+  const all = { ...stepErrors(1, { ...form, fatherName: "n/a" }, false), ...stepErrors(3, form, true, true) };
   const errors: StepErrors = {};
   for (const field of FIELDS) if (all[field]) errors[field] = all[field];
   return errors;

@@ -3,6 +3,7 @@ import { Pager, Pending, SearchBox, SelectFilter } from "@/components/table/Tabl
 import { toQueryString } from "@/lib/api";
 import { PageLoading, useData, usePage } from "@/lib/page";
 import { AddEmployeeButton, PeopleTable, type PersonRow } from "./PeopleClient";
+import { SubmittedForms } from "./SubmittedForms";
 
 
 export default function PeoplePage() {
@@ -29,6 +30,7 @@ export default function PeoplePage() {
         <div className="card kpi enter" style={{ ["--i" as string]: 3 }}><span className="spot"></span><span className="l"><i className="dot" style={{ color: "var(--bad)" }}></i> {t("Access disabled")}</span><span className="v num">{counts.accessDisabled}</span></div>
         <div className="card kpi enter" style={{ ["--i" as string]: 4 }}><span className="spot"></span><span className="l"><i className="dot" style={{ color: "var(--faint)" }}></i> {t("Past employees")}</span><span className="v num">{counts.past}</span></div>
       </div>
+      {canAdd && <SubmittedForms />}
       <div className="toolbar enter" style={{ ["--i" as string]: 5 }}>
         <SearchBox placeholder={t("Search name, ID, email, designation, manager")} label={t("Search people")} />
         <SelectFilter name="departmentId" label={t("Department")} dflt="All" options={[{ value: "All", label: t("All") }, ...departments.map((department) => ({ value: department.id, label: department.name }))]} />
@@ -38,7 +40,7 @@ export default function PeoplePage() {
       </div>
       <section className="card enter" style={{ ["--i" as string]: 6 }}>
         <Pending>
-          <PeopleTable rows={people} />
+          <PeopleTable rows={people} canSelect={canAdd} />
           <Pager page={page} take={take} total={total} />
         </Pending>
       </section>

@@ -33,7 +33,7 @@ describe("loss of pay when the balance is short", () => {
 describe("accrual", () => {
   it("full month after joining, pro-rata in the joining month, none before", () => {
     expect(accrualFor("2026-10", "2026-09-08", 1)).toBe(1);
-    expect(accrualFor("2026-09", "2026-09-08", 1)).toBe(0.77); // 23 of 30 days — prototype JC-074
+    expect(accrualFor("2026-09", "2026-09-08", 1)).toBe(0.77); // 23 of 30 days — prototype JC074
     expect(accrualFor("2026-09", "2026-09-08", 1.5)).toBe(1.15);
     expect(accrualFor("2026-08", "2026-09-08", 1)).toBe(0);
   });

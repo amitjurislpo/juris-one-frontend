@@ -68,7 +68,7 @@ describe("review flags", () => {
 describe("onboard employee form", () => {
   const form: EmployeeInput = {
     firstName: "Meera", middleName: "", lastName: "Joshi", fatherName: "", email: "meera@jurislpo.com", phoneCountry: "+91", phone: "9876543210", location: "", joiningOffice: "",
-    pan: "", aadhaar: "", uan: "", address: "", designation: "Associate", departmentId: "d1", managerId: "m1", dateOfJoining: "2026-11-01", shift: "IN_DAY", roleId: "r1",
+    pan: "", aadhaar: "", uan: "", address: "", designation: "Associate", departmentId: "d1", managerId: "m1", dateOfJoining: "2026-11-01", shift: "IN_DAY", roleId: "r1", employmentType: "", paymentType: "", gender: "", employeeCode: "",
   };
   it("accepts the minimal data without the father's name", () => {
     expect(newHireErrors(form)).toEqual({});

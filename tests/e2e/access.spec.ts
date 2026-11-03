@@ -3,7 +3,7 @@ import { expectLanded, login } from "./helpers";
 
 test.describe("server-side page permissions", () => {
   test("employee cannot open finance or admin pages by URL", async ({ page }) => {
-    await login(page, "JC-049");
+    await login(page, "JC049");
     await expectLanded(page, "/home");
     for (const path of ["/payroll", "/roles", "/employees", "/register", "/overview"]) {
       await page.goto(path);
@@ -12,7 +12,7 @@ test.describe("server-side page permissions", () => {
   });
 
   test("HR manager never gets finance pages", async ({ page }) => {
-    await login(page, "JC-012");
+    await login(page, "JC012");
     await expectLanded(page, "/home");
     await expect(page.getByRole("link", { name: "Employees", exact: true })).toBeVisible();
     for (const name of ["Payroll", "Salary structures", "Tax & TDS", "Investment proofs"]) await expect(page.getByRole("link", { name })).toHaveCount(0);
@@ -21,17 +21,17 @@ test.describe("server-side page permissions", () => {
   });
 
   test("manager with reports sees My team; others do not", async ({ page }) => {
-    await login(page, "JC-035");
+    await login(page, "JC035");
     await expectLanded(page, "/home");
     await expect(page.getByRole("link", { name: "My team" })).toBeVisible();
     await page.context().clearCookies();
-    await login(page, "JC-058");
+    await login(page, "JC058");
     await expectLanded(page, "/home");
     await expect(page.getByRole("link", { name: "My team" })).toHaveCount(0);
   });
 
   test("finance manager sees the finance group", async ({ page }) => {
-    await login(page, "JC-004");
+    await login(page, "JC004");
     await expectLanded(page, "/home");
     for (const name of ["Payroll", "Salary structures", "Tax & TDS", "Investment proofs"]) await expect(page.getByRole("complementary", { name: "Main menu" }).getByRole("link", { name })).toBeVisible();
     // Finance lost appr.reg (only Admin and HR approve regularizations) and never held appr.leave, so the Approvals link is gone
@@ -42,7 +42,7 @@ test.describe("server-side page permissions", () => {
 
 test.describe("shell", () => {
   test("command palette navigates and the theme persists", async ({ page }) => {
-    await login(page, "JC-074");
+    await login(page, "JC074");
     await expectLanded(page, "/home");
     await expect(page.getByRole("complementary", { name: "Main menu" })).toBeVisible(); // the shell (and its shortcuts) is up
     await page.keyboard.press("Control+k");

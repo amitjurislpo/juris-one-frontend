@@ -6,9 +6,9 @@ const TEST_START_TIME = new Date().toISOString();
 const PDF = Buffer.from("%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n");
 
 async function restore() {
-  await sql(`UPDATE declaration_items SET status = 'PENDING', decided_by = NULL, decided_at = NULL, reject_reason = NULL WHERE employee_id = (SELECT id FROM employees WHERE code = 'JC-058')`);
-  await sql(`DELETE FROM declaration_items WHERE employee_id = (SELECT id FROM employees WHERE code = 'JC-072')`);
-  await sql(`DELETE FROM tax_profiles WHERE employee_id = (SELECT id FROM employees WHERE code = 'JC-072')`);
+  await sql(`UPDATE declaration_items SET status = 'PENDING', decided_by = NULL, decided_at = NULL, reject_reason = NULL WHERE employee_id = (SELECT id FROM employees WHERE code = 'JC058')`);
+  await sql(`DELETE FROM declaration_items WHERE employee_id = (SELECT id FROM employees WHERE code = 'JC072')`);
+  await sql(`DELETE FROM tax_profiles WHERE employee_id = (SELECT id FROM employees WHERE code = 'JC072')`);
   await sql(`DELETE FROM notifications WHERE created_at >= $1`, [TEST_START_TIME]);
 }
 
@@ -17,7 +17,7 @@ test.describe("tax & declarations", () => {
   test.afterAll(restore);
 
   test("employee: old regime, declare, proof required, upload, submit", async ({ page }) => {
-    await login(page, "JC-072");
+    await login(page, "JC072");
     await expectLanded(page, "/home");
     await page.goto("/declare");
     await expect(page.getByRole("button", { name: /New regime/ })).toHaveAttribute("aria-pressed", "true");
@@ -42,7 +42,7 @@ test.describe("tax & declarations", () => {
   });
 
   test("Finance verifies proofs with a TDS preview", async ({ page }) => {
-    await login(page, "JC-018");
+    await login(page, "JC018");
     await expectLanded(page, "/home");
     await page.goto("/proofs");
     const row = page.locator("tbody tr", { hasText: "Kavya Iyer" });
@@ -61,12 +61,12 @@ test.describe("tax & declarations", () => {
     await expect(toast(page)).toContainText("3 proofs approved");
     const logged = await sql(`SELECT 1 FROM audit_log WHERE action = 'proof.decision' AND at >= $1`, [TEST_START_TIME]);
     expect(logged.length).toBe(2);
-    const note = await sql(`SELECT 1 FROM notifications n JOIN employees e ON e.id = n.employee_id WHERE e.code = 'JC-058' AND n.text LIKE '%rejected — Premium receipt%'`);
+    const note = await sql(`SELECT 1 FROM notifications n JOIN employees e ON e.id = n.employee_id WHERE e.code = 'JC058' AND n.text LIKE '%rejected — Premium receipt%'`);
     expect(note.length).toBe(1);
   });
 
   test("Tax & TDS: golden case, computation drawer, regime override", async ({ page }) => {
-    await login(page, "JC-004");
+    await login(page, "JC004");
     await expectLanded(page, "/home");
     await page.goto("/tax");
     const amit = page.locator("tbody tr", { hasText: "Amit Jaspal" });
@@ -92,7 +92,7 @@ test.describe("tax & declarations", () => {
     expect(await exp.text()).toContain("Amit Jaspal");
 
     await page.context().clearCookies();
-    await login(page, "JC-072");
+    await login(page, "JC072");
     await expectLanded(page, "/home");
     await page.goto("/declare");
     await expect(page.getByText(/Finance has set your regime/)).toBeVisible();
@@ -101,8 +101,8 @@ test.describe("tax & declarations", () => {
   });
 
   test("HR and others can't reach tax data or other people's proofs", async ({ page }) => {
-    const [item] = await sql<{ id: string }>(`SELECT d.id FROM declaration_items d JOIN employees e ON e.id = d.employee_id WHERE e.code = 'JC-058' AND d.proof_path IS NOT NULL LIMIT 1`);
-    await login(page, "JC-012");
+    const [item] = await sql<{ id: string }>(`SELECT d.id FROM declaration_items d JOIN employees e ON e.id = d.employee_id WHERE e.code = 'JC058' AND d.proof_path IS NOT NULL LIMIT 1`);
+    await login(page, "JC012");
     await expectLanded(page, "/home");
     for (const path of ["/tax", "/proofs"]) {
       await page.goto(path);

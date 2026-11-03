@@ -4,7 +4,7 @@ import { ADMIN_EMAIL, emailOf, expectLanded, login, loginWithCode, OWNER, sql } 
 test.describe("authentication", () => {
   test.afterAll(async () => {
     await sql(`UPDATE users SET failed_attempts = 0, locked_until = NULL`);
-    await sql(`UPDATE employees SET portal_access = true WHERE code = 'JC-072'`);
+    await sql(`UPDATE employees SET portal_access = true WHERE code = 'JC072'`);
   });
 
   test("super admin lands on the platform console and runs only the platform company's own staff", async ({ page }) => {
@@ -17,7 +17,7 @@ test.describe("authentication", () => {
     await expect(page.getByRole("link", { name: "My attendance" })).toHaveCount(0);
     const people = await page.request.get("/api/v1/people?status=All");
     expect(people.status()).toBe(200);
-    expect(await people.text()).not.toContain("JC-0"); // never a customer's employees
+    expect(await people.text()).not.toContain("JC0"); // never a customer's employees
   });
 
   test("the owner (business admin) lands on Overview", async ({ page }) => {
@@ -29,38 +29,38 @@ test.describe("authentication", () => {
   });
 
   test("employee signs in by email and lands on Home", async ({ page }) => {
-    await login(page, "jc-074");
+    await login(page, "jc074");
     await expectLanded(page, "/home");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Amit");
     await expect(page.getByRole("link", { name: "Payroll" })).toHaveCount(0);
   });
 
   test("a wrong code is rejected without revealing anything", async ({ page }) => {
-    await loginWithCode(page, "JC-049", "111111");
+    await loginWithCode(page, "JC049", "111111");
     await expect(page.locator(".err")).toHaveText("That code is wrong or has expired. Request a new one. If it keeps failing, your account may be disabled or your organisation suspended: contact your administrator.");
     await expect(page).toHaveURL(/\/login/);
   });
 
   test("disabled access gets no code, and is told why by email", async ({ page }) => {
-    await login(page, "JC-081");
+    await login(page, "JC081");
     await expect(page.locator(".err")).toBeVisible(); // no code exists for this account
-    const mails = await sql<{ text: string }>(`SELECT text FROM email_outbox WHERE "to" = $1 AND subject = 'Your JurisOne sign-in request'`, [await emailOf("JC-081")]);
+    const mails = await sql<{ text: string }>(`SELECT text FROM email_outbox WHERE "to" = $1 AND subject = 'Your JurisOne sign-in request'`, [await emailOf("JC081")]);
     expect(mails.length).toBeGreaterThan(0);
     expect(mails[0].text).toContain("Your portal access is disabled. Please contact HR.");
   });
 
   test("past employee gets no code, and is told why by email", async ({ page }) => {
-    await login(page, "JC-030");
+    await login(page, "JC030");
     await expect(page.locator(".err")).toBeVisible();
-    const mails = await sql<{ text: string }>(`SELECT text FROM email_outbox WHERE "to" = $1 AND subject = 'Your JurisOne sign-in request'`, [await emailOf("JC-030")]);
+    const mails = await sql<{ text: string }>(`SELECT text FROM email_outbox WHERE "to" = $1 AND subject = 'Your JurisOne sign-in request'`, [await emailOf("JC030")]);
     expect(mails[0].text).toContain("past employee");
   });
 
   test("five wrong codes burn the code and lock the account; once the lock ends a fresh code works", async ({ page }) => {
     const badTries = async () => Number((await sql<{ n: string }>(
-      `SELECT count(*)::text AS n FROM login_history h JOIN employees e ON e.id = h.employee_id WHERE e.code = 'JC-058' AND NOT h.success AND h.reason = 'bad_otp'`,
+      `SELECT count(*)::text AS n FROM login_history h JOIN employees e ON e.id = h.employee_id WHERE e.code = 'JC058' AND NOT h.success AND h.reason = 'bad_otp'`,
     ))[0].n);
-    await loginWithCode(page, "JC-058", "111111");
+    await loginWithCode(page, "JC058", "111111");
     await expect.poll(badTries).toBe(1);
     for (let i = 2; i <= 5; i++) {
       await page.getByLabel("Digit 1 of 6").fill("222222");
@@ -68,7 +68,7 @@ test.describe("authentication", () => {
     }
     await page.getByLabel("Digit 1 of 6").fill("000000"); // the right code, but the code is burnt and the account is locked after five wrong tries
     await expect(page.locator(".err")).toContainText("account is locked");
-    await sql(`UPDATE users SET locked_until = NULL FROM employees e WHERE e.id = users.employee_id AND e.code = 'JC-058'`);
+    await sql(`UPDATE users SET locked_until = NULL FROM employees e WHERE e.id = users.employee_id AND e.code = 'JC058'`);
     await page.getByRole("button", { name: "Back" }).first().click();
     await page.getByRole("button", { name: "Login", exact: true }).click();
     await page.getByLabel("Digit 1 of 6").fill("000000");
@@ -76,15 +76,15 @@ test.describe("authentication", () => {
   });
 
   test("disabling access ends an active session immediately", async ({ page }) => {
-    await login(page, "JC-072");
+    await login(page, "JC072");
     await expectLanded(page, "/home");
-    await sql(`UPDATE employees SET portal_access = false WHERE code = 'JC-072'`);
+    await sql(`UPDATE employees SET portal_access = false WHERE code = 'JC072'`);
     await page.goto("/attendance");
     await expect(page).toHaveURL(/\/login/);
   });
 
   test("sign out ends the session", async ({ page }) => {
-    await login(page, "JC-015");
+    await login(page, "JC015");
     await expectLanded(page, "/home");
     await page.getByRole("button", { name: /Pooja Nair/ }).click();
     await page.getByRole("menuitem", { name: "Sign out" }).click();
