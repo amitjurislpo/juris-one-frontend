@@ -14,6 +14,19 @@ async function restore() {
   await sql(`DELETE FROM notifications WHERE created_at >= $1`, [TEST_START_TIME]);
 }
 
+/**
+ * October is frozen once the lock day of the next month has passed, and these tests decide October requests. The policy lock day is
+ * pushed far out for the run and put back afterwards, so the tests do not depend on today's date.
+ */
+async function holdMonthsOpen() {
+  const [policy] = await sql<{ lockDay: string | null }>(`SELECT value->>'lockDayOfNextMonth' AS "lockDay" FROM settings WHERE key = 'attendance.policy'`);
+  await sql(`UPDATE settings SET value = jsonb_set(value, '{lockDayOfNextMonth}', '99') WHERE key = 'attendance.policy'`);
+  return async () => {
+    if (policy?.lockDay == null) await sql(`UPDATE settings SET value = value - 'lockDayOfNextMonth' WHERE key = 'attendance.policy'`);
+    else await sql(`UPDATE settings SET value = jsonb_set(value, '{lockDayOfNextMonth}', $1::jsonb) WHERE key = 'attendance.policy'`, [policy.lockDay]);
+  };
+}
+
 async function ledger(code: string, type: string) {
   const [balance] = await sql<{ total: string | null }>(`SELECT sum(l.delta)::text total FROM leave_ledger l JOIN employees e ON e.id = l.employee_id WHERE e.code = $1 AND l.leave_type = $2`, [code, type]);
   return Number(balance.total ?? 0);
@@ -30,8 +43,15 @@ async function pickRange(page: Page, firstDay: number, lastDay: number) {
 }
 
 test.describe("leave & approvals", () => {
-  test.beforeAll(restore);
-  test.afterAll(restore);
+  let putPolicyBack: () => Promise<void>;
+  test.beforeAll(async () => {
+    await restore();
+    putPolicyBack = await holdMonthsOpen();
+  });
+  test.afterAll(async () => {
+    await putPolicyBack();
+    await restore();
+  });
 
   test("apply: holidays skipped, live summary, max stretch, then cancel", async ({ page }) => {
     await login(page, "JC-072");
