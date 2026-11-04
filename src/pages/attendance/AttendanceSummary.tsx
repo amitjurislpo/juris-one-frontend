@@ -1,61 +1,57 @@
 import { useState } from "react";
-import Link from "@/lib/link";
-import { Icon } from "@/components/Icon";
 import { ComingInPhase, PageHeader } from "@/components/PageHeader";
 import { PageLoading, useData, usePage } from "@/lib/page";
 import { useReadOnly } from "@/lib/session";
 import { toQueryString } from "@/lib/api";
-import { formatWeekdayDayMonthYear, MONTH_ABBREVIATIONS, MONTH_NAMES } from "@/lib/format";
-import { AttendanceCalendar, type CalendarDay, type RegularizationView } from "./AttendanceClient";
+import { AttendanceDayList } from "./AttendanceDayList";
+import { AttendanceDayTable } from "./AttendanceDayTable";
+import { AttendanceFooter } from "./AttendanceFooter";
+import { AttendanceMonthView, type MonthData } from "./AttendanceMonthView";
+import { AttendanceToolbar } from "./AttendanceToolbar";
 import { RegularizationRequestModal } from "./RegularizationRequestModal";
+import { STATUS_FILTER_LABEL, useAttendanceView, type AttendanceSummaryData } from "./attendanceViews";
 
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const addDays = (isoDate: string, days: number) => new Date(Date.parse(`${isoDate}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
 
-const shiftMonth = (month: string, monthOffset: number) => new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)) - 1 + monthOffset, 1)).toISOString().slice(0, 7);
+/** The period the API is asked for: the URL's week (`from`) or month, else nothing (the API then uses this week / this month). */
+function periodQuery(view: string, searchParams: Record<string, string | undefined>): Record<string, string> {
+  if (view === "calendar") {
+    const month = searchParams.month;
+    if (!month || !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return {};
+    return { from: `${month}-01`, to: new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0)).toISOString().slice(0, 10) };
+  }
+  const from = searchParams.from;
+  return from && ISO_DATE.test(from) ? { from, to: addDays(from, 6) } : {};
+}
 
+/** Attendance summary: List / Tabular / Calendar of the period, the filter, Export / Print, and the day counters underneath. */
 export function AttendanceSummary() {
   const { t, searchParams } = usePage();
   const readOnly = useReadOnly();
-  const [requesting, setRequesting] = useState(false);
-  const data = useData<{
-    tracked: boolean; month: string; minMonth: string; workDate: string; locked: boolean; selectedDate: string;
-    summary: { present: number; absent: number; leave: number; holidays: number; weeklyOffs: number; workedMinutes: number; lateMarks: number; lateLopDays: number };
-    days: CalendarDay[]; regularizations: RegularizationView[]; holidays: { id: string; date: string; name: string }[];
-  }>(`/api/v1/attendance/mine${toQueryString(searchParams)}`);
-  if (!data) return <PageLoading />;
-  if (!data.tracked) return <div className="col"><PageHeader eyebrow={t("Attendance")} title={t("My")} emphasis={t("attendance")} /><ComingInPhase phase={2} t={t} what={t("Attendance isn't tracked for your account.")} /></div>;
+  const { view, setView } = useAttendanceView();
+  const [requestDate, setRequestDate] = useState<string | null>(null);
+  const status = view !== "calendar" && searchParams.status && searchParams.status in STATUS_FILTER_LABEL ? searchParams.status : "";
+  const summary = useData<AttendanceSummaryData>(`/api/v1/attendance/summary${toQueryString({ view, ...periodQuery(view, searchParams), ...(status ? { status } : {}) })}`);
+  const month = useData<MonthData>(view === "calendar" ? `/api/v1/attendance/mine${toQueryString(searchParams)}` : null);
+  if (!summary) return <PageLoading />;
+  if (!summary.tracked) return <div className="col"><PageHeader eyebrow={t("Attendance")} title={t("My")} emphasis={t("attendance")} /><ComingInPhase phase={2} t={t} what={t("Attendance isn't tracked for your account.")} /></div>;
+  if (view === "calendar" && !month) return <PageLoading />;
 
-  const { month, minMonth, workDate, locked, selectedDate, summary, days: calendarDays, regularizations, holidays } = data;
-  const prev = shiftMonth(month, -1), next = shiftMonth(month, 1);
-
+  const canRequest = !readOnly && !(month?.locked ?? false);
   return (
     <div className="col" style={{ gap: 24 }}>
-      {requesting && <RegularizationRequestModal date={workDate} onClose={() => setRequesting(false)} />}
-      <PageHeader eyebrow={t("Attendance")} title={t(MONTH_NAMES[Number(month.slice(5)) - 1])} emphasis={month.slice(0, 4)} sub={t("Tap any day to see its check-in, check-out and how it counts.")}>
-        {!readOnly && !locked && <button className="btn btn-gold" onClick={() => setRequesting(true)}>{t("Request regularization")}</button>}
-        {prev >= minMonth ? <Link className="icon-btn" href={`/attendance?month=${prev}`} aria-label={t("Previous month")}><Icon name="chevL" /></Link> : <span className="icon-btn" aria-disabled="true" style={{ opacity: 0.4 }}><Icon name="chevL" /></span>}
-        {next <= workDate.slice(0, 7) ? <Link className="icon-btn" href={`/attendance?month=${next}`} aria-label={t("Next month")}><Icon name="chevR" /></Link> : <span className="icon-btn" aria-disabled="true" style={{ opacity: 0.4 }}><Icon name="chevR" /></span>}
-      </PageHeader>
-      <div className="kpis">
-        <div className="card kpi enter" style={{ ["--i" as string]: 1 }}><span className="spot" aria-hidden="true"></span><span className="l"><i className="dot" style={{ color: "var(--ok)" }}></i> {t("Present")}</span><span className="v num">{summary.present}</span></div>
-        <div className="card kpi enter" style={{ ["--i" as string]: 2 }}><span className="spot" aria-hidden="true"></span><span className="l"><i className="dot" style={{ color: "var(--bad)" }}></i> {t("Absent · loss of pay")}</span><span className="v num">{summary.absent}</span>{summary.lateMarks > 0 && <span className="s">{summary.lateMarks === 1 ? t("{n} late mark", { n: summary.lateMarks }) : t("{n} late marks", { n: summary.lateMarks })}{summary.lateLopDays ? ` · ${t("+{n} day LOP", { n: summary.lateLopDays })}` : ""}</span>}</div>
-        <div className="card kpi enter" style={{ ["--i" as string]: 3 }}><span className="spot" aria-hidden="true"></span><span className="l"><i className="dot" style={{ color: "var(--info)" }}></i> {t("On leave")}</span><span className="v num">{summary.leave}</span></div>
-        <div className="card kpi enter" style={{ ["--i" as string]: 4 }}><span className="spot" aria-hidden="true"></span><span className="l"><i className="dot" style={{ color: "var(--gold)" }}></i> {t("Holidays · weekly off")}</span><span className="v">{summary.holidays} · {summary.weeklyOffs}</span></div>
-        <div className="card kpi enter" style={{ ["--i" as string]: 5 }}><span className="spot" aria-hidden="true"></span><span className="l"><i className="dot" style={{ color: "var(--text)" }}></i> {t("Hours worked")}</span><span className="v num">{(summary.workedMinutes / 60).toFixed(1)}</span></div>
-      </div>
-      <AttendanceCalendar key={month} days={calendarDays} regs={regularizations} initialSel={selectedDate} locked={locked} monthLabel={`${t(MONTH_NAMES[Number(month.slice(5)) - 1])} ${month.slice(0, 4)}`} />
-      <section className="card pad enter" style={{ ["--i" as string]: 8 }}>
-        <span className="spot" aria-hidden="true"></span>
-        <div className="card-h"><div><h3>{t("Upcoming holidays")}</h3><span className="faint" style={{ fontSize: 12.5 }}>{t("Official holidays for your team, set by HR")}</span></div></div>
-        <div className="up-hol">
-          {holidays.map((holiday, i) => (
-            <div className="it" key={holiday.id} style={{ animationDelay: `${i * 50}ms` }}>
-              <span className="hol-date"><b>{Number(holiday.date.slice(8))}</b><small>{MONTH_ABBREVIATIONS[Number(holiday.date.slice(5, 7)) - 1].toUpperCase()}</small></span>
-              <div style={{ minWidth: 0 }}><b style={{ fontSize: 13.5, fontWeight: 600 }}>{holiday.name}</b><div className="faint" style={{ fontSize: 12.5 }}>{formatWeekdayDayMonthYear(holiday.date)}</div></div>
-            </div>
-          ))}
-          {!holidays.length && <div className="faint">{t("No more holidays this year.")}</div>}
-        </div>
-      </section>
+      {requestDate && <RegularizationRequestModal date={requestDate} onClose={() => setRequestDate(null)} />}
+      <PageHeader eyebrow={t("Attendance")} title={t("My")} emphasis={t("attendance")} sub={t("Tap any day to see its check-in, check-out and how it counts.")} />
+      <AttendanceToolbar data={summary} view={view} onView={setView} status={status} onRequest={canRequest ? () => setRequestDate(summary.workDate) : null} />
+      {view === "calendar" && month ? <AttendanceMonthView data={month} /> : (
+        <section className="card enter">
+          {view === "list"
+            ? <AttendanceDayList days={summary.days} onRegularize={readOnly ? null : setRequestDate} />
+            : <AttendanceDayTable days={summary.days} onRegularize={readOnly ? null : setRequestDate} />}
+        </section>
+      )}
+      <AttendanceFooter counters={summary.counters} shiftName={`${summary.shift.name} · ${summary.shift.start} – ${summary.shift.end}`} />
     </div>
   );
 }

@@ -4,8 +4,10 @@ import { hindiOnboardingFamilyMessages } from "./hi-onboarding-family";
 import { hindiOnboardingSummaryMessages } from "./hi-onboarding-summary";
 import { hindiOnboardingHrMessages } from "./hi-onboarding-hr";
 import { hindiOnboardingFlowMessages } from "./hi-onboarding-flow";
+import { hindiAttendanceMessages } from "./hi-attendance";
 
 export const hindiMessages: Record<string, string> = {
+  ...hindiAttendanceMessages, // Attendance views, totals and export; entries below win on duplicates
   ...hindiOnboardingWizardMessages, // onboarding wizard shell and steps 1 to 3
   ...hindiOnboardingFamilyMessages, // onboarding Family/Nominations; entries below win on duplicates
   ...hindiOnboardingSummaryMessages, // onboarding Attachments/Summary/Success and the HR onboarding view
