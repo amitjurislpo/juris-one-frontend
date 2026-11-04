@@ -23,6 +23,7 @@ export function AttendanceDayList({ days, onRegularize }: { days: SummaryDay[]; 
                 <span className="num">{day.lastOut ?? (day.live ? t("Working now") : "—")}</span>
               </div>
             )}
+            {day.checkOutNote && <small className="faint" style={{ overflowWrap: "anywhere" }}>{t("Check-out note")}: {day.checkOutNote}</small>}
           </div>
           <div className="att-meta">
             {day.lateMinutes > 0 && <span className="chip warn">{t("Late by {time}", { time: formatMinutes(day.lateMinutes) })}</span>}

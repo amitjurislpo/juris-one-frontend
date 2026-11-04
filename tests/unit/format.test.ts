@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { daysBetween, formatWeekdayDayMonthYear, formatRupees, isoDateIn, isoInZone, todayIn, todayInIndia } from "@/lib/format";
+import { daysBetween, formatElapsed, formatWeekdayDayMonthYear, formatRupees, isoDateIn, isoInZone, todayIn, todayInIndia } from "@/lib/format";
 
 describe("formatting", () => {
   it("formats paise as Indian rupees", () => {
@@ -30,5 +30,13 @@ describe("formatting", () => {
   it("gives the calendar date of a stored timestamp in the business zone", () => {
     expect(isoDateIn("2026-10-26T19:00:00Z", "Asia/Kolkata")).toBe("2026-10-27");
     expect(isoDateIn("2026-10-26T19:00:00Z", "UTC")).toBe("2026-10-26");
+  });
+
+  it("formats the time since a check-in as hh:mm, from the server's time", () => {
+    const checkIn = "2026-11-05T04:00:00.000Z";
+    expect(formatElapsed(checkIn, Date.parse("2026-11-05T04:00:30.000Z"))).toBe("00:00");
+    expect(formatElapsed(checkIn, Date.parse("2026-11-05T05:05:59.000Z"))).toBe("01:05");
+    expect(formatElapsed(checkIn, Date.parse("2026-11-05T14:30:00.000Z"))).toBe("10:30");
+    expect(formatElapsed(checkIn, Date.parse("2026-11-05T03:59:00.000Z"))).toBe("00:00"); // a clock behind the server never goes negative
   });
 });
