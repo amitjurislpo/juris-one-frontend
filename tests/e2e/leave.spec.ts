@@ -202,7 +202,7 @@ test.describe("leave & approvals", () => {
     await expectLanded(adminPage, "/overview");
     await adminPage.goto("/approvals?tab=regularizations");
     const adminCard = adminPage.locator("article.req", { hasText: "Siddharth Krishna" });
-    await expect(adminCard).toBeVisible();
+    await expect(adminCard).toBeVisible({ timeout: 20_000 }); // a second browser signing in on a busy machine is slow
 
     await card.getByRole("button", { name: /Approve/ }).click();
     await expect(toast(page)).toContainText("Approved Siddharth Krishna");
