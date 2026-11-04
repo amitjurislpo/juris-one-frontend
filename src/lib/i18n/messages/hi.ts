@@ -2012,6 +2012,7 @@ export const hindiMessages: Record<string, string> = {
   "Back-date limit (days)": "पिछली तिथि की सीमा (दिन)",
   "Requests per month": "प्रति माह अनुरोध",
   "An attachment is mandatory": "संलग्नक अनिवार्य है",
+  "Approve at once the requests that Admin or HR raise for an employee": "Admin या HR द्वारा किसी कर्मचारी के लिए किए गए अनुरोध तुरंत स्वीकृत करें",
   "Reasons": "कारण",
   "needs a description": "विवरण ज़रूरी",
   "Needs a description": "विवरण ज़रूरी",

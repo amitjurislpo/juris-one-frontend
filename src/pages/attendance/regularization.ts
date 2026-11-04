@@ -51,6 +51,7 @@ export interface RegularizationRules {
   backDateLimitDays: number;
   monthlyLimit: number;
   attachmentMandatory: boolean;
+  autoApprove: boolean;
   maxAttachmentMb: number;
   month: string;
   usedThisMonth: number;
