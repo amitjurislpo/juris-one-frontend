@@ -18,6 +18,9 @@ const SECURITY_HEADERS = { "X-Content-Type-Options": "nosniff", "X-Frame-Options
 const CONTENT_SECURITY_POLICY =
   "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
 
+/** `localhost` and every subdomain of it (`juris-consultants.localhost`, `admin.localhost`). Real domains are served by the production web server, not Vite. */
+const LOCAL_HOSTS = [".localhost"];
+
 /**
  * The browser only ever talks to this origin: `/api/*` is proxied to the Spring Boot API. Keeping it same-origin is what
  * lets the API's SameSite=Lax session cookies and its Origin check work without CORS (the Host header is kept as is).
@@ -38,8 +41,9 @@ export default defineConfig(({ mode }) => {
       // the JurisTrack code lives outside this folder: it must use this app's copy of these packages, never its own
       dedupe: ["react", "react-dom", "@tanstack/react-query"],
     },
-    server: { port, strictPort: true, proxy, headers: SECURITY_HEADERS, fs: { allow: [process.cwd(), trackFolder] } },
-    preview: { port, strictPort: true, proxy, headers: { ...SECURITY_HEADERS, "Content-Security-Policy": CONTENT_SECURITY_POLICY } },
+    // every business has its own address <business code>.localhost (the API tells the business from the Host header): Vite must accept those hosts
+    server: { port, strictPort: true, allowedHosts: LOCAL_HOSTS, proxy, headers: SECURITY_HEADERS, fs: { allow: [process.cwd(), trackFolder] } },
+    preview: { port, strictPort: true, allowedHosts: LOCAL_HOSTS, proxy, headers: { ...SECURITY_HEADERS, "Content-Security-Policy": CONTENT_SECURITY_POLICY } },
     build: { outDir: env.BUILD_DIR || "dist", sourcemap: false },
   };
 });

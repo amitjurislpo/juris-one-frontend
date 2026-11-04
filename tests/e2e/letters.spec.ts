@@ -1,9 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
-import { expectLanded, login, sql } from "./helpers";
+import { expectLanded, login, sql, WEB_ORIGIN } from "./helpers";
 
 const TEST_START_TIME = new Date().toISOString();
 const toast = (page: Page) => page.locator(".toast").last();
-const ORIGIN = { Origin: "http://localhost:3006" };
+const ORIGIN = { Origin: WEB_ORIGIN };
 
 async function cleanup() {
   // issued letters are protected by a trigger: lift it for the cleanup only (T0 is an ISO timestamp made here)

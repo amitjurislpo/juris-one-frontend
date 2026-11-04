@@ -1,10 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
-import { expectLanded, login, sql } from "./helpers";
+import { expectLanded, login, originOfPage, sql } from "./helpers";
 
 const toast = (page: Page) => page.locator(".toast").last();
 const TEST_START_TIME = new Date().toISOString();
 const SEP = "2026-09";
-const ORIGIN = { Origin: "http://localhost:3006" };
 
 /** Net pay and TDS (paise) of the signed-in employee's closed September payslip, from /api/v1/payslips. */
 async function septemberFigures(page: Page) {
@@ -115,7 +114,7 @@ test.describe("payroll", () => {
     await expectLanded(page, "/home");
     const [{ id: employeeId }] = await sql<{ id: string }>(`SELECT id::text AS id FROM employees WHERE code = 'JC074'`);
     try {
-      const revision = await page.request.post("/api/v1/structures", { headers: ORIGIN, data: { employeeId, effectiveFrom: "2026-11-01", reason: "APPRAISAL", basic: 60000, hra: 30000, lta: 5000, special: 25000 } });
+      const revision = await page.request.post("/api/v1/structures", { headers: { Origin: originOfPage(page) }, data: { employeeId, effectiveFrom: "2026-11-01", reason: "APPRAISAL", basic: 60000, hra: 30000, lta: 5000, special: 25000 } });
       expect(revision.status()).toBe(201);
       await page.context().clearCookies();
       await login(page, "JC074");

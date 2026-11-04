@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { ADMIN_EMAIL, expectLanded, login, loginWithCode, OTP, sql } from "./helpers";
+import { ADMIN_EMAIL, expectLanded, login, loginWithCode, OTP, sql, originOfPage } from "./helpers";
 
 /**
  * The multi-business journey: the super admin creates a business and its sub admin, grants Juris Track; the sub
@@ -166,8 +166,8 @@ test.describe.serial("a business on JurisOne, end to end", () => {
     await page.getByRole("link", { name: "Export employees (Excel)" }).click();
     expect((await download).suggestedFilename()).toMatch(/\.xlsx$/);
     // the API refuses writes too, not just the screen
-    expect((await page.request.get("/api/v1/people")).status()).toBe(200);
-    const write = await page.request.post("/api/v1/departments", { data: { name: "Sneaky" }, headers: { Origin: new URL(page.url()).origin } });
+    expect((await page.request.get(`${originOfPage(page)}/api/v1/people`)).status()).toBe(200);
+    const write = await page.request.post(`${originOfPage(page)}/api/v1/departments`, { data: { name: "Sneaky" }, headers: { Origin: originOfPage(page) } });
     expect(write.status()).toBe(402);
   });
 
