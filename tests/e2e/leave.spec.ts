@@ -185,7 +185,7 @@ test.describe("leave & approvals", () => {
     await expectLanded(page, "/home");
     await page.getByRole("button", { name: /Notifications/ }).click();
     await expect(page.locator(".notif")).toContainText("Casual leave (21 Oct – 22 Oct) approved by Pooja Nair");
-    await page.goto("/attendance?month=2026-10&date=2026-10-21");
+    await page.goto("/attendance?view=calendar&month=2026-10&date=2026-10-21");
     await expect(page.locator(".chip", { hasText: "Casual leave" }).first()).toBeVisible();
   });
 

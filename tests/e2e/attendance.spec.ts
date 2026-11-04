@@ -72,8 +72,8 @@ test.describe("attendance", () => {
   test("My attendance: locked September shows the golden-case figures", async ({ page }) => {
     await login(page, "JC074");
     await expectLanded(page, "/home");
-    await page.goto("/attendance?month=2026-09");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("September");
+    await page.goto("/attendance?view=calendar&month=2026-09");
+    await expect(page.getByLabel(/Calendar, September 2026/)).toBeVisible();
     const kpi = (label: string) => page.locator(".kpi", { hasText: label }).locator(".v");
     await expect(kpi("Absent · loss of pay")).toHaveText("1");
     await expect(kpi("Present")).toHaveText("15");
@@ -99,7 +99,7 @@ test.describe("attendance", () => {
   async function regularizeAndWithdraw(page: Page) {
     await login(page, "JC074");
     await expectLanded(page, "/home");
-    await page.goto("/attendance?month=2026-10&date=2026-10-05");
+    await page.goto("/attendance?view=calendar&month=2026-10&date=2026-10-05");
     await expect(page.locator(".chip", { hasText: "Absent · LOP" }).first()).toBeVisible();
     await page.getByRole("button", { name: "Request regularization" }).first().click();
     const dialog = page.getByRole("dialog");
@@ -141,17 +141,17 @@ test.describe("attendance", () => {
     await page.context().clearCookies();
     await login(page, "JC090"); // US, New York
     await expectLanded(page, "/home");
-    await page.goto("/attendance?month=2026-11"); // explicit months: the page opens on the current month, which moves with the date
+    await page.goto("/attendance?view=calendar&month=2026-11"); // explicit months: the page opens on the current month, which moves with the date
     await expect(page.getByText("Thanksgiving Day")).toBeVisible();
-    await page.goto("/attendance?month=2026-10");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("October");
+    await page.goto("/attendance?view=calendar&month=2026-10");
+    await expect(page.getByLabel(/Calendar, October 2026/)).toBeVisible();
     await expect(page.getByText("Dussehra")).toHaveCount(0);
     await page.context().clearCookies();
     await login(page, "JC049"); // India
     await expectLanded(page, "/home");
-    await page.goto("/attendance?month=2026-10");
+    await page.goto("/attendance?view=calendar&month=2026-10");
     await expect(page.getByText("Dussehra").first()).toBeVisible(); // calendar cell + holiday card
-    await page.goto("/attendance?month=2026-11");
+    await page.goto("/attendance?view=calendar&month=2026-11");
     await expect(page.getByText("Govardhan Puja").first()).toBeVisible(); // the page has loaded
     await expect(page.getByText("Thanksgiving Day")).toHaveCount(0);
   });
