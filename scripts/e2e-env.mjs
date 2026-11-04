@@ -1,4 +1,5 @@
 // The end-to-end test environment, separate from development data. Playwright starts both parts (playwright.config.ts):
+//   (E2E_TENANT_HOST=1 runs the API with per-business addresses on: see scripts/e2e-hosts.mjs)
 //   node scripts/e2e-env.mjs backend    the API from the backend checkout (BACKEND_REPO, default ../JurisOne): database
 //                                       "<db>_e2e" reset + demo seed, API on :8081; uploaded files go to a temp folder
 //   node scripts/e2e-env.mjs frontend   `vite build` into dist-e2e (rebuilt when src/ changed), served on :3006 with /api
@@ -11,6 +12,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { backendRepo, devSettings } from "./backend-config.mjs";
+import { apexOrigin, isTenantHostRun } from "./e2e-hosts.mjs";
 import { e2eBuildFolder, e2eDatabaseSuffix, e2ePorts, e2eWorkFolderName } from "./e2e-slot.mjs";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -78,8 +80,8 @@ async function backend() {
     SPRING_DATASOURCE_USERNAME: decodeURIComponent(url.username),
     SPRING_DATASOURCE_PASSWORD: decodeURIComponent(url.password),
     SERVER_PORT: String(E2E.api),
-    JURISONE_APP_URL: `http://localhost:${E2E.web}`,
-    JURISONE_FRONTEND_ORIGIN: `http://localhost:${E2E.web}`,
+    JURISONE_APP_URL: apexOrigin,
+    JURISONE_FRONTEND_ORIGIN: apexOrigin,
     JURISONE_STORAGE_DIR: path.join(dir, "files"),
     JURISONE_SEED_DEMO: "true",
     JURISONE_MAIL_HOST: "",
@@ -88,11 +90,13 @@ async function backend() {
     JURISONE_OTP_REQUESTS_PER_IP: "100000",
     JURISONE_OTP_REQUESTS_PER_EMAIL: "100000",
   };
+  // E2E_TENANT_HOST=1: per-business addresses on and enforced (<business code>.localhost, admin.localhost); the bare address is then refused
+  const flags = isTenantHostRun ? ["-Djurisone.tenant-host.enabled=true", "-Djurisone.tenant-host.base-domain=localhost", "-Djurisone.tenant-host.enforce=true"] : [];
   // the dev-only reset command empties the e2e database, migrates it and seeds the demo business
-  run("java", ["-jar", copy, "reset"], { cwd: dir, env });
+  run("java", [...flags, "-jar", copy, "reset"], { cwd: dir, env });
   // run the scheduled jobs once (absences, the monthly lock, accrual) so the demo data is in its settled state
-  run("java", ["-jar", copy, "jobs"], { cwd: dir, env });
-  const server = spawn("java", ["-jar", copy], { cwd: dir, env, stdio: "inherit", shell: win });
+  run("java", [...flags, "-jar", copy, "jobs"], { cwd: dir, env });
+  const server = spawn("java", [...flags, "-jar", copy], { cwd: dir, env, stdio: "inherit", shell: win });
   server.on("exit", (code) => process.exit(code ?? 0));
 }
 

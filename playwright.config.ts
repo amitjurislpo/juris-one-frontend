@@ -1,4 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
+import path from "node:path";
+import { businessOrigin, DEMO_BUSINESS_CODE, isTenantHostRun } from "./scripts/e2e-hosts.mjs";
 import { e2ePorts } from "./scripts/e2e-slot.mjs";
 
 /**
@@ -8,6 +10,14 @@ import { e2ePorts } from "./scripts/e2e-slot.mjs";
  * the backend checkout (default: ../JurisOne).
  */
 
+// With per-business addresses the tests call the API at <business code>.localhost; Node cannot resolve that name on Windows (the browser can), so
+// the worker processes preload a small resolver (set before they are started).
+if (isTenantHostRun) {
+  // NODE_OPTIONS reads backslashes as escapes: give it forward slashes
+  const preload = `--require "${path.join(import.meta.dirname, "scripts", "e2e-localhost-dns.cjs").replaceAll("\\", "/")}"`;
+  process.env.NODE_OPTIONS = [process.env.NODE_OPTIONS, preload].filter(Boolean).join(" ");
+}
+
 export default defineConfig({
   testDir: "tests/e2e",
   fullyParallel: false,
@@ -15,7 +25,7 @@ export default defineConfig({
   retries: 0,
   timeout: 90_000,
   reporter: [["list"]],
-  use: { baseURL: `http://localhost:${e2ePorts.web}`, trace: "retain-on-failure" },
+  use: { baseURL: businessOrigin(DEMO_BUSINESS_CODE), trace: "retain-on-failure" },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
     { command: "node scripts/e2e-env.mjs backend", url: `http://127.0.0.1:${e2ePorts.api}/actuator/health`, reuseExistingServer: false, timeout: 600_000 },

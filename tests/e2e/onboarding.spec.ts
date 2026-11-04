@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { expect, test, type BrowserContext, type Locator, type Page } from "@playwright/test";
-import { expectLanded, login, sql } from "./helpers";
+import { expectLanded, login, sql, WEB_ORIGIN } from "./helpers";
 
 const NEW_EMAIL = "e2e.onboarding.hire@jurislpo.com";
 const BEHALF_EMAIL = "e2e.onboarding.behalf@jurislpo.com";
@@ -35,7 +35,7 @@ function sampleFile(name: string, bytes: Buffer) {
 
 // ---- helpers ----
 /** Browser writes carry this header; the API refuses writes from other origins. */
-const SAME_ORIGIN = { origin: "http://localhost:3006" };
+const SAME_ORIGIN = { origin: WEB_ORIGIN };
 /** A label that is exactly this text (the red star of a mandatory field is part of the label text). */
 const exactLabel = (text: string) => new RegExp(String.raw`^${text.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`)}( \*)?$`);
 const nextButton = (page: Page) => page.getByRole("button", { name: "Save & Next" });
