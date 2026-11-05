@@ -183,6 +183,24 @@ test.describe("attendance", () => {
     expect((await page.request.get("/api/v1/attendance/register")).status()).toBe(403);
   });
 
+  test("Team toggle: HR sees everyone; an employee with no reports has no Team view", async ({ page }) => {
+    await login(page, "JC012");
+    await expectLanded(page, "/home");
+    await page.goto("/attendance?scope=team&date=2026-09-16&search=Kavya");
+    await expect(page.getByRole("button", { name: "Team", exact: true })).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator("tbody tr").first()).toContainText("Kavya");
+    await page.getByRole("button", { name: "My data", exact: true }).click();
+    await expect(page).not.toHaveURL(/scope=team/);
+    await expect(page.getByRole("button", { name: "Team", exact: true })).toHaveAttribute("aria-pressed", "false");
+
+    await page.context().clearCookies();
+    await login(page, "JC074");
+    await expectLanded(page, "/home");
+    await page.goto("/attendance?scope=team");
+    await expect(page.getByRole("button", { name: "Team", exact: true })).toHaveCount(0); // no toggle, and the URL alone does not open the Team view
+    expect((await page.request.get("/api/v1/attendance/team-register")).status()).toBe(403);
+  });
+
   test("policies: Admin edits the attendance policy", async ({ page }) => {
     await login(page, OWNER);
     await expectLanded(page, "/overview");
