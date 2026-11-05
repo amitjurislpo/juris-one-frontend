@@ -52,3 +52,19 @@ export async function addRegularizationReason(input: { label: string; requiresDe
 export async function updateRegularizationReason(id: string, input: { label?: string; requiresDescription?: boolean; active?: boolean }): Promise<ActionResult> {
   return apiAction("PATCH", `/api/v1/attendance/regularization-reasons/${encodeURIComponent(id)}`, input, ["/attendance"]);
 }
+
+// Remote work requests (/api/v1/attendance/remote-work-requests…): Admin and HR approve.
+
+/** A new remote work request for the signed-in employee: ISO dates, both ends included, and a reason. */
+export async function requestRemoteWork(input: { fromDate: string; toDate: string; reason: string }): Promise<ActionResult<{ id: string }>> {
+  return apiAction("POST", "/api/v1/attendance/remote-work-requests", input, ["/attendance"]);
+}
+
+export async function cancelRemoteWork(id: string): Promise<ActionResult> {
+  return apiAction("DELETE", `/api/v1/attendance/remote-work-requests/${encodeURIComponent(id)}`, undefined, ["/attendance"]);
+}
+
+/** Approve or reject several remote work requests at once (Admin / HR); a rejection needs remarks. */
+export async function decideRemoteWork(input: { ids: string[]; approve: boolean; note?: string }): Promise<ActionResult<DecisionResult[]>> {
+  return apiAction("POST", "/api/v1/attendance/remote-work-decisions", input, ["/attendance"]);
+}

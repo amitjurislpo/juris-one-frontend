@@ -218,6 +218,13 @@ export const hindiServerTextMessages: Record<string, string> = {
   "They have used all {count} regularization requests for {month}.": "उन्होंने {month} के सभी {count} नियमितीकरण अनुरोध इस्तेमाल कर लिए हैं।",
   "You have used all {count} regularization requests for {month}.": "आपने {month} के सभी {count} नियमितीकरण अनुरोध इस्तेमाल कर लिए हैं।",
   "A regularization request for {date} is already pending.": "{date} के लिए नियमितीकरण अनुरोध पहले से लंबित है।",
+  // remote work requests
+  "Requests can be made up to {days} days ahead.": "अनुरोध अधिकतम {days} दिन आगे तक किए जा सकते हैं।",
+  "A request can cover at most {days} days.": "एक अनुरोध अधिकतम {days} दिनों का हो सकता है।",
+  "Enter the reason for working remotely.": "रिमोट वर्क का कारण लिखें।",
+  "You already have a remote work request for some of these days.": "इनमें से कुछ दिनों के लिए आपका रिमोट वर्क अनुरोध पहले से है।",
+  "That month's attendance is locked — reject this and adjust LOP in payroll instead.": "उस माह की उपस्थिति लॉक है — इसे अस्वीकार करें और इसके बजाय वेतन में LOP बदलें।",
+  "Remote work request added successfully": "रिमोट वर्क अनुरोध सफलतापूर्वक जोड़ा गया",
   "Choose between 1 and {count} requests.": "1 से {count} अनुरोध चुनें।",
   "This day isn't marked as loss of pay.": "यह दिन वेतन कटौती के रूप में चिह्नित नहीं है।",
   "There's no late mark on this day.": "इस दिन कोई लेट मार्क नहीं है।",
