@@ -47,6 +47,7 @@ export const hindiNotificationTemplates: Record<string, string> = {
   "Your onboarding needs changes: {comment}": "आपकी ऑनबोर्डिंग में बदलाव ज़रूरी हैं: {comment}",
   "{name} raised a regularization request for you for {date}": "{name} ने {date} के लिए आपकी ओर से नियमितीकरण अनुरोध किया",
   "{name} raised a regularization request for {employee} for {date}": "{name} ने {employee} के लिए {date} का नियमितीकरण अनुरोध किया",
+  "{name} asked for On Duty on {date}": "{name} ने {date} के लिए ऑन ड्यूटी का अनुरोध किया",
   "{name} asked to regularize attendance for {date}": "{name} ने {date} की उपस्थिति नियमित करने का अनुरोध किया",
 
   // payroll, people, tax (PayrollOperationsService, PeopleService, TaxOperationsService)
