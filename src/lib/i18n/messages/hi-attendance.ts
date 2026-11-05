@@ -23,4 +23,7 @@ export const hindiAttendanceMessages: Record<string, string> = {
   "All days": "सभी दिन",
   "Export PDF": "PDF निर्यात करें",
   "Print": "प्रिंट करें",
+  "Whose attendance": "किसकी उपस्थिति",
+  "Everyone's check-ins for the day or the month.": "दिन या महीने के सभी लोगों के चेक-इन।",
+  "Your direct reports' check-ins for the day or the month.": "दिन या महीने में आपके सीधे रिपोर्टियों के चेक-इन।",
 };
