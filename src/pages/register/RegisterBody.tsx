@@ -5,7 +5,7 @@ import { DayNav, ZonePicker } from "./RegisterControls";
 import { Avatar } from "@/components/Avatar";
 
 interface Clock { text: string; local: string | null }
-interface DailyRow { id: string; photo?: number | null; code: string; name: string; department: string; region: "IN" | "US"; location: string; shiftName: string; status: string; late: boolean; checkIn: Clock | null; checkOut: Clock | null; hours: number }
+interface DailyRow { id: string; photo?: number | null; code: string; name: string; department: string; region: "IN" | "US"; location: string; shiftName: string; status: string; late: boolean; checkIn: Clock | null; checkOut: Clock | null; hours: number; checkOutNote: string | null }
 interface GridRow { id: string; code: string; name: string; department: string; region: "IN" | "US"; cells: { code: string; tone: string }[]; days: { date: string; label: string; workedMinutes: number }[]; present: number; absent: number; leave: number }
 export interface RegisterData {
   view: "day" | "month"; date: string; month: string; timeZone: string; today: string; page: number; take: number; total: number;
@@ -68,7 +68,7 @@ function Daily({ register, departmentOptions, teamOptions }: { register: Registe
                     <td><span className={`chip nodot ${summaryRow.region === "IN" ? "gold" : "info"}`}>{summaryRow.location}</span></td>
                     <td><span className={`chip ${CHIP[summaryRow.status] ?? "neutral"}`}>{t(summaryRow.status)}</span>{summaryRow.late && <span className="chip warn nodot" style={{ marginLeft: 6 }}>{t("Late")}</span>}</td>
                     <td className="num"><b style={{ fontWeight: 500 }}>{summaryRow.checkIn?.text ?? "—"}</b>{summaryRow.checkIn?.local && <div className="faint" style={{ fontSize: 11.5 }}>{t("{time} local", { time: summaryRow.checkIn.local })}</div>}</td>
-                    <td className="num"><b style={{ fontWeight: 500 }}>{summaryRow.checkOut?.text ?? (summaryRow.status === "Working" ? t("Working now") : "—")}</b>{summaryRow.checkOut?.local && <div className="faint" style={{ fontSize: 11.5 }}>{t("{time} local", { time: summaryRow.checkOut.local })}</div>}</td>
+                    <td className="num"><b style={{ fontWeight: 500 }}>{summaryRow.checkOut?.text ?? (summaryRow.status === "Working" ? t("Working now") : "—")}</b>{summaryRow.checkOut?.local && <div className="faint" style={{ fontSize: 11.5 }}>{t("{time} local", { time: summaryRow.checkOut.local })}</div>}{summaryRow.checkOutNote && <div className="faint" style={{ fontSize: 11.5, maxWidth: 260, overflowWrap: "anywhere" }} title={t("Check-out note")}>{summaryRow.checkOutNote}</div>}</td>
                     <td className="r num">{summaryRow.hours ? formatHours(summaryRow.hours) : "—"}</td>
                   </tr>
                 ))}

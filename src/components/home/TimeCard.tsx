@@ -3,6 +3,7 @@ import { useRouter } from "@/lib/router";
 import { useEffect, useState, useTransition } from "react";
 import { punch } from "@/pages/home/actions";
 import { Icon } from "@/components/Icon";
+import { WorkingFor } from "@/components/WorkingFor";
 import { useToast } from "@/components/shell/Toasts";
 import { useT } from "@/lib/i18n/client";
 import { useReadOnly } from "@/lib/session";
@@ -27,6 +28,7 @@ export function TimeCard(card: TimeCardProps) {
   const toast = useToast();
   const readOnly = useReadOnly();
   const [busy, start] = useTransition();
+  const [note, setNote] = useState("");
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
     const tick = () => setNow(Date.now());
@@ -43,8 +45,11 @@ export function TimeCard(card: TimeCardProps) {
 
   const punchNow = () =>
     start(async () => {
-      const result = await punch(card.checkedIn ? "OUT" : "IN");
-      if (result.ok) toast(result.message!);
+      const result = await punch(card.checkedIn ? "OUT" : "IN", card.checkedIn ? note.trim() : undefined);
+      if (result.ok) {
+        toast(result.message!);
+        setNote("");
+      }
       else toast(result.error, "bad");
       router.refresh();
     });
@@ -55,7 +60,7 @@ export function TimeCard(card: TimeCardProps) {
       <div className="aur"></div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, position: "relative" }}>
         <div><span className="eyebrow">{t("Today's shift")}</span><div style={{ fontWeight: 600, marginTop: 2 }}>{shiftLabel(card.shiftText, t)}</div></div>
-        <span className={`chip ${card.checkedIn ? "ok" : "neutral"}`}>{card.checkedIn ? t("Checked in") : t("Checked out")}</span>
+        <span style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>{card.checkedIn && card.openSince && <WorkingFor since={card.openSince} />}<span className={`chip ${card.checkedIn ? "ok" : "neutral"}`}>{card.checkedIn ? t("Checked in") : t("Checked out")}</span></span>
       </div>
       <div style={{ position: "relative" }}>
         <div className="bigtime" aria-label={t("Worked today")} suppressHydrationWarning>
@@ -70,6 +75,10 @@ export function TimeCard(card: TimeCardProps) {
         </div>
         <div className="shift-ticks" style={{ marginTop: 10 }}>{card.ticks.map((tickLabel) => <span key={tickLabel}>{tickLabel}</span>)}</div>
       </div>
+      {card.checkedIn && !readOnly && (
+        <input className="input" style={{ position: "relative" }} type="text" maxLength={500} value={note} disabled={busy} onChange={(event) => setNote(event.target.value)}
+          placeholder={t("Add notes for check-out")} aria-label={t("Add notes for check-out")} />
+      )}
       <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", position: "relative" }}>
         {!readOnly && (
           <div className="punch">
