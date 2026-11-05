@@ -255,4 +255,10 @@ export const hindiServerTextMessages: Record<string, string> = {
   "A task can have at most {count} checklist items.": "एक कार्य में अधिकतम {count} चेकलिस्ट आइटम हो सकते हैं।",
   "A task can have at most {count} followers.": "एक कार्य में अधिकतम {count} फ़ॉलोअर्स हो सकते हैं।",
   "A workflow can have at most {count} steps.": "एक वर्कफ़्लो में अधिकतम {count} चरण हो सकते हैं।",
+  "Invalid status filter.": "अमान्य स्थिति फ़िल्टर।",
+  "The start date must not be after the end date.": "शुरू की तारीख़ अंतिम तारीख़ के बाद की नहीं हो सकती।",
+  "Choose a period of at most {days} days.": "अधिकतम {days} दिन की अवधि चुनें।",
+  "That period is out of range.": "वह अवधि सीमा से बाहर है।",
+  "Dates must look like YYYY-MM-DD.": "तारीख़ें YYYY-MM-DD रूप में होनी चाहिए।",
+  "Pick a valid shift.": "एक मान्य शिफ़्ट चुनें।",
 };
