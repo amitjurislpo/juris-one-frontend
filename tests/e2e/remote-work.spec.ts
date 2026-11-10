@@ -35,7 +35,7 @@ test.describe("remote work requests", () => {
     await page.getByLabel(/^Reason/).fill("Again");
     await page.getByRole("button", { name: "Send for approval" }).click();
     await expect(page.getByRole("alert")).toContainText("already have a remote work request");
-    await page.getByRole("button", { name: "Cancel" }).click();
+    await page.getByRole("button", { name: "Cancel", exact: true }).click();
 
     // HR (HR Manager) sees it under Team
     const hrPage = await browser.newPage();
@@ -45,7 +45,7 @@ test.describe("remote work requests", () => {
     const row = hrPage.locator("tbody tr", { hasText: "Internet repair at home" });
     await expect(row).toContainText("JC074");
     await row.click();
-    await hrPage.getByRole("button", { name: "Approve" }).click();
+    await hrPage.getByRole("button", { name: "Approve", exact: true }).click();
     await expect(toast(hrPage)).toContainText("Approved");
 
     const [request] = await sql<{ status: string; decided_role: string }>(`SELECT status, decided_role FROM remote_work_requests WHERE reason = 'Internet repair at home' AND created_at >= $1`, [TEST_START_TIME]);
