@@ -243,7 +243,7 @@ export const hindiServerTextMessages: Record<string, string> = {
   "They have used all {count} On Duty days for {month}.": "उन्होंने {month} के सभी {count} ऑन ड्यूटी दिन इस्तेमाल कर लिए हैं।",
   "You have used all {count} remote work days for {month}.": "आपने {month} के सभी {count} रिमोट वर्क दिन इस्तेमाल कर लिए हैं।",
   "They have used all {count} remote work days for {month}.": "उन्होंने {month} के सभी {count} रिमोट वर्क दिन इस्तेमाल कर लिए हैं।",
-  "A request from HR is decided by HR's reporting manager (by the Admin when there is none).": "एचआर का अनुरोध एचआर के रिपोर्टिंग मैनेजर द्वारा तय होता है (मैनेजर न हो तो एडमिन द्वारा)।",
+  "A request from HR is decided by HR's reporting manager or by the Admin.": "एचआर का अनुरोध एचआर के रिपोर्टिंग मैनेजर या एडमिन द्वारा तय होता है।",
   "Remote work request added successfully": "रिमोट वर्क अनुरोध सफलतापूर्वक जोड़ा गया",
   "Choose between 1 and {count} requests.": "1 से {count} अनुरोध चुनें।",
   "This day isn't marked as loss of pay.": "यह दिन वेतन कटौती के रूप में चिह्नित नहीं है।",

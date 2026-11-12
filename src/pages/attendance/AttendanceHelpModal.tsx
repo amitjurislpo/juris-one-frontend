@@ -9,7 +9,7 @@ export const ATTENDANCE_HELP: { title: string; text: string }[] = [
   { title: "Regularization", text: "Use it when the real check-in or check-out of a day is wrong or missing. Give the real times and a reason. You can change or withdraw a request while it is pending." },
   { title: "On Duty", text: "Use it for official work away from the usual place, for a full day or a half day. An approved On Duty day counts as a present, payable day." },
   { title: "Remote Work", text: "Use it to work from home for one or more days, or for one half of a day. An approved remote day counts as a normal working day even without a check-in." },
-  { title: "Who approves", text: "Admin and HR approve the requests of employees. A request from HR goes to HR's reporting manager, or to the Admin when there is none. The number next to a tab is how many requests wait for you." },
+  { title: "Who approves", text: "Admin and HR approve the requests of employees. A request from HR is decided by HR's reporting manager or by the Admin. The number next to a tab is how many requests wait for you." },
   { title: "Shift", text: "The Shift tab shows who works which shift, day by day. Admin and HR can assign shifts." },
 ];
 
