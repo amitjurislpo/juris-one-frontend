@@ -1,5 +1,6 @@
 import type { ActionResult } from "@/lib/action";
 import { apiAction, apiUpload } from "@/lib/api";
+import type { OnDutyPart } from "./onDuty";
 import type { RegularizationKind } from "./regularization";
 
 // Regularization runs in the Spring Boot API (/api/v1/attendance/regularizations…).
@@ -67,4 +68,29 @@ export async function cancelRemoteWork(id: string): Promise<ActionResult> {
 /** Approve or reject several remote work requests at once (Admin / HR); a rejection needs remarks. */
 export async function decideRemoteWork(input: { ids: string[]; approve: boolean; note?: string }): Promise<ActionResult<DecisionResult[]>> {
   return apiAction("POST", "/api/v1/attendance/remote-work-decisions", input, ["/attendance"]);
+}
+
+// On Duty runs in the Spring Boot API (/api/v1/attendance/on-duty-requests…).
+
+export interface OnDutyInput {
+  date: string;
+  /** Last day of a range (one request per day). */
+  toDate?: string;
+  part: OnDutyPart;
+  location?: string;
+  reason: string;
+}
+
+/** A new On Duty request (one per day of a range); Admin and HR approve it. */
+export async function requestOnDuty(input: OnDutyInput): Promise<ActionResult<DayOutcome[]>> {
+  return apiAction("POST", "/api/v1/attendance/on-duty-requests", input, ["/attendance"]);
+}
+
+export async function cancelOnDuty(id: string): Promise<ActionResult> {
+  return apiAction("DELETE", `/api/v1/attendance/on-duty-requests/${encodeURIComponent(id)}`, undefined, ["/attendance"]);
+}
+
+/** Approve or reject several On Duty requests at once (Admin / HR); a rejection needs remarks. */
+export async function decideOnDutyRequests(input: { ids: string[]; approve: boolean; note?: string }): Promise<ActionResult<DecisionResult[]>> {
+  return apiAction("POST", "/api/v1/attendance/on-duty-decisions", input, ["/attendance"]);
 }

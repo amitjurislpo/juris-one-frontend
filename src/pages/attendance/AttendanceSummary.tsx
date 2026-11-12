@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ComingInPhase, PageHeader } from "@/components/PageHeader";
+import { WorkingFor } from "@/components/WorkingFor";
 import { PageLoading, useData, usePage } from "@/lib/page";
 import { useReadOnly } from "@/lib/session";
 import { toQueryString } from "@/lib/api";
@@ -43,6 +44,7 @@ export function AttendanceSummary() {
     <div className="col" style={{ gap: 24 }}>
       {requestDate && <RegularizationRequestModal date={requestDate} onClose={() => setRequestDate(null)} />}
       <PageHeader eyebrow={t("Attendance")} title={t("My")} emphasis={t("attendance")} sub={t("Tap any day to see its check-in, check-out and how it counts.")} />
+      {summary.openSince && <div className="att-noprint"><WorkingFor since={summary.openSince} /></div>}
       <AttendanceToolbar data={summary} view={view} onView={setView} status={status} onRequest={canRequest ? () => setRequestDate(summary.workDate) : null} />
       {view === "calendar" && month ? <AttendanceMonthView data={month} /> : (
         <section className="card enter">
