@@ -30,6 +30,7 @@ export const APP_ROUTES: RouteDef[] = [
   { path: "employees", title: "Employees", nav: "employees", Page: page(() => import("@/pages/employees/page")) },
   { path: "departments", title: "Departments", nav: "departments", Page: page(() => import("@/pages/departments/page")) },
   { path: "holidays", title: "Holiday calendar", nav: "holidays", Page: page(() => import("@/pages/holidays/page")) },
+  { path: "leave-policy", title: "Leave policy", nav: "leave-policy", Page: page(() => import("@/pages/leave-policy/page")) },
   { path: "payroll", title: "Payroll", nav: "payroll", Page: page(() => import("@/pages/payroll/page")) },
   { path: "structures", title: "Salary structures", nav: "structures", Page: page(() => import("@/pages/structures/page")) },
   { path: "tax", title: "Tax & TDS", nav: "tax", Page: page(() => import("@/pages/tax/page")) },

@@ -15,7 +15,7 @@ import { EmployeeCodeSeries } from "./EmployeeCodeSeries";
 const TABS = ["access", "leave", "holidays", "attendance", "codes"] as const;
 const num = (d: number | null) => (d == null ? 0 : d);
 
-interface LeaveTypeView { code: string; name: string; annualQuota: number; accrualPerMonth: number; carryForwardCap: number; maxStretch: number | null; encashPerYear: number; encashAfterMonths: number; expiryDays: number | null }
+interface LeaveTypeView { code: string; name: string; annualQuota: number; accrualPerMonth: number; carryForwardCap: number; yearEndAction: "COLLAPSE" | "CARRY_ALL" | "CARRY_CAPPED"; maxStretch: number | null; encashPerYear: number; encashAfterMonths: number; expiryDays: number | null }
 interface ShiftView { id: string; code: string; name: string; startLocal: string; endLocal: string; graceMinutes: number; region: "IN" | "US" }
 
 export default function SettingsPage() {
@@ -76,7 +76,7 @@ function LeavePolicy() {
   const card = (leaveType: (typeof types)[number]): [string, string] => {
     if (leaveType.code === "LOP") return [t("Automatic"), t("Absent without leave · {n} late marks = ½ day · Gross ÷ days in month", { n: att.lateMarksPerHalfDayLop })];
     if (leaveType.code === "CO") return [t("On approval"), t("For holiday / weekend work of {h}h+ · expires in {d} days", { h: att.halfDayHours, d: leaveType.expiryDays ?? 60 })];
-    const parts = [t("{n} per month", { n: num(leaveType.accrualPerMonth) }), num(leaveType.carryForwardCap) ? t("carry up to {n}", { n: num(leaveType.carryForwardCap) }) : t("no carry forward")];
+    const parts = [t("{n} per month", { n: num(leaveType.accrualPerMonth) }), leaveType.yearEndAction === "CARRY_ALL" ? t("carry forward all") : leaveType.yearEndAction === "CARRY_CAPPED" ? t("carry up to {n}", { n: num(leaveType.carryForwardCap) }) : t("no carry forward")];
     if (leaveType.maxStretch) parts.push(t("max {n} at a stretch", { n: num(leaveType.maxStretch) }));
     if (num(leaveType.encashPerYear)) parts.push(t("encash {n} a year after {m} months", { n: num(leaveType.encashPerYear), m: leaveType.encashAfterMonths }));
     return [t("{n} a year", { n: num(leaveType.annualQuota) }), parts.join(" · ")];
