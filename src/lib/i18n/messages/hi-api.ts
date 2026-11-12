@@ -329,6 +329,7 @@ export const hindiApiMessages: Record<string, string> = {
   "Pick roles from the list.": "सूची में से भूमिकाएँ चुनें।",
   "One of those roles doesn't exist.": "इनमें से एक भूमिका मौजूद नहीं है।",
   "Regularization request added successfully": "नियमितीकरण अनुरोध सफलतापूर्वक जोड़ा गया",
+  "On Duty request added successfully": "ऑन ड्यूटी अनुरोध सफलतापूर्वक जोड़ा गया",
   "Regularization rules saved": "नियमितीकरण के नियम सहेजे गए",
   "Reason added": "कारण जोड़ा गया",
   "Reason saved": "कारण सहेजा गया",
