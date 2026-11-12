@@ -9,7 +9,7 @@ import { formatDayMonth, formatDayMonthYear, formatWeekdayDayMonthYear, MONTH_NA
 import { useT } from "@/lib/i18n/client";
 import type { Preview } from "@/lib/api-types";
 import { applyLeave, preview } from "./actions";
-import { LeaveEmployeePicker, type PickedEmployee } from "./LeaveEmployeePicker";
+import { EmployeePicker, type PickedEmployee } from "@/components/EmployeePicker";
 
 export interface LeaveTypeOption { code: string; name: string; available: number | null; paid: boolean; lockedReason: string | null }
 export interface LeaveYearSpan { from: string; to: string }
@@ -108,7 +108,7 @@ export function ApplyLeave({ types, today, leaveYear, holidays, weeklyOffs, onCl
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(320px, 100%), 1fr))", gap: 26 }}>
         <div className="col" style={{ gap: 20 }}>
           <div>
-            <LeaveEmployeePicker value={employee} onChange={setEmployee} />
+            <EmployeePicker permission="appr.leave" value={employee} onChange={setEmployee} />
             <div className="field" style={{ marginBottom: 10 }}>{t("1 · Leave type")}</div>
             <div className="ltypes" role="radiogroup" aria-label={t("Leave type")}>
               {types.map((typeOption) => (

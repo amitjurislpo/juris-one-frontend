@@ -5,7 +5,7 @@ import { todayIn } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import { usePage } from "@/lib/page";
 import { editRemoteWork, requestRemoteWork } from "./actions";
-import { EmployeePicker, type PickedEmployee } from "./EmployeePicker";
+import { EmployeePicker, type PickedEmployee } from "@/components/EmployeePicker";
 import { PART_LABEL, type OnDutyPart } from "./onDuty";
 import { onBehalfOf } from "./requestKinds";
 import { REMOTE_WORK_MAX_DAYS, REMOTE_WORK_MAX_REASON, remoteWorkDays, remoteWorkProblem, type RemoteWorkItem } from "./remoteWork";
@@ -50,7 +50,7 @@ export function RemoteWorkRequestModal({ onClose, editing }: { onClose: () => vo
         </div>
       </>}>
       <div className="col" style={{ gap: 14 }}>
-        {!editing && <EmployeePicker value={employee} onChange={setEmployee} />}
+        {!editing && <EmployeePicker permission="appr.reg" value={employee} onChange={setEmployee} />}
         <div className="grid2">
           <label className="field">{t("From")} *
             <input type="date" value={fromDate} onChange={(e) => { setFromDate(e.target.value); if (e.target.value && toDate < e.target.value) setToDate(e.target.value); setProblem(null); }} />

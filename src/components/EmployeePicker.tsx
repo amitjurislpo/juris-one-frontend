@@ -6,15 +6,15 @@ import { usePage } from "@/lib/page";
 export interface PickedEmployee { id: string; name: string }
 
 /**
- * Admin / HR pick the employee a request is raised for (search by name or code in the business directory); nothing picked means the request
- * is for the signed-in user. Shows nothing to anybody without the approval permission. The server checks the permission and the business again.
+ * Admin / HR pick the employee a request (attendance request or leave) is raised for (search by name or code in the business directory); nothing picked means the request
+ * is for the signed-in user. Shows nothing to anybody without the given approval permission (appr.reg for attendance requests, appr.leave for leave). The server checks the permission and the business again.
  */
-export function EmployeePicker({ value, onChange }: { value: PickedEmployee | null; onChange: (employee: PickedEmployee | null) => void }) {
+export function EmployeePicker({ permission, value, onChange }: { permission: "appr.reg" | "appr.leave"; value: PickedEmployee | null; onChange: (employee: PickedEmployee | null) => void }) {
   const t = useT();
   const { user } = usePage();
   const [search, setSearch] = useState("");
   const [people, setPeople] = useState<PickedEmployee[]>([]);
-  const canRaiseForOthers = user.perms.has("appr.reg");
+  const canRaiseForOthers = user.perms.has(permission);
 
   useEffect(() => {
     if (!canRaiseForOthers || search.trim().length < 2) { setPeople([]); return; }

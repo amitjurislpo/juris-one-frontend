@@ -5,7 +5,7 @@ import { formatDayMonthYear, todayIn } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import { usePage } from "@/lib/page";
 import { editOnDuty, requestOnDuty, type DayOutcome } from "./actions";
-import { EmployeePicker, type PickedEmployee } from "./EmployeePicker";
+import { EmployeePicker, type PickedEmployee } from "@/components/EmployeePicker";
 import { latestOnDutyDay, PART_LABEL, rangeProblem, type OnDutyItem, type OnDutyPart } from "./onDuty";
 import { onBehalfOf } from "./requestKinds";
 
@@ -67,7 +67,7 @@ export function OnDutyRequestModal({ onClose, editing }: { onClose: () => void; 
         </div>
       ) : (
         <div className="col" style={{ gap: 14 }}>
-          {!editing && <EmployeePicker value={employee} onChange={setEmployee} />}
+          {!editing && <EmployeePicker permission="appr.reg" value={employee} onChange={setEmployee} />}
           <div className="grid2">
             <label className="field">{t("Date")}
               <input type="date" value={date} max={latestOnDutyDay(today)} onChange={(e) => e.target.value && setDate(e.target.value)} />
