@@ -5,6 +5,8 @@ import { formatDayMonthYear, todayIn } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import { usePage } from "@/lib/page";
 import { requestOnDuty, type DayOutcome } from "./actions";
+import { EmployeePicker, type PickedEmployee } from "./EmployeePicker";
+import { onBehalfOf } from "./requestKinds";
 import { latestOnDutyDay, PART_LABEL, rangeProblem, type OnDutyPart } from "./onDuty";
 
 /**
@@ -19,6 +21,7 @@ export function OnDutyRequestModal({ onClose }: { onClose: () => void }) {
   const today = todayIn(user.timeZone);
   const [date, setDate] = useState(today);
   const [toDate, setToDate] = useState("");
+  const [employee, setEmployee] = useState<PickedEmployee | null>(null);
   const [part, setPart] = useState<OnDutyPart>("FULL");
   const [location, setLocation] = useState("");
   const [reason, setReason] = useState("");
@@ -29,7 +32,7 @@ export function OnDutyRequestModal({ onClose }: { onClose: () => void }) {
   const missing = invalidRange ? t(invalidRange) : !reason.trim() ? t("Enter the reason for the On Duty request.") : null;
 
   const submit = () => start(async () => {
-    const result = await requestOnDuty({ date, toDate: isRange ? toDate : undefined, part, location: location.trim() || undefined, reason: reason.trim() });
+    const result = await requestOnDuty({ ...onBehalfOf(employee?.id), date, toDate: isRange ? toDate : undefined, part, location: location.trim() || undefined, reason: reason.trim() });
     if (!result.ok) { setProblem(result.error); return; }
     const failed = result.data?.filter((outcome) => !outcome.ok) ?? [];
     const made = (result.data ?? []).filter((outcome) => outcome.ok).length;
@@ -41,10 +44,10 @@ export function OnDutyRequestModal({ onClose }: { onClose: () => void }) {
   return (
     <Modal title={t("Add On Duty request")} eyebrow={t("Attendance")} size="sm" onClose={onClose}
       footer={<>
-        <span className="faint" style={{ fontSize: 12.5 }}>{t("Goes to Admin and HR — either can approve.")}</span>
+        <span className="faint" style={{ fontSize: 12.5 }}>{employee ? t("Approved at once because you are raising it for someone else.") : t("Goes to Admin and HR — either can approve.")}</span>
         <div className="row" style={{ gap: 10 }}>
           <button className="btn btn-ghost" onClick={onClose}>{outcomes ? t("Close") : t("Cancel")}</button>
-          {!outcomes && <button className="btn btn-gold" disabled={busy || !!missing} onClick={submit}>{busy ? t("Sending…") : t("Send for approval")}</button>}
+          {!outcomes && <button className="btn btn-gold" disabled={busy || !!missing} onClick={submit}>{busy ? t("Sending…") : employee ? t("Add and approve") : t("Send for approval")}</button>}
         </div>
       </>}>
       {outcomes ? (
@@ -56,6 +59,7 @@ export function OnDutyRequestModal({ onClose }: { onClose: () => void }) {
         </div>
       ) : (
         <div className="col" style={{ gap: 14 }}>
+          <EmployeePicker value={employee} onChange={setEmployee} />
           <div className="grid2">
             <label className="field">{t("Date")}
               <input type="date" value={date} max={latestOnDutyDay(today)} onChange={(e) => e.target.value && setDate(e.target.value)} />

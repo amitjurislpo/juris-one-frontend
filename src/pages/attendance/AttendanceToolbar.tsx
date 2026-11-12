@@ -4,13 +4,17 @@ import Link from "@/lib/link";
 import { formatDayMonth, formatDayMonthYear, MONTH_NAMES } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import { toQueryString } from "@/lib/api";
+import { RequestMenu } from "./RequestMenu";
+import type { RequestKind } from "./requestKinds";
 import { ATTENDANCE_VIEWS, STATUS_FILTER_LABEL, type AttendanceSummaryData, type AttendanceView } from "./attendanceViews";
 
 const VIEW_ICON: Record<AttendanceView, string> = { list: "menu", tabular: "grid", calendar: "cal" };
 const VIEW_LABEL: Record<AttendanceView, string> = { list: "List", tabular: "Tabular", calendar: "Calendar" };
 
 /** Period navigator, the three view buttons, the status filter, the request button and Export CSV / PDF / Print. */
-export function AttendanceToolbar({ data, view, onView, status, onRequest }: { data: AttendanceSummaryData; view: AttendanceView; onView: (view: AttendanceView) => void; status: string; onRequest: (() => void) | null }) {
+export function AttendanceToolbar({ data, view, onView, status, requestKinds, onRequest }: {
+  data: AttendanceSummaryData; view: AttendanceView; onView: (view: AttendanceView) => void; status: string; requestKinds: RequestKind[]; onRequest: (kind: RequestKind) => void;
+}) {
   const t = useT();
   const isCalendar = view === "calendar";
   const link = (from: string) => `/attendance${toQueryString({ view, ...(isCalendar ? { month: from.slice(0, 7) } : { from }), ...(status ? { status } : {}) })}`;
@@ -33,7 +37,7 @@ export function AttendanceToolbar({ data, view, onView, status, onRequest }: { d
       <a className="btn btn-sm btn-ghost" href={exportLink("csv")} download><Icon name="download" size={14} /> {t("Export CSV")}</a>
       <a className="btn btn-sm btn-ghost" href={exportLink("pdf")} download><Icon name="download" size={14} /> {t("Export PDF")}</a>
       <button type="button" className="btn btn-sm btn-ghost" onClick={() => window.print()}>{t("Print")}</button>
-      {onRequest && <button type="button" className="btn btn-gold" onClick={onRequest}>{t("Request regularization")}</button>}
+      {requestKinds.length > 0 && <RequestMenu kinds={requestKinds} onChoose={onRequest} />}
     </div>
   );
 }

@@ -56,8 +56,8 @@ export async function updateRegularizationReason(id: string, input: { label?: st
 
 // Remote work requests (/api/v1/attendance/remote-work-requests…): Admin and HR approve.
 
-/** A new remote work request for the signed-in employee: ISO dates, both ends included, and a reason. */
-export async function requestRemoteWork(input: { fromDate: string; toDate: string; reason: string }): Promise<ActionResult<{ id: string }>> {
+/** A new remote work request: ISO dates, both ends included, and a reason. Admin / HR may name an `employeeId`; the request is then approved at once. */
+export async function requestRemoteWork(input: { employeeId?: string; fromDate: string; toDate: string; reason: string }): Promise<ActionResult<{ id: string }>> {
   return apiAction("POST", "/api/v1/attendance/remote-work-requests", input, ["/attendance"]);
 }
 
@@ -73,6 +73,8 @@ export async function decideRemoteWork(input: { ids: string[]; approve: boolean;
 // On Duty runs in the Spring Boot API (/api/v1/attendance/on-duty-requests…).
 
 export interface OnDutyInput {
+  /** Admin / HR: raise the request for this employee (approved at once). */
+  employeeId?: string;
   date: string;
   /** Last day of a range (one request per day). */
   toDate?: string;

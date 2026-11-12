@@ -5,6 +5,8 @@ import { todayIn } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import { usePage } from "@/lib/page";
 import { requestRemoteWork } from "./actions";
+import { EmployeePicker, type PickedEmployee } from "./EmployeePicker";
+import { onBehalfOf } from "./requestKinds";
 import { REMOTE_WORK_MAX_REASON, remoteWorkDays, remoteWorkProblem, REMOTE_WORK_MAX_DAYS } from "./remoteWork";
 
 /** The Add request form of the Remote Work Requests tab: the first and the last day (one day by default) and a reason. The server checks everything again. */
@@ -14,6 +16,7 @@ export function RemoteWorkRequestModal({ onClose }: { onClose: () => void }) {
   const { user } = usePage();
   const [busy, start] = useTransition();
   const today = todayIn(user.timeZone);
+  const [employee, setEmployee] = useState<PickedEmployee | null>(null);
   const [fromDate, setFromDate] = useState(today);
   const [toDate, setToDate] = useState(today);
   const [reason, setReason] = useState("");
@@ -22,7 +25,7 @@ export function RemoteWorkRequestModal({ onClose }: { onClose: () => void }) {
   const days = fromDate && toDate && toDate >= fromDate ? remoteWorkDays(fromDate, toDate) : 0;
 
   const submit = () => start(async () => {
-    const result = await requestRemoteWork({ fromDate, toDate, reason: reason.trim() });
+    const result = await requestRemoteWork({ ...onBehalfOf(employee?.id), fromDate, toDate, reason: reason.trim() });
     if (!result.ok) { setProblem(result.error); return; }
     toast(result.message!);
     onClose();
@@ -31,13 +34,14 @@ export function RemoteWorkRequestModal({ onClose }: { onClose: () => void }) {
   return (
     <Modal title={t("Request remote work")} eyebrow={t("Attendance")} size="sm" onClose={onClose}
       footer={<>
-        <span className="faint" style={{ fontSize: 12.5 }}>{t("Goes to Admin and HR — either can approve.")}</span>
+        <span className="faint" style={{ fontSize: 12.5 }}>{employee ? t("Approved at once because you are raising it for someone else.") : t("Goes to Admin and HR — either can approve.")}</span>
         <div className="row" style={{ gap: 10 }}>
           <button className="btn btn-ghost" onClick={onClose}>{t("Cancel")}</button>
-          <button className="btn btn-gold" disabled={busy || !!missing} onClick={submit}>{busy ? t("Sending…") : t("Send for approval")}</button>
+          <button className="btn btn-gold" disabled={busy || !!missing} onClick={submit}>{busy ? t("Sending…") : employee ? t("Add and approve") : t("Send for approval")}</button>
         </div>
       </>}>
       <div className="col" style={{ gap: 14 }}>
+        <EmployeePicker value={employee} onChange={setEmployee} />
         <div className="grid2">
           <label className="field">{t("From")} *
             <input type="date" value={fromDate} onChange={(e) => { setFromDate(e.target.value); if (e.target.value && toDate < e.target.value) setToDate(e.target.value); setProblem(null); }} />

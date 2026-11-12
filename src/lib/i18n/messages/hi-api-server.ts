@@ -232,6 +232,7 @@ export const hindiServerTextMessages: Record<string, string> = {
   "A request can cover at most {days} days.": "एक अनुरोध अधिकतम {days} दिनों का हो सकता है।",
   "Enter the reason for working remotely.": "रिमोट वर्क का कारण लिखें।",
   "You already have a remote work request for some of these days.": "इनमें से कुछ दिनों के लिए आपका रिमोट वर्क अनुरोध पहले से है।",
+  "The employee already has a remote work request for some of these days.": "इस कर्मचारी का इनमें से कुछ दिनों के लिए रिमोट वर्क अनुरोध पहले से है।",
   "Remote work request added successfully": "रिमोट वर्क अनुरोध सफलतापूर्वक जोड़ा गया",
   "Choose between 1 and {count} requests.": "1 से {count} अनुरोध चुनें।",
   "This day isn't marked as loss of pay.": "यह दिन वेतन कटौती के रूप में चिह्नित नहीं है।",

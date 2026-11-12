@@ -6,6 +6,8 @@ import { formatDayMonthYear, formatHours, todayIn } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import { usePage } from "@/lib/page";
 import { requestRegularization, type DayOutcome } from "./actions";
+import { EmployeePicker, type PickedEmployee } from "./EmployeePicker";
+import { onBehalfOf } from "./requestKinds";
 import { KIND_LABEL, minutesBetweenLocal, prefillUnlessTouched, type DayPreview, type RegularizationKind, type RegularizationRules } from "./regularization";
 
 /**
@@ -31,22 +33,9 @@ export function RegularizationRequestModal({ date: initialDate, onClose }: { dat
   const [attachment, setAttachment] = useState<File | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [toDate, setToDate] = useState("");
-  const [employee, setEmployee] = useState<{ id: string; name: string } | null>(null);
-  const [search, setSearch] = useState("");
-  const [people, setPeople] = useState<{ id: string; name: string }[]>([]);
+  const [employee, setEmployee] = useState<PickedEmployee | null>(null);
   const [outcomes, setOutcomes] = useState<DayOutcome[] | null>(null);
-  const canRaiseForOthers = user.perms.has("appr.reg");
   const employeeId = employee?.id ?? "";
-
-  // Admin / HR pick the employee they raise the request for
-  useEffect(() => {
-    if (!canRaiseForOthers || search.trim().length < 2) { setPeople([]); return; }
-    let current = true;
-    const timer = setTimeout(() => {
-      apiData<{ rows: { id: string; name: string }[] }>(`/api/v1/directory?search=${encodeURIComponent(search.trim())}`).then((found) => { if (current) setPeople(found.rows.filter((row) => row.id !== user.id)); }).catch(() => {});
-    }, 250);
-    return () => { current = false; clearTimeout(timer); };
-  }, [search, canRaiseForOthers, user.id]);
 
   // the day (or the employee) changes → what is recorded for it (prefill) and the month's remaining requests
   useEffect(() => {
@@ -90,7 +79,7 @@ export function RegularizationRequestModal({ date: initialDate, onClose }: { dat
 
   const submit = () => start(async () => {
     if (!kind) return;
-    const result = await requestRegularization({ date, toDate: toDate && toDate !== date ? toDate : undefined, employeeId: employeeId || undefined, kind, checkIn, checkOut, reasonId, description: description.trim() }, attachment);
+    const result = await requestRegularization({ date, toDate: toDate && toDate !== date ? toDate : undefined, ...onBehalfOf(employeeId), kind, checkIn, checkOut, reasonId, description: description.trim() }, attachment);
     if (!result.ok) { setProblem(result.error); return; }
     const failed = result.data?.filter((outcome) => !outcome.ok) ?? [];
     const made = (result.data ?? []).filter((outcome) => outcome.ok).length;
@@ -117,18 +106,7 @@ export function RegularizationRequestModal({ date: initialDate, onClose }: { dat
         </div>
       ) : (
       <div className="col" style={{ gap: 14 }}>
-        {canRaiseForOthers && (
-          <div className="field">{t("Employee")} <span className="hint">{t("leave empty for yourself")}</span>
-            {employee ? (
-              <div className="row" style={{ gap: 8, alignItems: "center" }}><b>{employee.name}</b><button type="button" className="btn btn-sm btn-ghost" onClick={() => { setEmployee(null); setSearch(""); }}>{t("Change")}</button></div>
-            ) : (
-              <>
-                <input value={search} placeholder={t("Search by employee")} onChange={(e) => setSearch(e.target.value)} />
-                {people.length > 0 && <div className="col" style={{ gap: 2, marginTop: 4 }}>{people.map((person) => <button type="button" key={person.id} className="btn btn-sm btn-ghost" style={{ justifyContent: "flex-start" }} onClick={() => { setEmployee(person); setPeople([]); }}>{person.name}</button>)}</div>}
-              </>
-            )}
-          </div>
-        )}
+        <EmployeePicker value={employee} onChange={setEmployee} />
         <div className="grid2">
           <label className="field">{t("Date")}
             <input type="date" value={date} max={today} min={rules ? new Date(Date.parse(`${today}T00:00:00Z`) - rules.backDateLimitDays * 86400000).toISOString().slice(0, 10) : undefined}
