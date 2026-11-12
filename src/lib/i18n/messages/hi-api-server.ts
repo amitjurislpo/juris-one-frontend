@@ -227,6 +227,12 @@ export const hindiServerTextMessages: Record<string, string> = {
   "An On Duty request for {date} already exists.": "{date} के लिए ऑन ड्यूटी अनुरोध पहले से मौजूद है।",
   "That month's attendance is locked — reject this and adjust LOP in payroll instead.": "उस माह की उपस्थिति बंद है — इसे अस्वीकृत करें और इसके बजाय पेरोल में LOP समायोजित करें।",
   "That day is now a holiday, weekly off or leave — reject this request.": "वह दिन अब अवकाश, साप्ताहिक अवकाश या छुट्टी है — इस अनुरोध को अस्वीकृत करें।",
+  // remote work requests
+  "Requests can be made up to {days} days ahead.": "अनुरोध अधिकतम {days} दिन आगे तक किए जा सकते हैं।",
+  "A request can cover at most {days} days.": "एक अनुरोध अधिकतम {days} दिनों का हो सकता है।",
+  "Enter the reason for working remotely.": "रिमोट वर्क का कारण लिखें।",
+  "You already have a remote work request for some of these days.": "इनमें से कुछ दिनों के लिए आपका रिमोट वर्क अनुरोध पहले से है।",
+  "Remote work request added successfully": "रिमोट वर्क अनुरोध सफलतापूर्वक जोड़ा गया",
   "Choose between 1 and {count} requests.": "1 से {count} अनुरोध चुनें।",
   "This day isn't marked as loss of pay.": "यह दिन वेतन कटौती के रूप में चिह्नित नहीं है।",
   "There's no late mark on this day.": "इस दिन कोई लेट मार्क नहीं है।",

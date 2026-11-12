@@ -58,6 +58,7 @@ function countsAs(day: CalendarDay, t: T) {
 }
 
 function explain(day: CalendarDay, t: T) {
+  if (day.label === "Remote") return t("An approved remote work day counts as a normal working day, with or without a check-in.");
   if (day.status === "ABSENT") return day.missedCheckout ? t("Check-out is missing, so the hours don't add up to a working day. Ask for a regularization with your real check-out time.") : t("No check-in and no leave applied. It stays loss of pay unless Admin or HR approves a regularization before payroll locks.");
   if (day.status === "HALF_DAY") return t("Between 4 and 8 hours worked, so half the day is loss of pay.");
   if (day.late) return t("Checked in after the grace period. Three late marks in a month count as half a day of loss of pay.");
