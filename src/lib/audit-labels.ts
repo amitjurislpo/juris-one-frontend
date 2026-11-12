@@ -5,7 +5,7 @@ export const AUDIT_GROUPS = {
   auth: { label: "Sign-in & accounts", prefixes: ["auth."] },
   people: { label: "Employees & access", prefixes: ["employee."] },
   roles: { label: "Roles, policies & company", prefixes: ["role.", "policy.", "asset.", "announcement."] },
-  time: { label: "Leave & attendance", prefixes: ["leave.", "regularization.", "attendance."] },
+  time: { label: "Leave & attendance", prefixes: ["leave.", "regularization.", "remote_work.", "attendance."] },
   org: { label: "Departments & holidays", prefixes: ["department.", "holiday."] },
   payroll: { label: "Salary & payroll", prefixes: ["salary.", "payroll."] },
   tax: { label: "Tax & proofs", prefixes: ["tax.", "declaration.", "proof."] },

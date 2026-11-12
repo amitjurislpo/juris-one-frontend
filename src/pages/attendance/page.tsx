@@ -6,22 +6,25 @@ import { AttendanceSummary } from "./AttendanceSummary";
 import { AttendanceTeam } from "./AttendanceTeam";
 import { OnDutyTab } from "./OnDutyTab";
 import { RegularizationTab } from "./RegularizationTab";
+import { RemoteWorkTab } from "./RemoteWorkTab";
 import { ShiftTab } from "./ShiftTab";
 
 /** Attendance: the summary (calendar) and the regularization requests, as tabs kept in the URL (?tab=regularization); the summary also has a Team view (?scope=team). */
 export default function AttendancePage() {
   const { t, user, searchParams } = usePage();
-  const tab = searchParams.tab === "regularization" ? "regularization" : searchParams.tab === "on-duty" ? "on-duty" : searchParams.tab === "shift" ? "shift" : "summary";
+  const tab = searchParams.tab === "regularization" ? "regularization" : searchParams.tab === "on-duty" ? "on-duty" : searchParams.tab === "remote-work" ? "remote-work" : searchParams.tab === "shift" ? "shift" : "summary";
   const canSeeTeam = user.perms.has("att.all") || user.hasReports;
   const showTeam = tab === "summary" && canSeeTeam && searchParams.scope === "team";
   return (
     <div className="col" style={{ gap: 24 }}>
       <div className="toolbar enter">
-        <SegmentedFilter name="tab" dflt="summary" label={t("Attendance sections")} options={[{ value: "summary", label: t("Attendance summary") }, { value: "regularization", label: t("Regularization") }, { value: "on-duty", label: t("On Duty") }, { value: "shift", label: t("Shift") }]} />
+        <SegmentedFilter name="tab" dflt="summary" label={t("Attendance sections")} options={[{ value: "summary", label: t("Attendance summary") }, { value: "regularization", label: t("Regularization") }, { value: "on-duty", label: t("On Duty") }, { value: "remote-work", label: t("Remote Work Requests") }, { value: "shift", label: t("Shift") }]} />
         {tab === "summary" && canSeeTeam && <AttendanceScopeToggle />}
       </div>
       {tab === "shift"
         ? <><PageHeader eyebrow={t("Attendance")} title={t("Shift")} emphasis={t("roster")} sub={t("Who works which shift, day by day.")} /><ShiftTab /></>
+        : tab === "remote-work"
+        ? <><PageHeader eyebrow={t("Attendance")} title={t("Remote work")} emphasis={t("requests")} sub={t("Ask to work from home for a day or more. Admin and HR decide.")} /><RemoteWorkTab /></>
         : tab === "on-duty"
         ? <><PageHeader eyebrow={t("Attendance")} title={t("On Duty")} emphasis={t("requests")} sub={t("Official work away from the usual place. An approved On Duty day counts as a present, payable day.")} /><OnDutyTab /></>
         : tab === "regularization"
