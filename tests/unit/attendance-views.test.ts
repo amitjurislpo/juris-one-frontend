@@ -3,7 +3,7 @@ import { canRegularize, formatDays, formatMinutes, type SummaryDay } from "@/pag
 
 const day = (overrides: Partial<SummaryDay>): SummaryDay => ({
   date: "2026-09-14", weekday: "MONDAY", status: "PRESENT", label: "Present", shiftName: "India Day", firstIn: "9:30 AM", lastOut: "6:30 PM", hours: 9,
-  lateMinutes: 0, earlyMinutes: 0, late: false, missedCheckout: false, today: false, future: false, live: false, regularized: false, regularizationStatus: null, ...overrides,
+  lateMinutes: 0, earlyMinutes: 0, late: false, missedCheckout: false, today: false, future: false, live: false, regularized: false, regularizationStatus: null, checkOutNote: null, ...overrides,
 });
 
 describe("attendance views helpers", () => {

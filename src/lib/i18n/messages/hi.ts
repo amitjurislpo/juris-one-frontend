@@ -5,9 +5,13 @@ import { hindiOnboardingSummaryMessages } from "./hi-onboarding-summary";
 import { hindiOnboardingHrMessages } from "./hi-onboarding-hr";
 import { hindiOnboardingFlowMessages } from "./hi-onboarding-flow";
 import { hindiAttendanceMessages } from "./hi-attendance";
+import { hindiOnDutyMessages } from "./hi-on-duty";
+import { hindiRemoteWorkMessages } from "./hi-remote-work";
 
 export const hindiMessages: Record<string, string> = {
   ...hindiAttendanceMessages, // Attendance views, totals and export; entries below win on duplicates
+  ...hindiOnDutyMessages, // Attendance On Duty tab
+  ...hindiRemoteWorkMessages, // Remote Work Requests tab
   ...hindiOnboardingWizardMessages, // onboarding wizard shell and steps 1 to 3
   ...hindiOnboardingFamilyMessages, // onboarding Family/Nominations; entries below win on duplicates
   ...hindiOnboardingSummaryMessages, // onboarding Attachments/Summary/Success and the HR onboarding view
@@ -436,6 +440,9 @@ export const hindiMessages: Record<string, string> = {
   "No record yet": "अभी कोई रिकॉर्ड नहीं",
   "First check-in": "पहला चेक-इन",
   "Last check-out": "अंतिम चेक-आउट",
+  "Add notes for check-out": "चेक-आउट के लिए टिप्पणी जोड़ें",
+  "Check-out note": "चेक-आउट की टिप्पणी",
+  "Working for {time}": "{time} से कार्यरत",
   "Working now": "अभी कार्यरत",
   "Worked": "कार्य किया",
   "Counts as": "गिना जाएगा",
@@ -2039,6 +2046,41 @@ export const hindiMessages: Record<string, string> = {
   "leave empty for yourself": "अपने लिए खाली छोड़ें",
   "Until date": "अंतिम तारीख़",
   "One request is made for each day, with the same times. Days that do not fit are skipped and listed.": "हर दिन के लिए एक अनुरोध बनता है, समान समय के साथ। जो दिन मेल नहीं खाते उन्हें छोड़कर सूची में दिखाया जाता है।",
+  "Shift assignment removed": "शिफ़्ट असाइनमेंट हटा दिया गया",
+  "Roster layout": "रोस्टर का रूप",
+  "Weekly": "साप्ताहिक",
+  "Monthly": "मासिक",
+  "Previous week": "पिछला सप्ताह",
+  "Next week": "अगला सप्ताह",
+  "Manage shifts": "शिफ़्ट प्रबंधित करें",
+  "Assign shift": "शिफ़्ट सौंपें",
+  "No shift roster": "कोई शिफ़्ट रोस्टर नहीं",
+  "Attendance is not tracked for you, so there is no roster to show.": "आपकी उपस्थिति दर्ज नहीं की जाती, इसलिए दिखाने के लिए कोई रोस्टर नहीं है।",
+  "Shifts": "शिफ़्टें",
+  "Click a day that is on the roster to remove that assignment.": "वह असाइनमेंट हटाने के लिए रोस्टर में शामिल किसी दिन पर क्लिक करें।",
+  "Remove shift assignment": "शिफ़्ट असाइनमेंट हटाएँ",
+  "The employee goes back to their own shift for all the dates of this assignment.": "इस असाइनमेंट की सभी तारीख़ों के लिए कर्मचारी अपनी शिफ़्ट पर लौट जाता है।",
+  "{n} employees assigned": "{n} कर्मचारियों को शिफ़्ट सौंपी गई",
+  "Shift roster": "शिफ़्ट रोस्टर",
+  "Until (optional)": "अंतिम तारीख़ (वैकल्पिक)",
+  "Select all shown": "दिखाए गए सभी चुनें",
+  "Search by name or code": "नाम या कोड से खोजें",
+  "Search employees": "कर्मचारी खोजें",
+  "No employees match.": "कोई कर्मचारी मेल नहीं खाता।",
+  "Shifts can be assigned from today onwards. An employee who already has a shift in these dates is not changed: remove that assignment first.": "शिफ़्ट आज से आगे के लिए सौंपी जा सकती है। जिस कर्मचारी की इन तारीख़ों में पहले से शिफ़्ट है उसे बदला नहीं जाता: पहले वह असाइनमेंट हटाएँ।",
+  "Starts": "शुरू",
+  "Ends": "समाप्त",
+  "Shift saved": "शिफ़्ट सहेजी गई",
+  "Shift created": "शिफ़्ट बनाई गई",
+  "Past midnight": "आधी रात के बाद तक",
+  "Built-in": "पहले से मौजूद",
+  "New shift": "नई शिफ़्ट",
+  "Add shift": "शिफ़्ट जोड़ें",
+  "Changing a shift changes it for everyone on it. Attendance of closed months does not change.": "शिफ़्ट बदलने से वह उस पर काम करने वाले सभी के लिए बदल जाती है। बंद महीनों की उपस्थिति नहीं बदलती।",
+  "No shift": "कोई शिफ़्ट नहीं",
+  "roster": "रोस्टर",
+  "Who works which shift, day by day.": "कौन किस दिन किस शिफ़्ट में काम करता है।",
+  "Manage shifts & the shift roster": "शिफ़्ट और शिफ़्ट रोस्टर प्रबंधित करें",
   // leave year and year-end policy
   "When the leave year starts, and what happens to each leave balance when it ends.": "छुट्टी वर्ष कब शुरू होता है, और खत्म होने पर हर छुट्टी के बैलेंस का क्या होता है।",
   "Leave year": "छुट्टी वर्ष",

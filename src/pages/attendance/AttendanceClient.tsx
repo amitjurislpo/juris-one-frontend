@@ -27,6 +27,7 @@ export interface CalendarDay {
   lopDays: number;
   leaveDays: number;
   regularized: boolean;
+  checkOutNote: string | null;
 }
 
 export interface RegularizationView { id: string; date: string; kind: string; status: string; decidedBy: string | null; reason: string | null }
@@ -57,6 +58,7 @@ function countsAs(day: CalendarDay, t: T) {
 }
 
 function explain(day: CalendarDay, t: T) {
+  if (day.label === "Remote") return t("An approved remote work day counts as a normal working day, with or without a check-in.");
   if (day.status === "ABSENT") return day.missedCheckout ? t("Check-out is missing, so the hours don't add up to a working day. Ask for a regularization with your real check-out time.") : t("No check-in and no leave applied. It stays loss of pay unless Admin or HR approves a regularization before payroll locks.");
   if (day.status === "HALF_DAY") return t("Between 4 and 8 hours worked, so half the day is loss of pay.");
   if (day.late) return t("Checked in after the grace period. Three late marks in a month count as half a day of loss of pay.");
@@ -121,6 +123,7 @@ export function AttendanceCalendar({ days, regs, initialSel, locked, monthLabel 
           <div style={{ marginTop: 16 }}>
             <div className="kv"><span className="muted">{t("First check-in")}</span><b className="num">{selectedDay.firstIn ?? "—"}</b></div>
             <div className="kv"><span className="muted">{t("Last check-out")}</span><b className="num">{selectedDay.lastOut ?? (selectedDay.live && selectedDay.firstIn ? t("Working now") : "—")}</b></div>
+            {selectedDay.checkOutNote && <div className="kv"><span className="muted">{t("Check-out note")}</span><b style={{ overflowWrap: "anywhere", textAlign: "right" }}>{selectedDay.checkOutNote}</b></div>}
             <div className="kv"><span className="muted">{t("Worked")}</span><b className="num">{selectedDay.hours ? formatHours(selectedDay.hours) : "—"}</b></div>
             <div className="kv"><span className="muted">{t("Counts as")}</span><b>{countsAs(selectedDay, t)}</b></div>
           </div>

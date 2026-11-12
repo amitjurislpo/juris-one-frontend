@@ -69,6 +69,12 @@ export const formatRupees = (paise: number | bigint | null | undefined) =>
 
 export const formatHours = (hours: number) => `${Math.floor(hours)}h ${pad(Math.round((hours % 1) * 60))}m`;
 
+/** Time since a check-in as "hh:mm" (whole minutes, never negative; a clock slightly behind the server's shows 00:00). */
+export const formatElapsed = (sinceIso: string, nowMs: number) => {
+  const minutes = Math.max(0, Math.floor((nowMs - Date.parse(sinceIso)) / 60_000));
+  return `${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}`;
+};
+
 export const initials = (name: string) => name.split(/\s+/).filter(Boolean).map((word) => word[0]).slice(0, 2).join("").toUpperCase();
 
 const AVC = ["c0", "c1", "c2", "c3", "c4"];

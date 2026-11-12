@@ -11,6 +11,7 @@ export const PERMISSIONS = [
   ["dept.manage", "Create departments"],
   ["holidays.manage", "Manage holiday calendar"],
   ["letters.manage", "Issue HR letters & edit letter templates"],
+  ["shifts.manage", "Manage shifts & the shift roster"],
   ["pay.view", "View & edit payroll"],
   ["pay.close", "Close payroll & publish payslips"],
   ["struct.manage", "Salary structures"],
@@ -31,7 +32,7 @@ export const PERMISSION_LABEL = Object.fromEntries(PERMISSIONS) as Record<Permis
 
 export const PERMISSION_GROUPS: [string, Permission[]][] = [
   ["Self-service", ["self", "dir"]],
-  ["People operations", ["att.all", "appr.leave", "appr.reg", "people.view", "people.add", "access.toggle", "dept.manage", "holidays.manage", "letters.manage"]],
+  ["People operations", ["att.all", "appr.leave", "appr.reg", "people.view", "people.add", "access.toggle", "dept.manage", "holidays.manage", "letters.manage", "shifts.manage"]],
   ["Finance", ["pay.view", "pay.close", "struct.manage", "tax.view", "proofs.verify"]],
   ["Administration", ["policies.manage", "assets.manage", "announcements.manage", "roles.manage"]],
   ["Tasks", ["tasks.manage", "projects.create"]],
