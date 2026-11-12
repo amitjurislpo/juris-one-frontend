@@ -27,6 +27,7 @@ export interface CalendarDay {
   lopDays: number;
   leaveDays: number;
   regularized: boolean;
+  checkOutNote: string | null;
 }
 
 export interface RegularizationView { id: string; date: string; kind: string; status: string; decidedBy: string | null; reason: string | null }
@@ -121,6 +122,7 @@ export function AttendanceCalendar({ days, regs, initialSel, locked, monthLabel 
           <div style={{ marginTop: 16 }}>
             <div className="kv"><span className="muted">{t("First check-in")}</span><b className="num">{selectedDay.firstIn ?? "—"}</b></div>
             <div className="kv"><span className="muted">{t("Last check-out")}</span><b className="num">{selectedDay.lastOut ?? (selectedDay.live && selectedDay.firstIn ? t("Working now") : "—")}</b></div>
+            {selectedDay.checkOutNote && <div className="kv"><span className="muted">{t("Check-out note")}</span><b style={{ overflowWrap: "anywhere", textAlign: "right" }}>{selectedDay.checkOutNote}</b></div>}
             <div className="kv"><span className="muted">{t("Worked")}</span><b className="num">{selectedDay.hours ? formatHours(selectedDay.hours) : "—"}</b></div>
             <div className="kv"><span className="muted">{t("Counts as")}</span><b>{countsAs(selectedDay, t)}</b></div>
           </div>

@@ -29,6 +29,7 @@ export interface SummaryDay {
   live: boolean;
   regularized: boolean;
   regularizationStatus: string | null;
+  checkOutNote: string | null;
 }
 
 export interface SummaryCounters {
@@ -55,6 +56,7 @@ export interface AttendanceSummaryData {
   shift: { name: string; start: string; end: string };
   counters: SummaryCounters;
   days: SummaryDay[];
+  openSince: string | null; // ISO time of the check-in that is still open
 }
 
 const STORAGE_KEY = "attendance.view";

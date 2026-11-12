@@ -45,6 +45,7 @@ test.describe("attendance", () => {
     await page.getByRole("button", { name: "Check in" }).click();
     await expect(toast(page)).toContainText("Checked in");
     await expect(page.locator(".timecard .chip")).toHaveText("Checked in");
+    await expect(page.getByRole("timer")).toContainText("Working for 00:0");
     await expect(page.locator(".timeline")).toContainText("Checked in");
     await expect(page.locator(".timeline")).toContainText("Web");
 
@@ -55,11 +56,16 @@ test.describe("attendance", () => {
     // pretend the check-in was 2 hours ago, then check out
     await sql(`UPDATE punches SET at = at - interval '2 hours' WHERE created_at >= $1 AND employee_id = (SELECT id FROM employees WHERE code = 'JC058')`, [TEST_START_TIME]);
     await page.reload();
+    await page.getByLabel("Add notes for check-out").fill("E2E note: filed the returns");
     await page.getByRole("button", { name: "Check out" }).click();
     await expect(toast(page)).toContainText("Checked out — 2h");
     await expect(page.locator(".timecard .chip")).toHaveText("Checked out");
     const rows = await sql<{ kind: string; ip: string | null }>(`SELECT kind, ip FROM punches WHERE created_at >= $1 AND employee_id = (SELECT id FROM employees WHERE code = 'JC058') ORDER BY at`, [TEST_START_TIME]);
     expect(rows.map((r) => r.kind)).toEqual(["IN", "OUT"]);
+    const notes = await sql<{ note: string | null }>(`SELECT note FROM punches WHERE created_at >= $1 AND kind = 'OUT' AND employee_id = (SELECT id FROM employees WHERE code = 'JC058')`, [TEST_START_TIME]);
+    expect(notes[0].note).toBe("E2E note: filed the returns");
+    await page.goto("/attendance?view=calendar");
+    await expect(page.getByText("E2E note: filed the returns")).toBeVisible();
   });
 
   test("Admin has no check-in or attendance pages", async ({ page }) => {
