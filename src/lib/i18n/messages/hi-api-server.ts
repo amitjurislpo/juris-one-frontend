@@ -297,4 +297,6 @@ export const hindiServerTextMessages: Record<string, string> = {
   "Enter a shift name.": "शिफ़्ट का नाम लिखें।",
   "Keep the shift name under 40 characters.": "शिफ़्ट का नाम 40 अक्षरों से कम रखें।",
   "Employee not found.": "कर्मचारी नहीं मिला।",
+  // encrypted names (EmployeeNameDirectory)
+  "There are too many people to search or sort by name at once. Narrow your search with a filter and try again.": "नाम से खोजने या क्रमबद्ध करने के लिए एक साथ बहुत ज़्यादा लोग हैं। फ़िल्टर से खोज सीमित करें और दोबारा कोशिश करें।",
 };
