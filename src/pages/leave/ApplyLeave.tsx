@@ -9,6 +9,7 @@ import { formatDayMonth, formatDayMonthYear, formatWeekdayDayMonthYear, MONTH_NA
 import { useT } from "@/lib/i18n/client";
 import type { Preview } from "@/lib/api-types";
 import { applyLeave, preview } from "./actions";
+import { LeaveEmployeePicker, type PickedEmployee } from "./LeaveEmployeePicker";
 
 export interface LeaveTypeOption { code: string; name: string; available: number | null; paid: boolean; lockedReason: string | null }
 export interface LeaveYearSpan { from: string; to: string }
@@ -65,17 +66,18 @@ export function ApplyLeave({ types, today, leaveYear, holidays, weeklyOffs, onCl
   const [range, setRange] = useState({ from: "", to: "" });
   const [part, setPart] = useState<Part>("FULL");
   const [reason, setReason] = useState("");
+  const [employee, setEmployee] = useState<PickedEmployee | null>(null);
   const [previewResult, setPreviewResult] = useState<Preview | null>(null);
   const [tried, setTried] = useState(false);
   const [err, setErr] = useState("");
   const [busy, start] = useTransition();
-  useDismissOnEdit(err, () => setErr(""), type, range, part, reason);
+  useDismissOnEdit(err, () => setErr(""), type, range, part, reason, employee);
   const rangeStart = range.from && range.to ? [range.from, range.to].sort()[0] : range.from;
   const rangeEnd = range.from && range.to ? [range.from, range.to].sort()[1] : range.from;
   const single = !!rangeStart && rangeStart === rangeEnd;
   const tName = types.find((x) => x.code === type)!.name;
 
-  const query = useMemo(() => (rangeStart ? { type, from: rangeStart, to: rangeEnd, part: single ? part : ("FULL" as Part), reason } : null), [type, rangeStart, rangeEnd, single, part, reason]);
+  const query = useMemo(() => (rangeStart ? { type, from: rangeStart, to: rangeEnd, part: single ? part : ("FULL" as Part), reason, employeeId: employee?.id } : null), [type, rangeStart, rangeEnd, single, part, reason, employee]);
   useEffect(() => {
     if (!query) return;
     let alive = true;
@@ -106,11 +108,12 @@ export function ApplyLeave({ types, today, leaveYear, holidays, weeklyOffs, onCl
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(320px, 100%), 1fr))", gap: 26 }}>
         <div className="col" style={{ gap: 20 }}>
           <div>
+            <LeaveEmployeePicker value={employee} onChange={setEmployee} />
             <div className="field" style={{ marginBottom: 10 }}>{t("1 · Leave type")}</div>
             <div className="ltypes" role="radiogroup" aria-label={t("Leave type")}>
               {types.map((typeOption) => (
-                <button key={typeOption.code} type="button" role="radio" aria-checked={type === typeOption.code} className={`ltype${type === typeOption.code ? " on" : ""}`} onClick={() => setType(typeOption.code)} disabled={!!typeOption.lockedReason} title={typeOption.lockedReason ? t(typeOption.lockedReason) : undefined}>
-                  <span className="tick"><Icon name="ok" size={12} /></span><b>{t(typeOption.name)}</b><small>{typeOption.lockedReason ? t("Not during probation") : typeOption.available === null ? t("Unpaid") : t("{n} available", { n: typeOption.available })}</small>
+                <button key={typeOption.code} type="button" role="radio" aria-checked={type === typeOption.code} className={`ltype${type === typeOption.code ? " on" : ""}`} onClick={() => setType(typeOption.code)} disabled={!employee && !!typeOption.lockedReason} title={typeOption.lockedReason ? t(typeOption.lockedReason) : undefined}>
+                  <span className="tick"><Icon name="ok" size={12} /></span><b>{t(typeOption.name)}</b><small>{employee ? "" : typeOption.lockedReason ? t("Not during probation") : typeOption.available === null ? t("Unpaid") : t("{n} available", { n: typeOption.available })}</small>
                 </button>
               ))}
             </div>
