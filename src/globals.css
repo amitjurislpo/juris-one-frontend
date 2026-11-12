@@ -2047,3 +2047,43 @@ tr.att-today td{background:var(--accentsoft)}
 .att-shift-name{font-size:12.5px}
 @media (max-width:640px){.att-row{grid-template-columns:56px minmax(0,1fr)}.att-meta{grid-column:1 / -1;justify-content:flex-start}}
 @media print{.side,.top,.att-noprint,.toasts{display:none !important}.main{margin:0 !important}.card{box-shadow:none !important}}
+/* Attendance page, Shift tab: the roster grid, its blocks and the assign / manage dialogs */
+.roster-scroll{overflow-x:auto}
+.roster-grid{border-collapse:separate;border-spacing:0;width:100%}
+.roster-grid.weekly{min-width:980px}
+.roster-grid th,.roster-grid td{border-top:1px solid var(--line);padding:6px 4px;vertical-align:middle;text-align:center}
+.roster-grid thead th{border-top:0;font-size:12px;font-weight:500;color:var(--muted);background:var(--surface)}
+.roster-grid .roster-day{display:table-cell}
+.roster-day span,.roster-day b{display:block}
+.roster-day b{font-size:13px;color:var(--text);font-weight:600}
+.roster-who{position:sticky;left:0;z-index:1;background:var(--surface);text-align:left !important;min-width:150px;max-width:190px;padding-left:14px !important;font-weight:400}
+.roster-who b,.roster-who span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.roster-who span{font-size:11.5px}
+.roster-axis{display:flex !important;justify-content:space-between;margin-top:4px;font-size:9.5px;color:var(--faint)}
+.roster-axis i{font-style:normal}
+.roster-track{position:relative;display:block;height:34px;border-radius:6px;background:var(--hover);overflow:hidden}
+.roster-track.off{background:repeating-linear-gradient(135deg,var(--hover) 0 6px,var(--sunken) 6px 12px)}
+.roster-block{position:absolute;top:0;bottom:0;border-radius:5px;opacity:.9}
+.roster-block.spill{border-top-left-radius:0;border-bottom-left-radius:0;opacity:.55}
+.roster-text{position:relative;display:flex;align-items:center;justify-content:center;height:100%;padding:0 4px;font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden}
+.roster-cell{padding:4px 3px !important}
+.roster-cell-button{display:block;width:100%;padding:0;border:0;background:none;font:inherit;color:inherit;cursor:pointer;border-radius:6px}
+.roster-cell-button:hover,.roster-cell-button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.roster-grid.monthly td{min-width:34px}
+.roster-chip{display:inline-flex;align-items:center;justify-content:center;width:30px;height:26px;border-radius:6px;font-size:11px;font-weight:600}
+.roster-chip.off{background:var(--hover);color:var(--faint);font-weight:400}
+.c0{background:var(--accentsoft);color:var(--accenttext)}
+.c1{background:var(--okbg);color:var(--ok)}
+.c2{background:var(--warnbg);color:var(--warn)}
+.c3{background:var(--infobg);color:var(--info)}
+.c4{background:var(--badbg);color:var(--bad)}
+.roster-block.c0{background:var(--accent2);opacity:.45}.roster-block.c1{background:var(--ok);opacity:.4}.roster-block.c2{background:var(--warn);opacity:.4}.roster-block.c3{background:var(--info);opacity:.4}.roster-block.c4{background:var(--bad);opacity:.4}
+.roster-legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12.5px}
+.roster-legend span{display:inline-flex;align-items:center;gap:6px}
+.roster-swatch{display:inline-block;width:12px;height:12px;border-radius:3px}
+.roster-search{width:100%;margin:8px 0}
+.roster-picker{max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:8px}
+.roster-picker-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-top:1px solid var(--line);cursor:pointer}
+.roster-picker-row:first-child{border-top:0}
+.roster-shift-editor{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr);gap:10px}
+@media (max-width:640px){.roster-shift-editor{grid-template-columns:1fr 1fr}.roster-shift-editor label:first-child{grid-column:1 / -1}.roster-who{min-width:120px}}
