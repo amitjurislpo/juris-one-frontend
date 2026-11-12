@@ -5,6 +5,7 @@ import { AttendanceScopeToggle } from "./AttendanceScopeToggle";
 import { AttendanceSummary } from "./AttendanceSummary";
 import { AttendanceTeam } from "./AttendanceTeam";
 import { OnDutyTab } from "./OnDutyTab";
+import { usePendingCounts, withPendingCount } from "./pendingCounts";
 import { RegularizationTab } from "./RegularizationTab";
 import { RemoteWorkTab } from "./RemoteWorkTab";
 import { ShiftTab } from "./ShiftTab";
@@ -13,12 +14,13 @@ import { ShiftTab } from "./ShiftTab";
 export default function AttendancePage() {
   const { t, user, searchParams } = usePage();
   const tab = searchParams.tab === "regularization" ? "regularization" : searchParams.tab === "on-duty" ? "on-duty" : searchParams.tab === "remote-work" ? "remote-work" : searchParams.tab === "shift" ? "shift" : "summary";
+  const counts = usePendingCounts(); // waiting for this user to decide, by the server's approval rule
   const canSeeTeam = user.perms.has("att.all") || user.hasReports;
   const showTeam = tab === "summary" && canSeeTeam && searchParams.scope === "team";
   return (
     <div className="col" style={{ gap: 24 }}>
       <div className="toolbar enter">
-        <SegmentedFilter name="tab" dflt="summary" label={t("Attendance sections")} options={[{ value: "summary", label: t("Attendance summary") }, { value: "regularization", label: t("Regularization") }, { value: "on-duty", label: t("On Duty") }, { value: "remote-work", label: t("Remote Work Requests") }, { value: "shift", label: t("Shift") }]} />
+        <SegmentedFilter name="tab" dflt="summary" label={t("Attendance sections")} options={[{ value: "summary", label: t("Attendance summary") }, { value: "regularization", label: withPendingCount(t("Regularization"), counts?.regularization) }, { value: "on-duty", label: withPendingCount(t("On Duty"), counts?.onDuty) }, { value: "remote-work", label: withPendingCount(t("Remote Work Requests"), counts?.remoteWork) }, { value: "shift", label: t("Shift") }]} />
         {tab === "summary" && canSeeTeam && <AttendanceScopeToggle />}
       </div>
       {tab === "shift"

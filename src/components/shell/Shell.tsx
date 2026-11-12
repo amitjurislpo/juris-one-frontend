@@ -31,7 +31,7 @@ export interface ShellProps {
   };
   groups: { title: string; items: { id: string; label: string; icon: string }[] }[];
   /** `myTasks`: my open tasks (direct or accountable) that are overdue or due today; absent = 0. */
-  badges: { approvals: number; proofs: number; myTasks?: number };
+  badges: { approvals: number; proofs: number; myTasks?: number; attendanceRequests?: number };
   notes: { text: string; meta: string; href?: string; id?: string | null; unread?: boolean; sticky?: boolean }[];
   unread: number;
   landing: string;
@@ -202,6 +202,7 @@ export function Shell(props: ShellProps) {
                   <span className="ic"><Icon name={navItem.icon} size={17} /></span>
                   <span className="nav-label">{t(navItem.label)}</span>
                   {navItem.id === "approvals" && badges.approvals > 0 && <span className="badge">{badges.approvals}</span>}
+                  {navItem.id === "attendance" && (badges.attendanceRequests ?? 0) > 0 && <span className="badge" title={t("Requests waiting for you")}>{badges.attendanceRequests}</span>}
                   {navItem.id === "proofs" && badges.proofs > 0 && <span className="badge">{badges.proofs}</span>}
                   {navItem.id === "my-tasks" && (badges.myTasks ?? 0) > 0 && <span className="badge" title={t("Overdue or due today")}>{badges.myTasks}</span>}
                 </Link>

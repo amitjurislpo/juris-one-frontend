@@ -18,9 +18,13 @@ export interface RemoteWorkItem {
   decidedAt: string | null;
   decisionNote: string | null;
   createdAt: string;
+  /** FULL, FIRST_HALF or SECOND_HALF (a half day is a single day). */
+  part: string;
+  createdBy: string | null;
 }
 
-export interface RemoteWorkList { scope: "mine" | "team"; canDecide: boolean; items: RemoteWorkItem[]; total: number; page: number; pageSize: number }
+/** `decidable`: the ids of the pending requests on the page that the signed-in user may decide (the server's approval rule). */
+export interface RemoteWorkList { scope: "mine" | "team"; canDecide: boolean; items: RemoteWorkItem[]; decidable: string[]; total: number; page: number; pageSize: number }
 
 /** The limits the server enforces (the form shows the same, so a request is rarely refused). */
 export const REMOTE_WORK_MAX_DAYS = 31;
@@ -40,5 +44,5 @@ export function remoteWorkProblem(fromDate: string, toDate: string, reason: stri
   return null;
 }
 
-/** Who may decide a row: an approver, on a pending request that is not their own. */
-export const canDecideRemoteWork = (item: RemoteWorkItem, canDecide: boolean, userId: string) => canDecide && item.status === "PENDING" && item.employeeId !== userId;
+/** "1 day", "3 days" or "First half" / "Second half" for a half-day request: the English text for `t()`, with the number for `{n}`. */
+export const remoteWorkDuration = (item: Pick<RemoteWorkItem, "days" | "part">) => (item.part === "FULL" || !item.part ? (item.days === 1 ? "1 day" : "{n} days") : item.part === "FIRST_HALF" ? "First half" : "Second half");
