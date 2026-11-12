@@ -481,6 +481,7 @@ export const hindiMessages: Record<string, string> = {
   "No more holidays this year.": "इस वर्ष और कोई अवकाश नहीं।",
   // leave
   "Weekend": "सप्ताहांत",
+  "Leave can be applied only inside the current leave year: {from} to {to}.": "छुट्टी केवल मौजूदा छुट्टी वर्ष के भीतर ही ली जा सकती है: {from} से {to}।",
   "Weekends, holidays and past dates can't be picked": "सप्ताहांत, अवकाश और बीती तारीख़ें नहीं चुनी जा सकतीं",
   "New request": "नया अनुरोध",
   "Sent to HR for approval": "स्वीकृति के लिए HR को भेजा जाएगा",

@@ -7,9 +7,9 @@ import { ConfirmDialog, Modal } from "@/components/ui/Modal";
 import { useT } from "@/lib/i18n/client";
 import { useReadOnly } from "@/lib/session";
 import { cancelLeave } from "./actions";
-import { ApplyLeave, type LeaveTypeOption } from "./ApplyLeave";
+import { ApplyLeave, type LeaveTypeOption, type LeaveYearSpan } from "./ApplyLeave";
 
-export function ApplyButton({ types, today, holidays, weeklyOffs, autoOpen }: { types: LeaveTypeOption[]; today: string; holidays: Record<string, string>; weeklyOffs: number[]; autoOpen: boolean }) {
+export function ApplyButton({ types, today, holidays, weeklyOffs, leaveYear, autoOpen }: { types: LeaveTypeOption[]; today: string; leaveYear: LeaveYearSpan; holidays: Record<string, string>; weeklyOffs: number[]; autoOpen: boolean }) {
   const t = useT();
   const router = useRouter();
   const path = usePathname();
@@ -27,7 +27,7 @@ export function ApplyButton({ types, today, holidays, weeklyOffs, autoOpen }: { 
           <p className="muted" style={{ margin: 0 }}>{t("You have no leave available at the moment. Leave is added to your balance as you earn it, so you can apply once you have some. Talk to HR if you think this is wrong.")}</p>
         </Modal>
       )}
-      {open && !none && <ApplyLeave types={types} today={today} holidays={holidays} weeklyOffs={weeklyOffs} onClose={close} />}
+      {open && !none && <ApplyLeave types={types} today={today} leaveYear={leaveYear} holidays={holidays} weeklyOffs={weeklyOffs} onClose={close} />}
     </>
   );
 }
