@@ -14,6 +14,7 @@ import { DAY_STATUS_LABEL, formatMinutes, KIND_LABEL, STATUS_CHIP, STATUS_LABEL,
 import { RegularizationDetailsModal } from "./RegularizationDetailsModal";
 import { RegularizationRequestModal } from "./RegularizationRequestModal";
 import { RegularizationRulesModal } from "./RegularizationRulesModal";
+import { usePendingCounts } from "./pendingCounts";
 
 /**
  * The Regularization tab: my requests (My data) or everyone's (Team, Admin / HR only) with Old and New hours and status, the approval
@@ -25,8 +26,10 @@ export function RegularizationTab() {
   const { user, searchParams } = usePage();
   const readOnly = useReadOnly();
   const { get, set } = useQuery();
-  const canDecide = user.perms.has("appr.reg");
-  const scope = canDecide && searchParams.scope === "team" ? "all" : "mine";
+  const counts = usePendingCounts();
+  const isApprover = user.perms.has("appr.reg");
+  const canSeeAll = isApprover || (counts?.managesHr ?? false); // Admin / HR see everyone; the manager of an HR person sees that person's requests
+  const scope = canSeeAll && searchParams.scope === "team" ? "all" : "mine";
   const query = { scope, status: searchParams.status ?? "", month: searchParams.month ?? "", search: searchParams.search ?? "", page: searchParams.page ?? "" };
   const data = useData<RegularizationList>(`/api/v1/attendance/regularizations${toQueryString(Object.fromEntries(Object.entries(query).filter(([, value]) => value !== "")))}`);
   const rules = useData<RegularizationRules>("/api/v1/attendance/regularization-rules");
@@ -43,7 +46,7 @@ export function RegularizationTab() {
   const today = todayIn(user.timeZone);
   const month = searchParams.month ?? "";
   const openedItem = data.items.find((item) => item.id === opened) ?? null;
-  const decidable = (item: RegularizationItem) => team && item.status === "PENDING" && item.employeeId !== user.id;
+  const decidable = (item: RegularizationItem) => data.decidable.includes(item.id); // the server's approval rule
   const status = (value: string | null) => (value ? t(DAY_STATUS_LABEL[value] ?? value) : "—");
   const exportQuery = toQueryString(Object.fromEntries(Object.entries({ status: query.status, month: query.month, search: query.search }).filter(([, value]) => value !== "")));
 
@@ -61,7 +64,7 @@ export function RegularizationTab() {
   return (
     <div className="col" style={{ gap: 18 }}>
       <div className="toolbar enter" style={{ flexWrap: "wrap", gap: 10 }}>
-        {canDecide && <SegmentedFilter name="scope" dflt="mine" label={t("Whose requests")} options={[{ value: "mine", label: t("My data") }, { value: "team", label: t("Team") }]} />}
+        {canSeeAll && <SegmentedFilter name="scope" dflt="mine" label={t("Whose requests")} options={[{ value: "mine", label: t("My data") }, { value: "team", label: t("Team") }]} />}
         <SegmentedFilter name="status" dflt="ALL" label={t("Approval status")} options={[
           { value: "ALL", label: t("All") }, { value: "PENDING", label: t("Pending") }, { value: "APPROVED", label: t("Approved") }, { value: "DECLINED", label: t("Rejected") }, { value: "CANCELLED", label: t("Cancelled") },
         ]} />
@@ -70,8 +73,8 @@ export function RegularizationTab() {
         </label>
         {team && <SearchBox placeholder={t("Search by employee")} label={t("Search requests")} />}
         <span style={{ flex: 1 }}></span>
-        {team && <a className="btn btn-sm btn-ghost" href={`/api/v1/attendance/regularizations/export${exportQuery}`} download><Icon name="download" size={14} /> {t("Export CSV")}</a>}
-        {team && !readOnly && <button className="btn btn-sm btn-ghost" onClick={() => setShowSettings(true)}>{t("Settings")}</button>}
+        {team && isApprover && <a className="btn btn-sm btn-ghost" href={`/api/v1/attendance/regularizations/export${exportQuery}`} download><Icon name="download" size={14} /> {t("Export CSV")}</a>}
+        {team && isApprover && !readOnly && <button className="btn btn-sm btn-ghost" onClick={() => setShowSettings(true)}>{t("Settings")}</button>}
         {!readOnly && <button className="btn btn-gold" onClick={() => setRequesting(true)}>{t("Add request")}</button>}
       </div>
 
@@ -118,7 +121,7 @@ export function RegularizationTab() {
       <Pager page={data.page} take={data.pageSize} total={data.total} />
 
       {requesting && <RegularizationRequestModal date={get("date", today)} onClose={() => setRequesting(false)} />}
-      {openedItem && <RegularizationDetailsModal item={openedItem} canDecide={canDecide} onClose={() => setOpened(null)} />}
+      {openedItem && <RegularizationDetailsModal item={openedItem} canDecide={decidable(openedItem)} onClose={() => setOpened(null)} />}
       {showSettings && <RegularizationRulesModal rules={rules} onClose={() => setShowSettings(false)} />}
       {rejecting && (
         <ConfirmDialog title={t("Reject requests")} danger confirm={t("Reject")} busy={busy || !note.trim()} onClose={() => setRejecting(false)} onConfirm={() => decide(false)}

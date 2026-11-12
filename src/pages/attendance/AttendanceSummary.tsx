@@ -6,6 +6,8 @@ import { useReadOnly } from "@/lib/session";
 import { toQueryString } from "@/lib/api";
 import { AttendanceDayList } from "./AttendanceDayList";
 import { AttendanceDayTable } from "./AttendanceDayTable";
+import { AttendanceHelpModal } from "./AttendanceHelpModal";
+import { AttendanceShiftCard } from "./AttendanceShiftCard";
 import { AttendanceFooter } from "./AttendanceFooter";
 import { AttendanceMonthView, type MonthData } from "./AttendanceMonthView";
 import { AttendanceToolbar } from "./AttendanceToolbar";
@@ -35,6 +37,7 @@ export function AttendanceSummary() {
   const readOnly = useReadOnly();
   const { view, setView } = useAttendanceView();
   // the request form open on this page: the Request menu picks the kind, a day's "Regularize" button opens regularization for that day
+  const [showHelp, setShowHelp] = useState(false);
   const [request, setRequest] = useState<{ kind: RequestKind; date: string } | null>(null);
   const status = view !== "calendar" && searchParams.status && searchParams.status in STATUS_FILTER_LABEL ? searchParams.status : "";
   const summary = useData<AttendanceSummaryData>(`/api/v1/attendance/summary${toQueryString({ view, ...periodQuery(view, searchParams), ...(status ? { status } : {}) })}`);
@@ -48,12 +51,14 @@ export function AttendanceSummary() {
   const openRegularization = (date: string) => setRequest({ kind: "regularization", date });
   return (
     <div className="col" style={{ gap: 24 }}>
+      {showHelp && <AttendanceHelpModal onClose={() => setShowHelp(false)} />}
       {request?.kind === "regularization" && <RegularizationRequestModal date={request.date} onClose={closeRequest} />}
       {request?.kind === "on-duty" && <OnDutyRequestModal onClose={closeRequest} />}
       {request?.kind === "remote-work" && <RemoteWorkRequestModal onClose={closeRequest} />}
       <PageHeader eyebrow={t("Attendance")} title={t("My")} emphasis={t("attendance")} sub={t("Tap any day to see its check-in, check-out and how it counts.")} />
       {summary.openSince && <div className="att-noprint"><WorkingFor since={summary.openSince} /></div>}
-      <AttendanceToolbar data={summary} view={view} onView={setView} status={status} requestKinds={requestKinds} onRequest={(kind) => setRequest({ kind, date: summary.workDate })} />
+      <AttendanceToolbar data={summary} view={view} onView={setView} status={status} requestKinds={requestKinds} onRequest={(kind) => setRequest({ kind, date: summary.workDate })} onHelp={() => setShowHelp(true)} />
+      <AttendanceShiftCard shiftText={`${summary.shift.name} · ${summary.shift.start} – ${summary.shift.end}`} openSince={summary.openSince} canPunch={!readOnly} />
       {view === "calendar" && month ? <AttendanceMonthView data={month} /> : (
         <section className="card enter">
           {view === "list"

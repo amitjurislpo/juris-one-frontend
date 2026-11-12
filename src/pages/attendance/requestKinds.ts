@@ -14,6 +14,9 @@ export function requestMenuKinds({ isReadOnly, isMonthLocked }: { isReadOnly: bo
   return isMonthLocked ? ["on-duty", "remote-work"] : ["regularization", "on-duty", "remote-work"];
 }
 
+/** A pending request can be changed by the person who raised it (the server checks the same). */
+export const canEditRequest = (item: { status: string; createdBy: string | null }, userId: string, isReadOnly: boolean) => !isReadOnly && item.status === "PENDING" && item.createdBy === userId;
+
 /** The request body for a chosen employee: nothing is sent when the request is for the signed-in user (the server then uses the session). */
 export function onBehalfOf(employeeId: string | undefined): { employeeId?: string } {
   return employeeId ? { employeeId } : {};

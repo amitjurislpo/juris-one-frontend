@@ -73,7 +73,7 @@ test.describe("remote work requests", () => {
     await dialog.getByLabel(/^From/).fill(fromDate);
     await dialog.getByLabel(/^To/).fill(fromDate);
     await dialog.getByLabel(/^Reason/).fill("Raised by HR for the employee");
-    await dialog.getByRole("button", { name: "Add and approve" }).click();
+    await dialog.getByRole("button", { name: "Add for the employee" }).click();
     await expect(toast(page)).toContainText("Remote work request added successfully");
 
     const [request] = await sql<{ status: string; decided_role: string; code: string }>(
