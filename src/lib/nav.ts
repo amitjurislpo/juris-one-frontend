@@ -2,7 +2,7 @@ import type { Permission } from "./permissions";
 
 export type NavId =
   | "platform" | "platform-audit" | "plans" | "juris-track" | "lead-intelligence" | "notifications" | "profile" | "home" | "overview" | "attendance" | "leave" | "payslips" | "declare" | "directory" | "team"
-  | "register" | "approvals" | "employees" | "departments" | "holidays"
+  | "register" | "approvals" | "employees" | "departments" | "holidays" | "leave-policy"
   | "payroll" | "structures" | "tax" | "proofs" | "roles" | "policies" | "settings" | "audit" | "subscription" | "my-policies"
   | "my-assets" | "announcements" | "assets" | "manage-announcements" | "my-letters" | "letters"
   | "my-tasks" | "team-tasks" | "projects" | "task-settings" | "onboard-employee";
@@ -66,6 +66,7 @@ export const NAV: NavItem[] = [
   { id: "onboard-employee", label: "Onboard employee", icon: "plus", perm: ["people.add"], group: "People ops", path: "/onboarding/hires", isHiddenFromMenu: true },
   { id: "departments", label: "Departments", icon: "building", perm: ["dept.manage"], group: "People ops" },
   { id: "holidays", label: "Holiday calendar", icon: "sun", perm: ["holidays.manage"], group: "People ops" },
+  { id: "leave-policy", label: "Leave policy", icon: "cal", perm: ["roles.manage", "holidays.manage"], group: "People ops" },
   { id: "assets", label: "Assets", icon: "layers", perm: ["assets.manage"], group: "People ops" },
   { id: "manage-announcements", label: "Post announcements", icon: "bell", perm: ["announcements.manage"], group: "People ops" },
   { id: "letters", label: "HR letters", icon: "doc", perm: ["letters.manage"], group: "People ops" },

@@ -12,11 +12,14 @@ export interface ApplyInput {
   to: string;
   part: "FULL" | "FIRST_HALF" | "SECOND_HALF";
   reason?: string;
+  /** Admin / HR only: apply for this employee instead of oneself. */
+  employeeId?: string;
 }
 
 /** Live numbers for the apply form — same rules the server enforces on submit. */
 export async function preview(input: ApplyInput): Promise<ActionResult<Preview>> {
   const queryParameters = new URLSearchParams({ type: input.type, from: input.from, to: input.to, part: input.part });
+  if (input.employeeId) queryParameters.set("employeeId", input.employeeId);
   return (await apiCall<Preview>("GET", `/api/v1/leave/previews?${queryParameters}`)).body;
 }
 

@@ -10,6 +10,8 @@ export const hindiNotificationTemplates: Record<string, string> = {
   "{kind} for {date} declined by {name} ({role})": "{kind} ({date}) को {name} ({role}) ने अस्वीकृत किया",
   "{type} ({from} – {to}) approved by {name}": "{type} ({from} – {to}) को {name} ने स्वीकृत किया",
   "{type} ({from} – {to}) declined by {name}": "{type} ({from} – {to}) को {name} ने अस्वीकृत किया",
+  "{name} applied {type} for you ({from} – {to})": "{name} ने आपकी ओर से {type} ({from} – {to}) के लिए आवेदन किया",
+  "{name} applied {type} for you ({date})": "{name} ने आपकी ओर से {type} ({date}) के लिए आवेदन किया",
   "{type} ({date}) approved by {name}": "{type} ({date}) को {name} ने स्वीकृत किया",
   "{type} ({date}) declined by {name}": "{type} ({date}) को {name} ने अस्वीकृत किया",
 

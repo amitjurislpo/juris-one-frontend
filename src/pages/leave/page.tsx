@@ -2,7 +2,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { ClearFilters, Pending, SegmentedFilter, SortableHeader } from "@/components/table/Table";
 import { toQueryString } from "@/lib/api";
 import { PageLoading, useData, usePage } from "@/lib/page";
-import { formatDayMonth, formatWeekdayDayMonthYear, MONTH_ABBREVIATIONS } from "@/lib/format";
+import { formatDayMonth, formatDayMonthYear, formatWeekdayDayMonthYear, MONTH_ABBREVIATIONS } from "@/lib/format";
 import { ApplyButton, CancelLeave } from "./LeaveClient";
 
 
@@ -28,15 +28,17 @@ function Ring({ value, max, color, animationIndex: i }: { value: number; max: nu
 export default function LeavePage() {
   const { t, searchParams } = usePage();
   const data = useData<{
-    tab: "requests" | "holidays"; status: (typeof STATUS)[number]; today: string; year: string; canApply: boolean; lopYear: number;
+    tab: "requests" | "holidays"; status: (typeof STATUS)[number]; today: string; year: string; yearFrom: string; yearTo: string; canApply: boolean; lopYear: number;
     balances: { code: string; name: string; balance: number; pending: number; paid: boolean; needsBalance: boolean; annual: number }[];
     requests: { id: string; typeName: string; leaveType: string; from: string; to: string; part: string; days: number; lopDays: number; applied: string; reason: string | null; status: string; decidedBy: string | null }[];
     holidays: { id: string; date: string; name: string }[]; holidayMap: Record<string, string>;
     types: { code: string; name: string; paid: boolean; available: number | null; lockedReason: string | null }[]; weeklyOffs: number[];
   }>(`/api/v1/leave${toQueryString(searchParams)}`);
   if (!data) return <PageLoading />;
-  const { tab, status, today, year, balances, requests, holidays, holidayMap, types, lopYear } = data;
+  const { tab, status, today, yearFrom, yearTo, balances, requests, holidays, holidayMap, types, lopYear } = data;
 
+  // the business's leave year: just the year when it is a calendar year, else the two dates
+  const year = yearFrom.endsWith("-01-01") ? yearFrom.slice(0, 4) : `${formatDayMonthYear(yearFrom)} – ${formatDayMonthYear(yearTo)}`;
   const bal = (leaveCode: string) => balances.find((b) => b.code === leaveCode);
   const avail = (leaveCode: string) => { const balance = bal(leaveCode); return balance ? Math.round((balance.balance - balance.pending) * 100) / 100 : 0; };
   const rings: [string, number, number, string, string][] = [
@@ -49,7 +51,7 @@ export default function LeavePage() {
   return (
     <div className="col" style={{ gap: 24 }}>
       <PageHeader eyebrow={t("Leave · {year}", { year })} title={t("Time away,")} emphasis={t("well planned")} sub={t("Apply in three steps — leave type, dates, and an optional reason.")}>
-        {data.canApply && <ApplyButton types={types} today={today} holidays={holidayMap} weeklyOffs={data.weeklyOffs} autoOpen={searchParams.apply === "1"} />}
+        {data.canApply && <ApplyButton types={types} today={today} holidays={holidayMap} weeklyOffs={data.weeklyOffs} leaveYear={{ from: yearFrom, to: yearTo }} autoOpen={searchParams.apply === "1"} />}
       </PageHeader>
       <div className="kpis">
         {rings.map(([name, available, max, color, note], i) => (

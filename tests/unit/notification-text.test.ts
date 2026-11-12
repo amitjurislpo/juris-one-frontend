@@ -41,6 +41,8 @@ const SAMPLES: { template: string; text: string; keeps: string[] }[] = [
   { template: "Your onboarding needs changes: {comment}", text: "Your onboarding needs changes: PAN photo is blurred", keeps: ["PAN photo is blurred"] },
   { template: "{name} raised a regularization request for you for {date}", text: "Priya Rao raised a regularization request for you for 9 Oct", keeps: ["Priya Rao"] },
   { template: "{name} raised a regularization request for {employee} for {date}", text: "Priya Rao raised a regularization request for Riya Verma for 9 Oct", keeps: ["Priya Rao", "Riya Verma"] },
+  { template: "{name} applied {type} for you ({date})", text: "Priya Rao applied Casual leave for you (9 Oct)", keeps: ["Priya Rao"] },
+  { template: "{name} applied {type} for you ({from} – {to})", text: "Priya Rao applied Earned leave for you (9 Oct – 12 Oct)", keeps: ["Priya Rao"] },
   { template: "{name} asked for On Duty on {date}", text: "Riya Verma asked for On Duty on 9 Oct", keeps: ["Riya Verma"] },
   { template: "{name} raised an On Duty request for you for {date}", text: "Priya Rao raised an On Duty request for you for 9 Oct", keeps: ["Priya Rao"] },
   { template: "{name} raised an On Duty request for {employee} on {date}", text: "Priya Rao raised an On Duty request for Riya Verma on 9 Oct", keeps: ["Priya Rao", "Riya Verma"] },
