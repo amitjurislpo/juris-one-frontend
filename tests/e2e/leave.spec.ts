@@ -21,9 +21,11 @@ async function restore() {
 async function holdMonthsOpen() {
   const [policy] = await sql<{ lockDay: string | null }>(`SELECT value->>'lockDayOfNextMonth' AS "lockDay" FROM settings WHERE key = 'attendance.policy'`);
   await sql(`UPDATE settings SET value = jsonb_set(value, '{lockDayOfNextMonth}', '99') WHERE key = 'attendance.policy'`);
-  // leave can only be applied inside the business's leave year: let it start today (never 29 February) so "next month" is always inside it
+  // leave can only be applied inside the business's leave year: let it start yesterday (never 29 February) so "next month" is always inside it
   const leavePolicies = await sql<{ businessId: string; value: unknown }>(`SELECT business_id AS "businessId", value FROM settings WHERE key = 'leave.policy'`);
-  const today = new Date();
+  // Start it YESTERDAY, not today: the API's "today" can still be the previous day (e.g. just after midnight), and then a year starting today would
+  // not contain it yet and the API would offer last year's, which ends before next month.
+  const today = new Date(Date.now() - 86400_000);
   const startDay = today.getMonth() === 1 && today.getDate() === 29 ? 28 : today.getDate();
   await sql(`INSERT INTO settings (key, value, updated_at, business_id)
     SELECT 'leave.policy', jsonb_build_object('yearStartMonth', $1::int, 'yearStartDay', $2::int, 'yearEnd', '{}'::jsonb), now(), id FROM businesses
