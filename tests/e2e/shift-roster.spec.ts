@@ -3,6 +3,9 @@ import { expectLanded, login, sql } from "./helpers";
 
 const toast = (page: Page) => page.locator(".toast").last();
 
+// The assignment starts today and has no end date. Look at next week, where it covers the working days even when the test runs on a weekend (a weekly off hides the shift).
+const nextWeekAnchor = new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString().slice(0, 10);
+
 test.describe("shift roster", () => {
   test.afterAll(async () => {
     await sql(`DELETE FROM shift_assignments WHERE shift_id IN (SELECT id FROM shifts WHERE name LIKE 'E2E %')`);
@@ -32,6 +35,7 @@ test.describe("shift roster", () => {
     await assignDialog.getByRole("checkbox", { name: /JC074/ }).check();
     await assignDialog.getByRole("button", { name: "Assign", exact: true }).click();
     await expect(page.locator(".toast").last()).toContainText("1 employee assigned");
+    await page.getByRole("button", { name: "Next week" }).click();
     await expect(page.locator(".roster-grid")).toContainText("E2E Evening");
 
     // the same shift again for the same days is refused as a whole
@@ -48,7 +52,7 @@ test.describe("shift roster", () => {
     const employeePage = await browser.newPage();
     await login(employeePage, "JC074");
     await expectLanded(employeePage, "/home");
-    await employeePage.goto("/attendance?tab=shift");
+    await employeePage.goto(`/attendance?tab=shift&anchor=${nextWeekAnchor}`);
     await expect(employeePage.locator(".roster-grid tbody tr")).toHaveCount(1);
     await expect(employeePage.locator(".roster-grid")).toContainText("E2E Evening");
     await expect(employeePage.getByRole("button", { name: "Assign shift" })).toHaveCount(0);

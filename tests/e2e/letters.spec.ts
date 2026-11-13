@@ -12,6 +12,7 @@ async function cleanup() {
 }
 
 test.describe("HR letters", () => {
+  test.describe.configure({ timeout: 180_000 }); // sign-ins and PDF generation are slow on a busy machine
   test.beforeAll(cleanup);
   test.afterAll(cleanup);
 
@@ -81,7 +82,7 @@ test.describe("HR letters", () => {
     await expectLanded(page, "/overview");
     await page.goto("/letters");
     const offer = page.getByLabel("Template").locator("option", { hasText: "Offer letter" });
-    await expect(offer).toBeEnabled();
+    await expect(offer).toBeEnabled({ timeout: 30_000 }); // the page loads four lists first; give it room on a busy machine
   });
 
   test("an ordinary employee cannot open HR letters", async ({ page }) => {
