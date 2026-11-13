@@ -143,7 +143,7 @@ function AttendancePolicy() {
       <div className="kv"><span className="muted">{translate("Weekly off")}</span><b>{attendancePolicy.weeklyOffs.map((dayIndex) => days[dayIndex]).join(" & ")}</b></div>
       <div className="kv"><span className="muted">{translate("Monthly attendance lock")}</span><b>{translate("{day} of next month, {time} IST", { day: attendancePolicy.lockDayOfNextMonth === 1 ? translate("1st") : translate("Day {n}", { n: attendancePolicy.lockDayOfNextMonth }), time: formatClockTime(attendancePolicy.lockTime) })}</b></div>
       <div className="kv"><span className="muted">{translate("US team")}</span><b>{translate("Day shift, local time · holidays from the US calendar")}</b></div>
-      <div className="kv"><span className="muted">{translate("Regularization approvers")}</span><b>{translate("HR, Finance or Admin — the first decision counts")}</b></div>
+      <div className="kv"><span className="muted">{translate("Regularization approvers")}</span><b>{translate("HR or Admin — the first decision counts")}</b></div>
       <div className="kv"><span className="muted">{translate("Admin accounts")}</span><b>{translate("No attendance or leave tracking")}</b></div>
       <div className="kv"><span className="muted">{translate("Salary visibility")}</span><b>{translate("Finance & Admin; employees see their own payslip")}</b></div>
     </section>

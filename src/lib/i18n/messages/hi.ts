@@ -1154,7 +1154,7 @@ export const hindiMessages: Record<string, string> = {
   "Day {n}": "दिन {n}",
   "Day shift, local time · holidays from the US calendar": "दिन की शिफ़्ट, स्थानीय समय · अमेरिकी कैलेंडर के अवकाश",
   "Regularization approvers": "नियमितीकरण स्वीकृतिकर्ता",
-  "HR, Finance or Admin — the first decision counts": "एचआर, फ़ाइनेंस या एडमिन — पहला निर्णय मान्य होता है",
+  "HR or Admin — the first decision counts": "एचआर या एडमिन — पहला निर्णय मान्य होता है",
   "Admin accounts": "एडमिन खाते",
   "No attendance or leave tracking": "उपस्थिति या छुट्टी की ट्रैकिंग नहीं",
   "Salary visibility": "वेतन की दृश्यता",
