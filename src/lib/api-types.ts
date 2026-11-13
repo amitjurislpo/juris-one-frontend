@@ -481,6 +481,12 @@ export interface TaskAssignee {
   reportingManagerName: string | null;
 }
 
+/** GET /api/v1/settings/leave-policy: the business's leave year and the year-end choice of each leave type with a balance. */
+export interface LeavePolicy {
+  year: { startMonth: number; startDay: number; currentFrom: string; currentTo: string };
+  types: { code: string; name: string; yearEndAction: "COLLAPSE" | "CARRY_ALL" | "CARRY_CAPPED"; carryForwardCap: number }[];
+}
+
 /** GET /api/v1/task-settings */
 export interface TaskSettings {
   defaultStatuses: WorkflowStatus[];

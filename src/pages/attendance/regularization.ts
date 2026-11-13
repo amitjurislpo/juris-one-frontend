@@ -5,6 +5,14 @@ export type RegularizationKind = "ABSENT" | "LATE_CHECKIN" | "MISSED_CHECKOUT" |
 /** English label of each request type (the key of the Hindi translation). */
 export const KIND_LABEL: Record<string, string> = { ABSENT: "Absent", LATE_CHECKIN: "Late check-in", MISSED_CHECKOUT: "Missed check-out", HOLIDAY_WORK: "Holiday work (comp-off)" };
 
+/** An instant (ISO) as the `yyyy-MM-ddTHH:mm` a datetime-local input takes, in the given time zone; "" for no instant. */
+export function toLocalInput(iso: string | null, timeZone: string): string {
+  if (!iso) return "";
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date(iso));
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
+}
+
 /** The stored status DECLINED is shown as "Rejected". */
 export const STATUS_LABEL: Record<string, string> = { PENDING: "Waiting for approval", APPROVED: "Approved", DECLINED: "Rejected", CANCELLED: "Cancelled" };
 export const STATUS_CHIP: Record<string, string> = { PENDING: "warn", APPROVED: "ok", DECLINED: "bad", CANCELLED: "neutral" };
@@ -41,9 +49,11 @@ export interface RegularizationItem {
   hasAttachment: boolean;
   attachmentName: string | null;
   createdAt: string;
+  createdBy: string | null;
 }
 
-export interface RegularizationList { scope: "mine" | "all"; items: RegularizationItem[]; total: number; page: number; pageSize: number }
+/** `decidable`: the ids of the pending requests on the page that the signed-in user may decide (the server's approval rule). */
+export interface RegularizationList { scope: "mine" | "all"; items: RegularizationItem[]; decidable: string[]; total: number; page: number; pageSize: number }
 
 interface RegularizationReason { id: string; label: string; requiresDescription: boolean; active: boolean; sortOrder: number }
 
@@ -52,6 +62,9 @@ export interface RegularizationRules {
   monthlyLimit: number;
   attachmentMandatory: boolean;
   autoApprove: boolean;
+  /** The most On Duty days / remote work days (a half day is 0.5) one employee can have pending or approved in a month. */
+  onDutyMonthlyLimit: number;
+  remoteWorkMonthlyLimit: number;
   maxAttachmentMb: number;
   month: string;
   usedThisMonth: number;

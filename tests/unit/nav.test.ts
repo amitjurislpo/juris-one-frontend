@@ -29,6 +29,13 @@ describe("navigation access", () => {
     for (const permission of SALARY_PERMISSIONS) expect(HR_MANAGER.has(permission)).toBe(false);
   });
 
+  it("shows Leave policy to Admin and HR, not to a plain employee or Finance", () => {
+    expect(visible(ADMIN)).toContain("leave-policy");
+    expect(visible(HR_MANAGER)).toContain("leave-policy");
+    expect(visible(EMPLOYEE)).not.toContain("leave-policy");
+    expect(visible(FIN_EXEC)).not.toContain("leave-policy");
+  });
+
   it("shows My team only with active direct reports", () => {
     expect(visible(EMPLOYEE, false)).not.toContain("team");
     expect(visible(EMPLOYEE, true)).toContain("team");

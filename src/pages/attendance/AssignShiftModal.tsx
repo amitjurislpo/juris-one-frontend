@@ -24,7 +24,7 @@ export function AssignShiftModal({ employees, shifts, today, onClose }: { employ
   const submit = () => start(async () => {
     const result = await assignShift({ employeeIds: selected, shiftId, fromDate, toDate: toDate || undefined });
     if (!result.ok) { toast(result.error, "bad"); return; }
-    toast(t("{n} employees assigned", { n: selected.length }), "ok");
+    toast(selected.length === 1 ? t("{n} employee assigned", { n: 1 }) : t("{n} employees assigned", { n: selected.length }), "ok");
     onClose();
   });
 

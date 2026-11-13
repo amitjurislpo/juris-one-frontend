@@ -7,9 +7,11 @@ import { usePage } from "@/lib/page";
 import { useReadOnly } from "@/lib/session";
 import { cancelRemoteWork, decideRemoteWork } from "./actions";
 import { STATUS_CHIP, STATUS_LABEL } from "./regularization";
-import { canDecideRemoteWork, REMOTE_WORK_MAX_NOTE, type RemoteWorkItem } from "./remoteWork";
+import { canEditRequest } from "./requestKinds";
+import { RemoteWorkRequestModal } from "./RemoteWorkRequestModal";
+import { REMOTE_WORK_MAX_NOTE, remoteWorkDuration, type RemoteWorkItem } from "./remoteWork";
 
-/** One remote work request in full. The owner can withdraw it while pending; Admin / HR can approve or reject it (a rejection needs remarks). */
+/** One remote work request in full. The owner can withdraw it, and whoever raised it can change it, while pending; whoever the approval rule names can approve or reject it (a rejection needs remarks). */
 export function RemoteWorkDetailsModal({ item, canDecide, onClose }: { item: RemoteWorkItem; canDecide: boolean; onClose: () => void }) {
   const t = useT();
   const toast = useToast();
@@ -18,6 +20,7 @@ export function RemoteWorkDetailsModal({ item, canDecide, onClose }: { item: Rem
   const [busy, start] = useTransition();
   const [rejecting, setRejecting] = useState(false);
   const [note, setNote] = useState("");
+  const [changing, setChanging] = useState(false);
   const isOwn = item.employeeId === user.id;
   const time = (iso: string | null) => (iso ? formatDateTime(new Date(iso), user.timeZone) : "—");
 
@@ -35,10 +38,11 @@ export function RemoteWorkDetailsModal({ item, canDecide, onClose }: { item: Rem
       footer={<>
         <span className={`chip ${STATUS_CHIP[item.status] ?? "neutral"}`}>{t(STATUS_LABEL[item.status] ?? item.status)}</span>
         <div className="row" style={{ gap: 10 }}>
+          {canEditRequest(item, user.id, readOnly) && <button className="btn btn-ghost" disabled={busy} onClick={() => setChanging(true)}>{t("Change request")}</button>}
           {item.status === "PENDING" && isOwn && !readOnly && (
             <button className="btn btn-ghost" disabled={busy} onClick={() => start(async () => { const result = await cancelRemoteWork(item.id); toast(result.ok ? result.message! : result.error, result.ok ? "ok" : "bad"); if (result.ok) onClose(); })}>{t("Withdraw request")}</button>
           )}
-          {canDecideRemoteWork(item, canDecide, user.id) && !readOnly && <>
+          {item.status === "PENDING" && canDecide && !readOnly && <>
             <button className="btn btn-danger" disabled={busy} onClick={() => setRejecting(true)}>{t("Reject")}</button>
             <button className="btn btn-gold" disabled={busy} onClick={() => decide(true)}>{t("Approve")}</button>
           </>}
@@ -47,12 +51,13 @@ export function RemoteWorkDetailsModal({ item, canDecide, onClose }: { item: Rem
       <div className="col" style={{ gap: 4 }}>
         <div className="kv"><span className="muted">{t("Employee")}</span><b>{item.employeeName} <span className="faint">{item.employeeCode}</span></b></div>
         <div className="kv"><span className="muted">{t("Period")}</span><b className="num">{formatDayMonthYear(item.fromDate)} – {formatDayMonthYear(item.toDate)}</b></div>
-        <div className="kv"><span className="muted">{t("Duration")}</span><b className="num">{item.days === 1 ? t("1 day") : t("{n} days", { n: item.days })}</b></div>
+        <div className="kv"><span className="muted">{t("Duration")}</span><b className="num">{t(remoteWorkDuration(item), { n: item.days })}</b></div>
         <div className="kv"><span className="muted">{t("Reason")}</span><b>{item.reason}</b></div>
         <div className="kv"><span className="muted">{t("Requested on")}</span><b className="num">{time(item.createdAt)}</b></div>
         {item.decidedAt && <div className="kv"><span className="muted">{item.status === "APPROVED" ? t("Approved by") : t("Rejected by")}</span><b>{item.decidedBy ?? "—"} · {time(item.decidedAt)}</b></div>}
         {item.decisionNote && <div className="kv"><span className="muted">{t("Remarks")}</span><b>{item.decisionNote}</b></div>}
       </div>
+      {changing && <RemoteWorkRequestModal editing={item} onClose={() => { setChanging(false); onClose(); }} />}
       {rejecting && (
         <ConfirmDialog title={t("Reject request")} danger confirm={t("Reject")} busy={busy || !note.trim()} onClose={() => setRejecting(false)} onConfirm={() => decide(false)}
           body={t("Tell {who} why. They will see these remarks.", { who: item.employeeName })}>

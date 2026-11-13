@@ -10,6 +10,8 @@ export const hindiNotificationTemplates: Record<string, string> = {
   "{kind} for {date} declined by {name} ({role})": "{kind} ({date}) को {name} ({role}) ने अस्वीकृत किया",
   "{type} ({from} – {to}) approved by {name}": "{type} ({from} – {to}) को {name} ने स्वीकृत किया",
   "{type} ({from} – {to}) declined by {name}": "{type} ({from} – {to}) को {name} ने अस्वीकृत किया",
+  "{name} applied {type} for you ({from} – {to})": "{name} ने आपकी ओर से {type} ({from} – {to}) के लिए आवेदन किया",
+  "{name} applied {type} for you ({date})": "{name} ने आपकी ओर से {type} ({date}) के लिए आवेदन किया",
   "{type} ({date}) approved by {name}": "{type} ({date}) को {name} ने स्वीकृत किया",
   "{type} ({date}) declined by {name}": "{type} ({date}) को {name} ने अस्वीकृत किया",
 
@@ -48,6 +50,14 @@ export const hindiNotificationTemplates: Record<string, string> = {
   "{name} raised a regularization request for you for {date}": "{name} ने {date} के लिए आपकी ओर से नियमितीकरण अनुरोध किया",
   "{name} raised a regularization request for {employee} for {date}": "{name} ने {employee} के लिए {date} का नियमितीकरण अनुरोध किया",
   "{name} asked for On Duty on {date}": "{name} ने {date} के लिए ऑन ड्यूटी का अनुरोध किया",
+  "{name} raised an On Duty request for you for {date}": "{name} ने {date} के लिए आपकी ओर से ऑन ड्यूटी का अनुरोध किया",
+  "{name} raised an On Duty request for {employee} on {date}": "{name} ने {employee} के लिए {date} का ऑन ड्यूटी अनुरोध किया",
+  "{name} raised a remote work request for you for {from} to {to}": "{name} ने {from} से {to} के लिए आपकी ओर से रिमोट वर्क का अनुरोध किया",
+  "{name} raised a remote work request for you for {date}": "{name} ने {date} के लिए आपकी ओर से रिमोट वर्क का अनुरोध किया",
+  "{name} raised a remote work request for {employee} for {from} to {to}": "{name} ने {employee} के लिए {from} से {to} तक का रिमोट वर्क अनुरोध किया",
+  "{name} raised a remote work request for {employee} for {date}": "{name} ने {employee} के लिए {date} का रिमोट वर्क अनुरोध किया",
+  "{name} asked to work remotely for {from} to {to}": "{name} ने {from} से {to} तक रिमोट वर्क का अनुरोध किया",
+  "{name} asked to work remotely for {date}": "{name} ने {date} के लिए रिमोट वर्क का अनुरोध किया",
   "{name} asked to regularize attendance for {date}": "{name} ने {date} की उपस्थिति नियमित करने का अनुरोध किया",
 
   // payroll, people, tax (PayrollOperationsService, PeopleService, TaxOperationsService)

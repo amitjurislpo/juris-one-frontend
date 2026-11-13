@@ -31,7 +31,7 @@ test.describe("shift roster", () => {
     await assignDialog.getByLabel("Search employees").fill("JC074");
     await assignDialog.getByRole("checkbox", { name: /JC074/ }).check();
     await assignDialog.getByRole("button", { name: "Assign", exact: true }).click();
-    await expect(page.locator(".toast").last()).toContainText("1 employees assigned");
+    await expect(page.locator(".toast").last()).toContainText("1 employee assigned");
     await expect(page.locator(".roster-grid")).toContainText("E2E Evening");
 
     // the same shift again for the same days is refused as a whole

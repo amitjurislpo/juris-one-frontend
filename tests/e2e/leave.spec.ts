@@ -21,7 +21,16 @@ async function restore() {
 async function holdMonthsOpen() {
   const [policy] = await sql<{ lockDay: string | null }>(`SELECT value->>'lockDayOfNextMonth' AS "lockDay" FROM settings WHERE key = 'attendance.policy'`);
   await sql(`UPDATE settings SET value = jsonb_set(value, '{lockDayOfNextMonth}', '99') WHERE key = 'attendance.policy'`);
+  // leave can only be applied inside the business's leave year: let it start today (never 29 February) so "next month" is always inside it
+  const leavePolicies = await sql<{ businessId: string; value: unknown }>(`SELECT business_id AS "businessId", value FROM settings WHERE key = 'leave.policy'`);
+  const today = new Date();
+  const startDay = today.getMonth() === 1 && today.getDate() === 29 ? 28 : today.getDate();
+  await sql(`INSERT INTO settings (key, value, updated_at, business_id)
+    SELECT 'leave.policy', jsonb_build_object('yearStartMonth', $1::int, 'yearStartDay', $2::int, 'yearEnd', '{}'::jsonb), now(), id FROM businesses
+    ON CONFLICT (business_id, key) DO UPDATE SET value = EXCLUDED.value`, [today.getMonth() + 1, startDay]);
   return async () => {
+    await sql(`DELETE FROM settings WHERE key = 'leave.policy'`);
+    for (const policy of leavePolicies) await sql(`INSERT INTO settings (key, value, updated_at, business_id) VALUES ('leave.policy', $1::jsonb, now(), $2)`, [JSON.stringify(policy.value), policy.businessId]);
     if (policy?.lockDay == null) await sql(`UPDATE settings SET value = value - 'lockDayOfNextMonth' WHERE key = 'attendance.policy'`);
     else await sql(`UPDATE settings SET value = jsonb_set(value, '{lockDayOfNextMonth}', $1::jsonb) WHERE key = 'attendance.policy'`, [policy.lockDay]);
   };

@@ -15,8 +15,14 @@ async function openOctoberForRegularization() {
   const [policy] = await sql<{ lockDay: string | null }>(`SELECT value->>'lockDayOfNextMonth' AS "lockDay" FROM settings WHERE key = 'attendance.policy'`);
   const frozen = await sql<{ id: string }>(`SELECT d.employee_id AS id FROM attendance_days d JOIN employees e ON e.id = d.employee_id WHERE e.code = 'JC074' AND d.work_date = '2026-10-05' AND d.locked`);
   await sql(`UPDATE settings SET value = jsonb_set(value, '{lockDayOfNextMonth}', '99') WHERE key = 'attendance.policy'`);
+  // 5 Oct 2026 falls further back than the default 30-day back-date limit as the calendar moves on: allow a long look-back for the test
+  const previousLimits = await sql<{ businessId: string; value: string }>(`SELECT business_id AS "businessId", value::text AS value FROM settings WHERE key = 'attendance.regularization'`);
+  await sql(`INSERT INTO settings (business_id, key, value, updated_at) SELECT business_id, 'attendance.regularization', '{"backDateLimitDays":3650}'::jsonb, now() FROM settings WHERE key = 'attendance.policy'
+    ON CONFLICT (business_id, key) DO UPDATE SET value = jsonb_set(settings.value, '{backDateLimitDays}', '3650')`);
   await sql(`UPDATE attendance_days SET locked = false WHERE work_date = '2026-10-05' AND employee_id IN (SELECT id FROM employees WHERE code = 'JC074')`);
   return async () => {
+    await sql(`DELETE FROM settings WHERE key = 'attendance.regularization'`);
+    for (const previous of previousLimits) await sql(`INSERT INTO settings (business_id, key, value, updated_at) VALUES ($1, 'attendance.regularization', $2::jsonb, now())`, [previous.businessId, previous.value]);
     if (policy?.lockDay == null) await sql(`UPDATE settings SET value = value - 'lockDayOfNextMonth' WHERE key = 'attendance.policy'`);
     else await sql(`UPDATE settings SET value = jsonb_set(value, '{lockDayOfNextMonth}', $1::jsonb) WHERE key = 'attendance.policy'`, [policy.lockDay]);
     if (frozen.length) await sql(`UPDATE attendance_days SET locked = true WHERE work_date = '2026-10-05' AND employee_id = $1`, [frozen[0].id]);

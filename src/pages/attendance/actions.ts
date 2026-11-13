@@ -42,7 +42,7 @@ export async function decideRegularizations(input: { ids: string[]; approve: boo
   return apiAction("POST", "/api/v1/attendance/regularization-decisions", input, ["/attendance"]);
 }
 
-export async function saveRegularizationRules(input: { backDateLimitDays: number; monthlyLimit: number; attachmentMandatory: boolean; autoApprove: boolean }): Promise<ActionResult> {
+export async function saveRegularizationRules(input: { backDateLimitDays: number; monthlyLimit: number; attachmentMandatory: boolean; autoApprove: boolean; onDutyMonthlyLimit: number; remoteWorkMonthlyLimit: number }): Promise<ActionResult> {
   return apiAction("PUT", "/api/v1/attendance/regularization-rules", input, ["/attendance"]);
 }
 
@@ -56,9 +56,24 @@ export async function updateRegularizationReason(id: string, input: { label?: st
 
 // Remote work requests (/api/v1/attendance/remote-work-requests…): Admin and HR approve.
 
-/** A new remote work request for the signed-in employee: ISO dates, both ends included, and a reason. */
-export async function requestRemoteWork(input: { fromDate: string; toDate: string; reason: string }): Promise<ActionResult<{ id: string }>> {
+/** A new remote work request: ISO dates, both ends included, and a reason. Admin / HR may name an `employeeId`; the request is then approved at once. */
+export async function requestRemoteWork(input: { employeeId?: string; fromDate: string; toDate: string; reason: string; part?: string }): Promise<ActionResult<{ id: string }>> {
   return apiAction("POST", "/api/v1/attendance/remote-work-requests", input, ["/attendance"]);
+}
+
+/** Change a remote work request that is still pending (only the person who raised it). */
+export async function editRemoteWork(id: string, input: { fromDate: string; toDate: string; reason: string; part: string }): Promise<ActionResult> {
+  return apiAction("PATCH", `/api/v1/attendance/remote-work-requests/${encodeURIComponent(id)}`, input, ["/attendance"]);
+}
+
+/** Change a regularization request that is still pending (only the person who raised it); the day itself does not change. */
+export async function editRegularization(id: string, input: { kind: RegularizationKind; checkIn: string; checkOut: string; reasonId: string; description: string }): Promise<ActionResult> {
+  return apiAction("PATCH", `/api/v1/attendance/regularizations/${encodeURIComponent(id)}`, input, ["/attendance"]);
+}
+
+/** Change an On Duty request that is still pending (only the person who raised it). */
+export async function editOnDuty(id: string, input: { date: string; part: OnDutyPart; location?: string; reason: string }): Promise<ActionResult> {
+  return apiAction("PATCH", `/api/v1/attendance/on-duty-requests/${encodeURIComponent(id)}`, input, ["/attendance"]);
 }
 
 export async function cancelRemoteWork(id: string): Promise<ActionResult> {
@@ -73,6 +88,8 @@ export async function decideRemoteWork(input: { ids: string[]; approve: boolean;
 // On Duty runs in the Spring Boot API (/api/v1/attendance/on-duty-requests…).
 
 export interface OnDutyInput {
+  /** Admin / HR: raise the request for this employee (approved at once). */
+  employeeId?: string;
   date: string;
   /** Last day of a range (one request per day). */
   toDate?: string;
