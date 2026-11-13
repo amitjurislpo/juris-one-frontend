@@ -169,6 +169,7 @@ export const hindiMessages: Record<string, string> = {
   "More": "ज़्यादा",
   "Holiday": "अवकाश",
   "Loss of pay": "वेतन कटौती",
+  "Leave without pay": "वेतन रहित छुट्टी",
   "Leave": "छुट्टी",
   "Before joining": "नियुक्ति से पहले",
   "Attendance": "उपस्थिति",
