@@ -5,9 +5,11 @@ import { useToast } from "@/components/shell/Toasts";
 import { ConfirmDialog } from "@/components/ui/Modal";
 import { useT } from "@/lib/i18n/client";
 import { useReadOnly } from "@/lib/session";
-import { decideLeave, decideRegularization } from "./actions";
+import { decideLeave, decideOnDuty, decideRegularization, decideRemoteWorkRequest } from "./actions";
 
-export function DecideButtons({ id, kind, who }: { id: string; kind: "leave" | "reg"; who: string }) {
+const DECIDE = { leave: decideLeave, reg: decideRegularization, onDuty: decideOnDuty, remoteWork: decideRemoteWorkRequest };
+
+export function DecideButtons({ id, kind, who }: { id: string; kind: keyof typeof DECIDE; who: string }) {
   const t = useT();
   const readOnly = useReadOnly();
   const toast = useToast();
@@ -16,7 +18,7 @@ export function DecideButtons({ id, kind, who }: { id: string; kind: "leave" | "
   const [note, setNote] = useState("");
   const decide = (approve: boolean) =>
     start(async () => {
-      const result = await (kind === "leave" ? decideLeave : decideRegularization)({ id, approve, note: note || undefined });
+      const result = await DECIDE[kind]({ id, approve, note: note || undefined });
       toast(result.ok ? result.message! : result.error, result.ok && approve ? "ok" : "bad");
       setDeclining(false);
     });
@@ -28,8 +30,8 @@ export function DecideButtons({ id, kind, who }: { id: string; kind: "leave" | "
       <button className="btn btn-danger" disabled={busy} onClick={() => setDeclining(true)}>{t("Decline")}</button>
       <button className="btn btn-gold" disabled={busy} onClick={() => decide(true)} aria-label={t("Approve {who}", { who })}><Icon name="ok" size={16} />{t("Approve")}</button>
       {declining && (
-        <ConfirmDialog title={t("Decline request")} danger confirm={t("Decline")} busy={busy || (kind === "reg" && !note.trim())} onClose={() => setDeclining(false)} body={declineBody} onConfirm={() => decide(false)}>
-          <label className="field" style={{ marginTop: 14 }}>{t("Note to the employee")} {kind === "reg" ? "*" : <span className="hint">{t("optional")}</span>}<input value={note} maxLength={300} onChange={(e) => setNote(e.target.value)} placeholder={t("e.g. Please apply after the filing deadline")} /></label>
+        <ConfirmDialog title={t("Decline request")} danger confirm={t("Decline")} busy={busy || (kind !== "leave" && !note.trim())} onClose={() => setDeclining(false)} body={declineBody} onConfirm={() => decide(false)}>
+          <label className="field" style={{ marginTop: 14 }}>{t("Note to the employee")} {kind !== "leave" ? "*" : <span className="hint">{t("optional")}</span>}<input value={note} maxLength={300} onChange={(e) => setNote(e.target.value)} placeholder={t("e.g. Please apply after the filing deadline")} /></label>
         </ConfirmDialog>
       )}
     </div>

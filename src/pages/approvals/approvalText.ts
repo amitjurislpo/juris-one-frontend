@@ -17,3 +17,17 @@ export function translateDecidedRequest(what: string, t: T): string {
   const [name, ...rest] = what.split(" · ");
   return [t(name), ...rest].join(" · ");
 }
+
+/** The number on the Attendance tab of Approvals: regularizations plus the On Duty and Remote Work requests waiting for this approver. */
+export function attendanceQueueCount(counts: { regularizationCount: number; onDutyCount: number; remoteWorkCount: number }): number {
+  return counts.regularizationCount + counts.onDutyCount + counts.remoteWorkCount;
+}
+
+/** "Full day · Client site" (On Duty) or "Full day · 2 days" (Remote Work) as the API sends it: the day part and the day count are translated, a location is the employee's own text. */
+export function translateAttendanceDetail(detail: string, t: T): string {
+  const [part, ...rest] = detail.split(" · ");
+  return [t(part), ...rest.map((text) => {
+    const days = /^(\d+) days?$/.exec(text);
+    return days ? (days[1] === "1" ? t("{n} day", { n: 1 }) : t("{n} days", { n: Number(days[1]) })) : text;
+  })].join(" · ");
+}

@@ -14,7 +14,7 @@ import { DAY_STATUS_LABEL, formatMinutes, KIND_LABEL, STATUS_CHIP, STATUS_LABEL,
 import { RegularizationDetailsModal } from "./RegularizationDetailsModal";
 import { RegularizationRequestModal } from "./RegularizationRequestModal";
 import { RegularizationRulesModal } from "./RegularizationRulesModal";
-import { usePendingCounts } from "./pendingCounts";
+import { defaultRequestScope, usePendingCounts } from "./pendingCounts";
 
 /**
  * The Regularization tab: my requests (My data) or everyone's (Team, Admin / HR only) with Old and New hours and status, the approval
@@ -29,7 +29,8 @@ export function RegularizationTab() {
   const counts = usePendingCounts();
   const isApprover = user.perms.has("appr.reg");
   const canSeeAll = isApprover || (counts?.managesHr ?? false); // Admin / HR see everyone; the manager of an HR person sees that person's requests
-  const scope = canSeeAll && searchParams.scope === "team" ? "all" : "mine";
+  const defaultScope = defaultRequestScope(canSeeAll, counts?.regularization);
+  const scope = canSeeAll && (searchParams.scope ?? defaultScope) === "team" ? "all" : "mine";
   const query = { scope, status: searchParams.status ?? "", month: searchParams.month ?? "", search: searchParams.search ?? "", page: searchParams.page ?? "" };
   const data = useData<RegularizationList>(`/api/v1/attendance/regularizations${toQueryString(Object.fromEntries(Object.entries(query).filter(([, value]) => value !== "")))}`);
   const rules = useData<RegularizationRules>("/api/v1/attendance/regularization-rules");
@@ -64,7 +65,7 @@ export function RegularizationTab() {
   return (
     <div className="col" style={{ gap: 18 }}>
       <div className="toolbar enter" style={{ flexWrap: "wrap", gap: 10 }}>
-        {canSeeAll && <SegmentedFilter name="scope" dflt="mine" label={t("Whose requests")} options={[{ value: "mine", label: t("My data") }, { value: "team", label: t("Team") }]} />}
+        {canSeeAll && <SegmentedFilter name="scope" dflt={defaultScope} label={t("Whose requests")} options={[{ value: "mine", label: t("My data") }, { value: "team", label: t("Team") }]} />}
         <SegmentedFilter name="status" dflt="ALL" label={t("Approval status")} options={[
           { value: "ALL", label: t("All") }, { value: "PENDING", label: t("Pending") }, { value: "APPROVED", label: t("Approved") }, { value: "DECLINED", label: t("Rejected") }, { value: "CANCELLED", label: t("Cancelled") },
         ]} />

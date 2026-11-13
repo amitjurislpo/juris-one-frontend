@@ -8,3 +8,6 @@ export const usePendingCounts = () => useData<PendingCounts>("/api/v1/attendance
 
 /** A tab label with its pending count: "On Duty · 3", or just the label when nothing waits. */
 export const withPendingCount = (label: string, count: number | undefined) => (count ? `${label} · ${count}` : label);
+
+/** The view a request tab opens on: Team when the user can see the team's requests and some wait for them, else My data. A choice in the URL (?scope=) wins. */
+export const defaultRequestScope = (canSeeTeam: boolean, pending: number | undefined): "mine" | "team" => (canSeeTeam && (pending ?? 0) > 0 ? "team" : "mine");

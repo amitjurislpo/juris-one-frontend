@@ -26,7 +26,7 @@ export const hindiOnboardingSummaryMessages: Record<string, string> = {
   "Edit Form": "फ़ॉर्म बदलें",
   "Submit Onboarding": "ऑनबोर्डिंग जमा करें",
   "Submit": "जमा करें",
-  "Are you sure you want to submit your onboarding information ?": "क्या आप सच में अपनी ऑनबोर्डिंग जानकारी जमा करना चाहते हैं ?",
+  "Are you sure you want to submit your onboarding information?": "क्या आप सच में अपनी ऑनबोर्डिंग जानकारी जमा करना चाहते हैं?",
   "Loading...": "लोड हो रहा है...",
   "Yes": "हाँ",
   "No": "नहीं",

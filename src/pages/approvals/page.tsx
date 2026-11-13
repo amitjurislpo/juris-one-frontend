@@ -4,23 +4,27 @@ import { PageLoading, useData, usePage } from "@/lib/page";
 import { toQueryString } from "@/lib/api";
 import { avatarColorClass, initials } from "@/lib/format";
 import { DecideButtons } from "./ApprovalsClient";
-import { translateDecidedRequest, translateLeaveImpact } from "./approvalText";
+import { attendanceQueueCount, translateAttendanceDetail, translateDecidedRequest, translateLeaveImpact } from "./approvalText";
 
 
+
+type AttendanceRequestCard = { id: string; name: string; department: string; kind: string; date: string; detail: string; reason: string | null };
 
 export default function ApprovalsPage() {
   const { t, searchParams } = usePage();
   const data = useData<{
-    tab: "leave" | "regularizations"; search: string; canLeave: boolean; canApproveRegularizations: boolean; leaveCount: number; regularizationCount: number;
+    tab: "leave" | "regularizations"; search: string; canLeave: boolean; canApproveRegularizations: boolean; leaveCount: number; regularizationCount: number; onDutyCount: number; remoteWorkCount: number;
     leaveCards: { id: string; name: string; department: string; type: string; span: string; days: number; part: string; reason: string | null; impact: string; overlap: number }[];
     regularizationCards: { id: string; name: string; department: string; kind: string; date: string; detail: string; reason: string | null }[];
+    onDutyCards: AttendanceRequestCard[]; remoteWorkCards: AttendanceRequestCard[];
     decided: { id: string; when: string; employeeName: string; what: string; approved: boolean; decidedBy: string }[];
   }>(`/api/v1/approvals${toQueryString(searchParams)}`);
   if (!data) return <PageLoading />;
-  const { tab, search, canLeave, canApproveRegularizations, leaveCount, regularizationCount, leaveCards, regularizationCards, decided } = data;
+  const { tab, search, canLeave, canApproveRegularizations, leaveCount, regularizationCount, onDutyCount, remoteWorkCount, leaveCards, regularizationCards, onDutyCards, remoteWorkCards, decided } = data;
+  const attendanceCount = attendanceQueueCount({ regularizationCount, onDutyCount, remoteWorkCount });
 
-  const total = leaveCount + regularizationCount;
-  const tabs = [...(canLeave ? [{ value: "leave", label: t("Leave · {n}", { n: leaveCount }) }] : []), ...(canApproveRegularizations ? [{ value: "regularizations", label: t("Attendance · {n}", { n: regularizationCount }) }] : [])];
+  const total = leaveCount + attendanceCount;
+  const tabs = [...(canLeave ? [{ value: "leave", label: t("Leave · {n}", { n: leaveCount }) }] : []), ...(canApproveRegularizations ? [{ value: "regularizations", label: t("Attendance · {n}", { n: attendanceCount }) }] : [])];
 
   return (
     <div className="col" style={{ gap: 24 }}>
@@ -56,7 +60,19 @@ export default function ApprovalsPage() {
             <DecideButtons id={regularizationCard.id} kind="reg" who={regularizationCard.name} />
           </article>
         ))}
-        {((tab === "leave" && !leaveCards.length) || (tab === "regularizations" && !regularizationCards.length)) && <div className="empty enter"><b>{t("All clear")}</b><span className="muted">{search ? t("No pending request matches that name.") : t("Nothing waiting in this queue.")}</span></div>}
+        {tab === "regularizations" && ([["onDuty", onDutyCards], ["remoteWork", remoteWorkCards]] as const).flatMap(([decideKind, cards]) => cards.map((requestCard) => (
+          <article className="card req enter" key={`${decideKind}-${requestCard.id}`}>
+            <span className="spot" aria-hidden="true"></span>
+            <span className={`avatar lg ${avatarColorClass(initials(requestCard.name))}`}>{initials(requestCard.name)}</span>
+            <div className="body">
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}><b style={{ fontSize: 16 }}>{requestCard.name}</b><span className="chip gold">{t(requestCard.kind)}</span><span className="faint" style={{ fontSize: 12.5 }}>{requestCard.department}</span></div>
+              <span style={{ fontSize: 14.5 }}>{requestCard.date} · {translateAttendanceDetail(requestCard.detail, t)}</span>
+              <span className="muted" style={{ fontSize: 13.5 }}>{requestCard.reason ? `“${requestCard.reason}”` : t("No reason given")}</span>
+            </div>
+            <DecideButtons id={requestCard.id} kind={decideKind} who={requestCard.name} />
+          </article>
+        )))}
+        {((tab === "leave" && !leaveCards.length) || (tab === "regularizations" && !regularizationCards.length && !onDutyCards.length && !remoteWorkCards.length)) && <div className="empty enter"><b>{t("All clear")}</b><span className="muted">{search ? t("No pending request matches that name.") : t("Nothing waiting in this queue.")}</span></div>}
       </div>
       {decided.length > 0 && (
         <section className="card pad enter">

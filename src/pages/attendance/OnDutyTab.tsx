@@ -12,7 +12,7 @@ import { decideOnDutyRequests } from "./actions";
 import { partLabel, type OnDutyItem, type OnDutyList } from "./onDuty";
 import { OnDutyDetailsModal } from "./OnDutyDetailsModal";
 import { OnDutyRequestModal } from "./OnDutyRequestModal";
-import { usePendingCounts } from "./pendingCounts";
+import { defaultRequestScope, usePendingCounts } from "./pendingCounts";
 import { STATUS_CHIP, STATUS_LABEL } from "./regularization";
 
 /**
@@ -27,7 +27,8 @@ export function OnDutyTab() {
   const { set } = useQuery();
   const counts = usePendingCounts();
   const canSeeAll = user.perms.has("appr.reg") || (counts?.managesHr ?? false); // Admin / HR see everyone; the manager of an HR person sees that person's requests
-  const scope = canSeeAll && searchParams.scope === "team" ? "all" : "mine";
+  const defaultScope = defaultRequestScope(canSeeAll, counts?.onDuty);
+  const scope = canSeeAll && (searchParams.scope ?? defaultScope) === "team" ? "all" : "mine";
   const query = { scope, status: searchParams.status ?? "", month: searchParams.month ?? "", search: searchParams.search ?? "", page: searchParams.page ?? "" };
   const data = useData<OnDutyList>(`/api/v1/attendance/on-duty-requests${toQueryString(Object.fromEntries(Object.entries(query).filter(([, value]) => value !== "")))}`);
   const [busy, start] = useTransition();
@@ -57,7 +58,7 @@ export function OnDutyTab() {
   return (
     <div className="col" style={{ gap: 18 }}>
       <div className="toolbar enter" style={{ flexWrap: "wrap", gap: 10 }}>
-        {canSeeAll && <SegmentedFilter name="scope" dflt="mine" label={t("Whose requests")} options={[{ value: "mine", label: t("My data") }, { value: "team", label: t("Team") }]} />}
+        {canSeeAll && <SegmentedFilter name="scope" dflt={defaultScope} label={t("Whose requests")} options={[{ value: "mine", label: t("My data") }, { value: "team", label: t("Team") }]} />}
         <SegmentedFilter name="status" dflt="ALL" label={t("Approval status")} options={[
           { value: "ALL", label: t("All") }, { value: "PENDING", label: t("Pending") }, { value: "APPROVED", label: t("Approved") }, { value: "DECLINED", label: t("Rejected") }, { value: "CANCELLED", label: t("Cancelled") },
         ]} />

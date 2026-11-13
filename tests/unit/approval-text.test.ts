@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { translateDecidedRequest, translateLeaveImpact } from "@/pages/approvals/approvalText";
+import { attendanceQueueCount, translateAttendanceDetail, translateDecidedRequest, translateLeaveImpact } from "@/pages/approvals/approvalText";
 import type { T } from "@/lib/i18n/translate";
 
 /** A stand-in translator that marks what it translated and fills the variables. */
@@ -17,5 +17,13 @@ describe("approval text", () => {
   });
   it("translates only the name of a decided request, not its date", () => {
     expect(translateDecidedRequest("Casual leave · 23 Nov", translate)).toBe("[Casual leave] · 23 Nov");
+  });
+  it("translates the day part and the day count of an attendance request, not the location", () => {
+    expect(translateAttendanceDetail("Full day · Client site", translate)).toBe("[Full day] · Client site");
+    expect(translateAttendanceDetail("Second half · 1 day", translate)).toBe("[Second half] · [1 day]");
+    expect(translateAttendanceDetail("Full day · 3 days", translate)).toBe("[Full day] · [3 days]");
+  });
+  it("counts regularizations, On Duty and Remote Work requests in the Attendance tab", () => {
+    expect(attendanceQueueCount({ regularizationCount: 2, onDutyCount: 1, remoteWorkCount: 3 })).toBe(6);
   });
 });

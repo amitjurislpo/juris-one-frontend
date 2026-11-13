@@ -13,6 +13,7 @@ import { STATUS_CHIP, STATUS_LABEL } from "./regularization";
 import { REMOTE_WORK_MAX_NOTE, remoteWorkDuration, type RemoteWorkItem, type RemoteWorkList } from "./remoteWork";
 import { RemoteWorkDetailsModal } from "./RemoteWorkDetailsModal";
 import { RemoteWorkRequestModal } from "./RemoteWorkRequestModal";
+import { defaultRequestScope, usePendingCounts } from "./pendingCounts";
 
 /**
  * The Remote Work Requests tab: my requests (My data) or the team's (Team: everyone for Admin / HR, the direct reports for a manager) with
@@ -25,7 +26,9 @@ export function RemoteWorkTab() {
   const readOnly = useReadOnly();
   const { set } = useQuery();
   const canSeeTeam = user.perms.has("appr.reg") || user.hasReports;
-  const scope = canSeeTeam && searchParams.scope === "team" ? "team" : "mine";
+  const counts = usePendingCounts();
+  const defaultScope = defaultRequestScope(canSeeTeam, counts?.remoteWork);
+  const scope = canSeeTeam && (searchParams.scope ?? defaultScope) === "team" ? "team" : "mine";
   const query = { scope, status: searchParams.status ?? "", month: searchParams.month ?? "", search: searchParams.search ?? "", page: searchParams.page ?? "" };
   const data = useData<RemoteWorkList>(`/api/v1/attendance/remote-work-requests${toQueryString(Object.fromEntries(Object.entries(query).filter(([, value]) => value !== "")))}`);
   const [busy, start] = useTransition();
@@ -56,7 +59,7 @@ export function RemoteWorkTab() {
   return (
     <div className="col" style={{ gap: 18 }}>
       <div className="toolbar enter" style={{ flexWrap: "wrap", gap: 10 }}>
-        {canSeeTeam && <SegmentedFilter name="scope" dflt="mine" label={t("Whose requests")} options={[{ value: "mine", label: t("My data") }, { value: "team", label: t("Team") }]} />}
+        {canSeeTeam && <SegmentedFilter name="scope" dflt={defaultScope} label={t("Whose requests")} options={[{ value: "mine", label: t("My data") }, { value: "team", label: t("Team") }]} />}
         <SegmentedFilter name="status" dflt="ALL" label={t("Approval status")} options={[
           { value: "ALL", label: t("All") }, { value: "PENDING", label: t("Pending") }, { value: "APPROVED", label: t("Approved") }, { value: "DECLINED", label: t("Rejected") }, { value: "CANCELLED", label: t("Cancelled") },
         ]} />
