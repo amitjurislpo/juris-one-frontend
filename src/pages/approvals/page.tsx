@@ -4,6 +4,7 @@ import { PageLoading, useData, usePage } from "@/lib/page";
 import { toQueryString } from "@/lib/api";
 import { avatarColorClass, initials } from "@/lib/format";
 import { DecideButtons } from "./ApprovalsClient";
+import { translateDecidedRequest, translateLeaveImpact } from "./approvalText";
 
 
 
@@ -37,7 +38,7 @@ export default function ApprovalsPage() {
               <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}><b style={{ fontSize: 16 }}>{leaveCard.name}</b><span className="chip info">{t(leaveCard.type)}</span><span className="faint" style={{ fontSize: 12.5 }}>{leaveCard.department}</span></div>
               <span style={{ fontSize: 14.5 }}>{leaveCard.span} · {leaveCard.days === 1 ? t("{n} day", { n: leaveCard.days }) : t("{n} days", { n: leaveCard.days })} <span className="faint">({t(leaveCard.part)})</span></span>
               <span className="muted" style={{ fontSize: 13.5 }}>{leaveCard.reason ? `“${leaveCard.reason}”` : t("No reason given")}</span>
-              <span className="faint" style={{ fontSize: 12.5 }}>{leaveCard.impact}</span>
+              <span className="faint" style={{ fontSize: 12.5 }}>{translateLeaveImpact(leaveCard.impact, t)}</span>
               {leaveCard.overlap > 0 && <span className="chip warn" style={{ alignSelf: "flex-start" }}>{leaveCard.overlap > 1 ? t("{n} overlapping requests in {dept}", { n: leaveCard.overlap, dept: leaveCard.department }) : t("{n} overlapping request in {dept}", { n: leaveCard.overlap, dept: leaveCard.department })}</span>}
             </div>
             <DecideButtons id={leaveCard.id} kind="leave" who={leaveCard.name} />
@@ -64,7 +65,7 @@ export default function ApprovalsPage() {
           <div className="list">
             {decided.map((decision) => (
               <div className="it" key={decision.id}>
-                <span style={{ flex: 1 }}><b>{decision.employeeName}</b> <span className="muted">· {decision.what}</span><div className="faint" style={{ fontSize: 12 }}>{decision.when}</div></span>
+                <span style={{ flex: 1 }}><b>{decision.employeeName}</b> <span className="muted">· {translateDecidedRequest(decision.what, t)}</span><div className="faint" style={{ fontSize: 12 }}>{decision.when}</div></span>
                 <span className={`chip ${decision.approved ? "ok" : "bad"}`}>{decision.approved ? t("Approved") : t("Declined")} · {decision.decidedBy}</span>
               </div>
             ))}

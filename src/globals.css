@@ -2087,3 +2087,6 @@ tr.att-today td{background:var(--accentsoft)}
 .roster-picker-row:first-child{border-top:0}
 .roster-shift-editor{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr);gap:10px}
 @media (max-width:640px){.roster-shift-editor{grid-template-columns:1fr 1fr}.roster-shift-editor label:first-child{grid-column:1 / -1}.roster-who{min-width:120px}}
+
+/* a toolbar with an open dropdown menu is drawn above the cards that follow it (each animated block is its own stacking context) */
+.toolbar:has([aria-expanded="true"]){position:relative;z-index:30}

@@ -406,6 +406,8 @@ export const hindiMessages: Record<string, string> = {
   "Weekly off": "साप्ताहिक अवकाश",
   "Leave {leave}d · LOP {lop}d": "छुट्टी {leave} दिन · LOP {lop} दिन",
   "Unpaid leave": "अवैतनिक छुट्टी",
+  "Balance {from} → {to}": "शेष {from} → {to}",
+  "Only {available} available — {days} day(s) become loss of pay": "केवल {available} उपलब्ध — {days} दिन वेतन कटौती बन जाएँगे",
   "Paid leave": "वैतनिक छुट्टी",
   "Day in progress": "दिन जारी है",
   "Check-out is missing, so the hours don't add up to a working day. Ask for a regularization with your real check-out time.": "चेक-आउट दर्ज नहीं है, इसलिए घंटे एक कार्य दिवस के बराबर नहीं बनते। अपने वास्तविक चेक-आउट समय के साथ नियमितीकरण का अनुरोध करें।",
