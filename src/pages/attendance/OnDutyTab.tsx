@@ -12,6 +12,7 @@ import { decideOnDutyRequests } from "./actions";
 import { partLabel, type OnDutyItem, type OnDutyList } from "./onDuty";
 import { OnDutyDetailsModal } from "./OnDutyDetailsModal";
 import { OnDutyRequestModal } from "./OnDutyRequestModal";
+import { defaultRequestScope, usePendingCounts } from "./pendingCounts";
 import { STATUS_CHIP, STATUS_LABEL } from "./regularization";
 
 /**
@@ -24,8 +25,10 @@ export function OnDutyTab() {
   const { user, searchParams } = usePage();
   const readOnly = useReadOnly();
   const { set } = useQuery();
-  const canDecide = user.perms.has("appr.reg");
-  const scope = canDecide && searchParams.scope === "team" ? "all" : "mine";
+  const counts = usePendingCounts();
+  const canSeeAll = user.perms.has("appr.reg") || (counts?.managesHr ?? false); // Admin / HR see everyone; the manager of an HR person sees that person's requests
+  const defaultScope = defaultRequestScope(canSeeAll, counts?.onDuty);
+  const scope = canSeeAll && (searchParams.scope ?? defaultScope) === "team" ? "all" : "mine";
   const query = { scope, status: searchParams.status ?? "", month: searchParams.month ?? "", search: searchParams.search ?? "", page: searchParams.page ?? "" };
   const data = useData<OnDutyList>(`/api/v1/attendance/on-duty-requests${toQueryString(Object.fromEntries(Object.entries(query).filter(([, value]) => value !== "")))}`);
   const [busy, start] = useTransition();
@@ -39,7 +42,7 @@ export function OnDutyTab() {
   const team = data.scope === "all";
   const month = searchParams.month ?? "";
   const openedItem = data.items.find((item) => item.id === opened) ?? null;
-  const decidable = (item: OnDutyItem) => team && item.status === "PENDING" && item.employeeId !== user.id;
+  const decidable = (item: OnDutyItem) => data.decidable.includes(item.id); // the server's approval rule
 
   const decide = (approve: boolean) => start(async () => {
     const result = await decideOnDutyRequests({ ids: selected, approve, note: note.trim() || undefined });
@@ -55,7 +58,7 @@ export function OnDutyTab() {
   return (
     <div className="col" style={{ gap: 18 }}>
       <div className="toolbar enter" style={{ flexWrap: "wrap", gap: 10 }}>
-        {canDecide && <SegmentedFilter name="scope" dflt="mine" label={t("Whose requests")} options={[{ value: "mine", label: t("My data") }, { value: "team", label: t("Team") }]} />}
+        {canSeeAll && <SegmentedFilter name="scope" dflt={defaultScope} label={t("Whose requests")} options={[{ value: "mine", label: t("My data") }, { value: "team", label: t("Team") }]} />}
         <SegmentedFilter name="status" dflt="ALL" label={t("Approval status")} options={[
           { value: "ALL", label: t("All") }, { value: "PENDING", label: t("Pending") }, { value: "APPROVED", label: t("Approved") }, { value: "DECLINED", label: t("Rejected") }, { value: "CANCELLED", label: t("Cancelled") },
         ]} />
@@ -109,7 +112,7 @@ export function OnDutyTab() {
       <Pager page={data.page} take={data.pageSize} total={data.total} />
 
       {requesting && <OnDutyRequestModal onClose={() => setRequesting(false)} />}
-      {openedItem && <OnDutyDetailsModal item={openedItem} canDecide={canDecide} onClose={() => setOpened(null)} />}
+      {openedItem && <OnDutyDetailsModal item={openedItem} canDecide={decidable(openedItem)} onClose={() => setOpened(null)} />}
       {rejecting && (
         <ConfirmDialog title={t("Reject requests")} danger confirm={t("Reject")} busy={busy || !note.trim()} onClose={() => setRejecting(false)} onConfirm={() => decide(false)}
           body={t("The employees will see these remarks.")}>

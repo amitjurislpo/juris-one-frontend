@@ -25,9 +25,12 @@ export interface OnDutyItem {
   decidedAt: string | null;
   decisionNote: string | null;
   createdAt: string;
+  /** Who raised it: the employee, or the Admin / HR who raised it for them. */
+  createdBy: string | null;
 }
 
-export interface OnDutyList { scope: "mine" | "all"; items: OnDutyItem[]; total: number; page: number; pageSize: number }
+/** `decidable`: the ids of the pending requests on the page that the signed-in user may decide (the server's approval rule). */
+export interface OnDutyList { scope: "mine" | "all"; items: OnDutyItem[]; decidable: string[]; total: number; page: number; pageSize: number }
 
 const DAY_MS = 86_400_000;
 

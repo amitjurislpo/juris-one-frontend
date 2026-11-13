@@ -5,20 +5,23 @@ import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
 import { ConfirmDialog, Modal } from "@/components/ui/Modal";
 import { useT } from "@/lib/i18n/client";
+import { usePage } from "@/lib/page";
 import { useReadOnly } from "@/lib/session";
 import { cancelLeave } from "./actions";
-import { ApplyLeave, type LeaveTypeOption } from "./ApplyLeave";
+import { ApplyLeave, type LeaveTypeOption, type LeaveYearSpan } from "./ApplyLeave";
 
-export function ApplyButton({ types, today, holidays, weeklyOffs, autoOpen }: { types: LeaveTypeOption[]; today: string; holidays: Record<string, string>; weeklyOffs: number[]; autoOpen: boolean }) {
+export function ApplyButton({ types, today, holidays, weeklyOffs, leaveYear, autoOpen }: { types: LeaveTypeOption[]; today: string; leaveYear: LeaveYearSpan; holidays: Record<string, string>; weeklyOffs: number[]; autoOpen: boolean }) {
   const t = useT();
   const router = useRouter();
   const path = usePathname();
   const readOnly = useReadOnly();
+  const { user } = usePage();
   const [open, setOpen] = useState(autoOpen);
   const close = () => { setOpen(false); if (autoOpen) router.replace(path, { scroll: false }); };
   if (readOnly) return null;
   // nothing to apply against: no leave types at all, or every type is a balance-based one with less than half a day left
-  const none = types.length === 0 || types.every((leaveType) => leaveType.lockedReason || (leaveType.available !== null && leaveType.available < 0.5));
+  // Admin / HR can still open it to apply for an employee, whose balance is not their own
+  const none = types.length === 0 || (!user.perms.has("appr.leave") && types.every((leaveType) => leaveType.lockedReason || (leaveType.available !== null && leaveType.available < 0.5)));
   return (
     <>
       <button className="btn btn-gold btn-lg" onClick={() => setOpen(true)}><Icon name="plus" size={18} />{t("Apply leave")}</button>
@@ -27,7 +30,7 @@ export function ApplyButton({ types, today, holidays, weeklyOffs, autoOpen }: { 
           <p className="muted" style={{ margin: 0 }}>{t("You have no leave available at the moment. Leave is added to your balance as you earn it, so you can apply once you have some. Talk to HR if you think this is wrong.")}</p>
         </Modal>
       )}
-      {open && !none && <ApplyLeave types={types} today={today} holidays={holidays} weeklyOffs={weeklyOffs} onClose={close} />}
+      {open && !none && <ApplyLeave types={types} today={today} leaveYear={leaveYear} holidays={holidays} weeklyOffs={weeklyOffs} onClose={close} />}
     </>
   );
 }

@@ -5,16 +5,18 @@ import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
 import { Modal } from "@/components/ui/Modal";
 import { addDays, weekdayOf } from "@/lib/attendance/engine";
-import { formatDayMonth, formatWeekdayDayMonthYear, MONTH_NAMES } from "@/lib/format";
+import { formatDayMonth, formatDayMonthYear, formatWeekdayDayMonthYear, MONTH_NAMES } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import type { Preview } from "@/lib/api-types";
 import { applyLeave, preview } from "./actions";
+import { EmployeePicker, type PickedEmployee } from "@/components/EmployeePicker";
 
 export interface LeaveTypeOption { code: string; name: string; available: number | null; paid: boolean; lockedReason: string | null }
+export interface LeaveYearSpan { from: string; to: string }
 type Part = "FULL" | "FIRST_HALF" | "SECOND_HALF";
 
 /** Prototype range picker: tap a start, then an end; weekends, holidays and past dates disabled. */
-function RangePicker({ startDate, endDate, onPick, today, holidays, weeklyOffs }: { startDate: string; endDate: string; onPick: (startDate: string, endDate: string) => void; today: string; holidays: Record<string, string>; weeklyOffs: number[] }) {
+function RangePicker({ startDate, endDate, onPick, today, leaveYear, holidays, weeklyOffs }: { startDate: string; endDate: string; onPick: (startDate: string, endDate: string) => void; today: string; leaveYear: LeaveYearSpan; holidays: Record<string, string>; weeklyOffs: number[] }) {
   const t = useT();
   const [month, setMonth] = useState((startDate || today).slice(0, 7));
   const [picking, setPicking] = useState(false);
@@ -29,7 +31,7 @@ function RangePicker({ startDate, endDate, onPick, today, holidays, weeklyOffs }
       <div className="drp-h">
         <button className="icon-btn" type="button" onClick={() => move(-1)} aria-label={t("Previous month")} disabled={month <= today.slice(0, 7)}><Icon name="chevL" /></button>
         <b>{t(MONTH_NAMES[Number(month.slice(5)) - 1])} {month.slice(0, 4)}</b>
-        <button className="icon-btn" type="button" onClick={() => move(1)} aria-label={t("Next month")}><Icon name="chevR" /></button>
+        <button className="icon-btn" type="button" onClick={() => move(1)} aria-label={t("Next month")} disabled={month >= leaveYear.to.slice(0, 7)}><Icon name="chevR" /></button>
       </div>
       <div className="drp-g">
         {["M", "T", "W", "T", "F", "S", "S"].map((w, i) => <span className="w" key={i}>{w}</span>)}
@@ -38,7 +40,7 @@ function RangePicker({ startDate, endDate, onPick, today, holidays, weeklyOffs }
           const isoDate = addDays(first, i);
           const isWeeklyOff = weeklyOffs.includes(weekdayOf(isoDate));
           const hol = holidays[isoDate];
-          const dis = isoDate < today || isWeeklyOff || !!hol;
+          const dis = isoDate < today || isoDate > leaveYear.to || isoDate < leaveYear.from || isWeeklyOff || !!hol;
           const cls = [hol && "hol", isoDate === today && "td", isoDate === rangeStart && "s", isoDate === rangeEnd && "e", rangeStart && rangeEnd && isoDate > rangeStart && isoDate < rangeEnd && "in"].filter(Boolean).join(" ");
           return (
             <button key={isoDate} type="button" className={cls || undefined} disabled={dis} title={hol || (isWeeklyOff ? t("Weekend") : undefined)} aria-label={`${formatWeekdayDayMonthYear(isoDate)}${hol ? `, ${hol}` : ""}`}
@@ -51,29 +53,31 @@ function RangePicker({ startDate, endDate, onPick, today, holidays, weeklyOffs }
       </div>
       <div className="faint" style={{ fontSize: 11.5, marginTop: 10, display: "flex", gap: 14, flexWrap: "wrap" }}>
         <span><span style={{ color: "var(--gold)" }}>●</span> {t("Holiday")}</span><span>{t("Weekends, holidays and past dates can't be picked")}</span>
+        <span>{t("Leave can be applied only inside the current leave year: {from} to {to}.", { from: formatDayMonthYear(leaveYear.from), to: formatDayMonthYear(leaveYear.to) })}</span>
       </div>
     </div>
   );
 }
 
-export function ApplyLeave({ types, today, holidays, weeklyOffs, onClose }: { types: LeaveTypeOption[]; today: string; holidays: Record<string, string>; weeklyOffs: number[]; onClose: () => void }) {
+export function ApplyLeave({ types, today, leaveYear, holidays, weeklyOffs, onClose }: { types: LeaveTypeOption[]; today: string; leaveYear: LeaveYearSpan; holidays: Record<string, string>; weeklyOffs: number[]; onClose: () => void }) {
   const toast = useToast();
   const t = useT();
   const [type, setType] = useState((types.find((leaveType) => leaveType.code === "CL" && !leaveType.lockedReason) ?? types.find((leaveType) => !leaveType.lockedReason) ?? types[0]).code);
   const [range, setRange] = useState({ from: "", to: "" });
   const [part, setPart] = useState<Part>("FULL");
   const [reason, setReason] = useState("");
+  const [employee, setEmployee] = useState<PickedEmployee | null>(null);
   const [previewResult, setPreviewResult] = useState<Preview | null>(null);
   const [tried, setTried] = useState(false);
   const [err, setErr] = useState("");
   const [busy, start] = useTransition();
-  useDismissOnEdit(err, () => setErr(""), type, range, part, reason);
+  useDismissOnEdit(err, () => setErr(""), type, range, part, reason, employee);
   const rangeStart = range.from && range.to ? [range.from, range.to].sort()[0] : range.from;
   const rangeEnd = range.from && range.to ? [range.from, range.to].sort()[1] : range.from;
   const single = !!rangeStart && rangeStart === rangeEnd;
   const tName = types.find((x) => x.code === type)!.name;
 
-  const query = useMemo(() => (rangeStart ? { type, from: rangeStart, to: rangeEnd, part: single ? part : ("FULL" as Part), reason } : null), [type, rangeStart, rangeEnd, single, part, reason]);
+  const query = useMemo(() => (rangeStart ? { type, from: rangeStart, to: rangeEnd, part: single ? part : ("FULL" as Part), reason, employeeId: employee?.id } : null), [type, rangeStart, rangeEnd, single, part, reason, employee]);
   useEffect(() => {
     if (!query) return;
     let alive = true;
@@ -104,18 +108,19 @@ export function ApplyLeave({ types, today, holidays, weeklyOffs, onClose }: { ty
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(320px, 100%), 1fr))", gap: 26 }}>
         <div className="col" style={{ gap: 20 }}>
           <div>
+            <EmployeePicker permission="appr.leave" value={employee} onChange={setEmployee} />
             <div className="field" style={{ marginBottom: 10 }}>{t("1 · Leave type")}</div>
             <div className="ltypes" role="radiogroup" aria-label={t("Leave type")}>
               {types.map((typeOption) => (
-                <button key={typeOption.code} type="button" role="radio" aria-checked={type === typeOption.code} className={`ltype${type === typeOption.code ? " on" : ""}`} onClick={() => setType(typeOption.code)} disabled={!!typeOption.lockedReason} title={typeOption.lockedReason ? t(typeOption.lockedReason) : undefined}>
-                  <span className="tick"><Icon name="ok" size={12} /></span><b>{t(typeOption.name)}</b><small>{typeOption.lockedReason ? t("Not during probation") : typeOption.available === null ? t("Unpaid") : t("{n} available", { n: typeOption.available })}</small>
+                <button key={typeOption.code} type="button" role="radio" aria-checked={type === typeOption.code} className={`ltype${type === typeOption.code ? " on" : ""}`} onClick={() => setType(typeOption.code)} disabled={!employee && !!typeOption.lockedReason} title={typeOption.lockedReason ? t(typeOption.lockedReason) : undefined}>
+                  <span className="tick"><Icon name="ok" size={12} /></span><b>{t(typeOption.name)}</b><small>{employee ? "" : typeOption.lockedReason ? t("Not during probation") : typeOption.available === null ? t("Unpaid") : t("{n} available", { n: typeOption.available })}</small>
                 </button>
               ))}
             </div>
           </div>
           <div>
             <div className="field" style={{ marginBottom: 10 }}>{t("2 · Start and end date")} <span className="hint">{t("tap a start date, then an end date")}</span></div>
-            <RangePicker startDate={range.from} endDate={range.to} onPick={(startDate, endDate) => setRange({ from: startDate, to: endDate })} today={today} holidays={holidays} weeklyOffs={weeklyOffs} />
+            <RangePicker startDate={range.from} endDate={range.to} onPick={(startDate, endDate) => setRange({ from: startDate, to: endDate })} today={today} leaveYear={leaveYear} holidays={holidays} weeklyOffs={weeklyOffs} />
           </div>
         </div>
         <div className="col" style={{ gap: 18 }}>

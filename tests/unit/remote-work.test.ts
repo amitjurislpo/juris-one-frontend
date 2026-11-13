@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { canDecideRemoteWork, remoteWorkDays, remoteWorkProblem, type RemoteWorkItem } from "@/pages/attendance/remoteWork";
+import { remoteWorkDays, remoteWorkDuration, remoteWorkProblem, type RemoteWorkItem } from "@/pages/attendance/remoteWork";
 import { translate } from "@/lib/i18n/translate";
 
 const item = (overrides: Partial<RemoteWorkItem> = {}): RemoteWorkItem => ({
   id: "r1", employeeId: "e1", employeeCode: "JC01", employeeName: "Asha Rao", department: null, fromDate: "2026-11-12", toDate: "2026-11-14", days: 3,
-  reason: "Internet repair", status: "PENDING", decidedBy: null, decidedAt: null, decisionNote: null, createdAt: "2026-11-05T09:00:00Z", ...overrides,
+  reason: "Internet repair", status: "PENDING", decidedBy: null, decidedAt: null, decisionNote: null, createdAt: "2026-11-05T09:00:00Z", part: "FULL", createdBy: "e1", ...overrides,
 });
 
 describe("remote work request rules", () => {
@@ -33,11 +33,11 @@ describe("remote work request rules", () => {
     }
   });
 
-  it("lets an approver decide only a pending request that is not their own", () => {
-    expect(canDecideRemoteWork(item(), true, "hr")).toBe(true);
-    expect(canDecideRemoteWork(item(), false, "hr")).toBe(false); // a manager only looks
-    expect(canDecideRemoteWork(item(), true, "e1")).toBe(false);
-    expect(canDecideRemoteWork(item({ status: "APPROVED" }), true, "hr")).toBe(false);
-    expect(canDecideRemoteWork(item({ status: "CANCELLED" }), true, "hr")).toBe(false);
+  it("words the duration of a full-day range and of a half day", () => {
+    expect(remoteWorkDuration(item({ days: 1 }))).toBe("1 day");
+    expect(remoteWorkDuration(item())).toBe("{n} days");
+    expect(remoteWorkDuration(item({ days: 1, part: "FIRST_HALF" }))).toBe("First half");
+    expect(remoteWorkDuration(item({ days: 1, part: "SECOND_HALF" }))).toBe("Second half");
+    for (const text of ["1 day", "First half", "Second half", "Half day"]) expect(translate("hi", text)).not.toBe(text);
   });
 });

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { defaultRequestScope } from "@/pages/attendance/pendingCounts";
 import { formatMinutes, minutesBetweenLocal, prefillUnlessTouched } from "@/pages/attendance/regularization";
 
 describe("regularization helpers", () => {
@@ -22,5 +23,12 @@ describe("regularization helpers", () => {
     expect(prefillUnlessTouched("", "2026-10-05T09:30", false)).toBe("2026-10-05T09:30");
     expect(prefillUnlessTouched("2026-10-05T10:00", "2026-10-05T09:30", true)).toBe("2026-10-05T10:00");
     expect(prefillUnlessTouched("", "", true)).toBe("");
+  });
+
+  it("opens the Team view when an approver has pending requests, My data otherwise", () => {
+    expect(defaultRequestScope(true, 2)).toBe("team");
+    expect(defaultRequestScope(true, 0)).toBe("mine");
+    expect(defaultRequestScope(true, undefined)).toBe("mine");
+    expect(defaultRequestScope(false, 5)).toBe("mine");
   });
 });

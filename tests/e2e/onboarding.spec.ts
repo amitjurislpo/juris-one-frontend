@@ -504,7 +504,7 @@ test.describe("employee onboarding wizard", () => {
     await hire.goto("/onboarding/summary");
     await hire.getByRole("button", { name: "Submit Onboarding" }).click();
     const submitModal = hire.getByRole("dialog");
-    await expect(submitModal).toContainText("Are you sure you want to submit your onboarding information ?");
+    await expect(submitModal).toContainText("Are you sure you want to submit your onboarding information?");
     await submitModal.getByRole("button", { name: "No" }).click();
     await expect(submitModal).toHaveCount(0);
     await expect(hire).toHaveURL(/\/onboarding\/summary$/);

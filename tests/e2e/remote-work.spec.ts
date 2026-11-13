@@ -56,4 +56,38 @@ test.describe("remote work requests", () => {
     await page.reload();
     await expect(page.locator("tbody tr", { hasText: "Internet repair at home" })).toContainText("Approved");
   });
+
+  test("HR raises remote work for an employee from the Request menu and it is approved at once", async ({ page }) => {
+    const fromDate = isoDaysFromNow(40);
+    const [employee] = await sql<{ fullName: string }>(`SELECT full_name AS "fullName" FROM employees WHERE code = 'JC074'`);
+
+    await login(page, "JC012");
+    await expectLanded(page, "/home");
+    await page.goto("/attendance");
+    await page.getByRole("button", { name: "Request", exact: true }).click();
+    await expect(page.getByRole("menuitem")).toHaveText(["Regularization", "On Duty", "Remote Work"]);
+    await page.getByRole("menuitem", { name: "Remote Work" }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByPlaceholder("Search by employee").fill(employee.fullName.slice(0, 5));
+    await dialog.getByRole("button", { name: employee.fullName }).click();
+    await dialog.getByLabel(/^From/).fill(fromDate);
+    await dialog.getByLabel(/^To/).fill(fromDate);
+    await dialog.getByLabel(/^Reason/).fill("Raised by HR for the employee");
+    await dialog.getByRole("button", { name: "Add for the employee" }).click();
+    await expect(toast(page)).toContainText("Remote work request added successfully");
+
+    const [request] = await sql<{ status: string; decided_role: string; code: string }>(
+      `SELECT r.status, r.decided_role, e.code FROM remote_work_requests r JOIN employees e ON e.id = r.employee_id WHERE r.reason = 'Raised by HR for the employee' AND r.created_at >= $1`, [TEST_START_TIME]);
+    expect(request).toEqual({ status: "APPROVED", decided_role: "HR Manager", code: "JC074" });
+
+    // an ordinary employee has no employee picker
+    const employeePage = await page.context().browser()!.newPage();
+    await login(employeePage, "JC074");
+    await expectLanded(employeePage, "/home");
+    await employeePage.goto("/attendance");
+    await employeePage.getByRole("button", { name: "Request", exact: true }).click();
+    await employeePage.getByRole("menuitem", { name: "On Duty" }).click();
+    await expect(employeePage.getByRole("dialog").getByPlaceholder("Search by employee")).toHaveCount(0);
+    await employeePage.close();
+  });
 });

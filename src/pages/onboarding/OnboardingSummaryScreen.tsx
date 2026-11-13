@@ -64,7 +64,7 @@ export function OnboardingSummaryScreen({ view, target, canEdit }: { view: Onboa
             <button type="button" className="btn" onClick={() => setIsConfirming(false)}>{t("No")}</button>
             <button type="button" className="btn btn-gold" onClick={submit}>{t("Yes")}</button>
           </>}>
-          {isSubmitting ? <p className="muted" role="status">{t("Loading...")}</p> : <p>{t("Are you sure you want to submit your onboarding information ?")}</p>}
+          {isSubmitting ? <p className="muted" role="status">{t("Loading...")}</p> : <p>{t("Are you sure you want to submit your onboarding information?")}</p>}
         </Modal>
       )}
     </div>

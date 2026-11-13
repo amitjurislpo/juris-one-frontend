@@ -10,9 +10,10 @@ import { useData, usePage } from "@/lib/page";
 import { useReadOnly } from "@/lib/session";
 import { decideRemoteWork } from "./actions";
 import { STATUS_CHIP, STATUS_LABEL } from "./regularization";
-import { canDecideRemoteWork, REMOTE_WORK_MAX_NOTE, type RemoteWorkList } from "./remoteWork";
+import { REMOTE_WORK_MAX_NOTE, remoteWorkDuration, type RemoteWorkItem, type RemoteWorkList } from "./remoteWork";
 import { RemoteWorkDetailsModal } from "./RemoteWorkDetailsModal";
 import { RemoteWorkRequestModal } from "./RemoteWorkRequestModal";
+import { defaultRequestScope, usePendingCounts } from "./pendingCounts";
 
 /**
  * The Remote Work Requests tab: my requests (My data) or the team's (Team: everyone for Admin / HR, the direct reports for a manager) with
@@ -25,7 +26,9 @@ export function RemoteWorkTab() {
   const readOnly = useReadOnly();
   const { set } = useQuery();
   const canSeeTeam = user.perms.has("appr.reg") || user.hasReports;
-  const scope = canSeeTeam && searchParams.scope === "team" ? "team" : "mine";
+  const counts = usePendingCounts();
+  const defaultScope = defaultRequestScope(canSeeTeam, counts?.remoteWork);
+  const scope = canSeeTeam && (searchParams.scope ?? defaultScope) === "team" ? "team" : "mine";
   const query = { scope, status: searchParams.status ?? "", month: searchParams.month ?? "", search: searchParams.search ?? "", page: searchParams.page ?? "" };
   const data = useData<RemoteWorkList>(`/api/v1/attendance/remote-work-requests${toQueryString(Object.fromEntries(Object.entries(query).filter(([, value]) => value !== "")))}`);
   const [busy, start] = useTransition();
@@ -39,6 +42,8 @@ export function RemoteWorkTab() {
   const team = data.scope === "team";
   const month = searchParams.month ?? "";
   const openedItem = data.items.find((item) => item.id === opened) ?? null;
+  const decidable = (item: RemoteWorkItem) => data.decidable.includes(item.id); // the server's approval rule
+  const canSelect = data.decidable.length > 0;
 
   const decide = (approve: boolean) => start(async () => {
     const result = await decideRemoteWork({ ids: selected, approve, note: note.trim() || undefined });
@@ -54,7 +59,7 @@ export function RemoteWorkTab() {
   return (
     <div className="col" style={{ gap: 18 }}>
       <div className="toolbar enter" style={{ flexWrap: "wrap", gap: 10 }}>
-        {canSeeTeam && <SegmentedFilter name="scope" dflt="mine" label={t("Whose requests")} options={[{ value: "mine", label: t("My data") }, { value: "team", label: t("Team") }]} />}
+        {canSeeTeam && <SegmentedFilter name="scope" dflt={defaultScope} label={t("Whose requests")} options={[{ value: "mine", label: t("My data") }, { value: "team", label: t("Team") }]} />}
         <SegmentedFilter name="status" dflt="ALL" label={t("Approval status")} options={[
           { value: "ALL", label: t("All") }, { value: "PENDING", label: t("Pending") }, { value: "APPROVED", label: t("Approved") }, { value: "DECLINED", label: t("Rejected") }, { value: "CANCELLED", label: t("Cancelled") },
         ]} />
@@ -82,17 +87,17 @@ export function RemoteWorkTab() {
           <div className="table-wrap">
             <table className="t">
               <thead><tr>
-                {data.canDecide && <th style={{ width: 32 }}></th>}
+                {canSelect && <th style={{ width: 32 }}></th>}
                 <th>{t("Employee")}</th><th>{t("Period")}</th><th>{t("Duration")}</th><th>{t("Reason")}</th><th>{t("Approval status")}</th>
               </tr></thead>
               <tbody>
                 {data.items.map((item) => (
                   <tr key={item.id} onClick={() => setOpened(item.id)} style={{ cursor: "pointer" }}>
-                    {data.canDecide && <td onClick={(e) => e.stopPropagation()}>{canDecideRemoteWork(item, data.canDecide, user.id) && <input type="checkbox" aria-label={t("Select {who}", { who: item.employeeName })} checked={selected.includes(item.id)}
+                    {canSelect && <td onClick={(e) => e.stopPropagation()}>{decidable(item) && <input type="checkbox" aria-label={t("Select {who}", { who: item.employeeName })} checked={selected.includes(item.id)}
                       onChange={(e) => setSelected(e.target.checked ? [...selected, item.id] : selected.filter((id) => id !== item.id))} />}</td>}
                     <td><b>{item.employeeName}</b><div className="faint" style={{ fontSize: 12 }}>{item.employeeCode}</div></td>
                     <td className="num">{item.fromDate === item.toDate ? formatDayMonthYear(item.fromDate) : `${formatDayMonthYear(item.fromDate)} – ${formatDayMonthYear(item.toDate)}`}</td>
-                    <td className="num">{item.days === 1 ? t("1 day") : t("{n} days", { n: item.days })}</td>
+                    <td className="num">{t(remoteWorkDuration(item), { n: item.days })}</td>
                     <td>{item.reason}</td>
                     <td><span className={`chip ${STATUS_CHIP[item.status] ?? "neutral"}`}>{t(STATUS_LABEL[item.status] ?? item.status)}</span></td>
                   </tr>
@@ -106,7 +111,7 @@ export function RemoteWorkTab() {
       <Pager page={data.page} take={data.pageSize} total={data.total} />
 
       {requesting && <RemoteWorkRequestModal onClose={() => setRequesting(false)} />}
-      {openedItem && <RemoteWorkDetailsModal item={openedItem} canDecide={data.canDecide} onClose={() => setOpened(null)} />}
+      {openedItem && <RemoteWorkDetailsModal item={openedItem} canDecide={decidable(openedItem)} onClose={() => setOpened(null)} />}
       {rejecting && (
         <ConfirmDialog title={t("Reject requests")} danger confirm={t("Reject")} busy={busy || !note.trim()} onClose={() => setRejecting(false)} onConfirm={() => decide(false)}
           body={t("The employees will see these remarks.")}>
