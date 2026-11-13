@@ -49,7 +49,7 @@ export function ShiftRosterGrid({ roster, layout, onOpenAssignment }: { roster: 
                   <span className={`roster-chip${day.isWeeklyOff || !entry ? " off" : ` c${entry.colour}`}`}>{day.isWeeklyOff || !entry ? "–" : entry.shift.name.slice(0, 2).toUpperCase()}</span>
                 );
                 return (
-                  <td key={day.date} className={`roster-cell${day.assignmentId ? " assigned" : ""}`} title={day.isWeeklyOff ? t("Weekly off") : label}>
+                  <td key={day.date} className={`roster-day-cell${day.assignmentId ? " assigned" : ""}`} title={day.isWeeklyOff ? t("Weekly off") : label}>
                     {open ? <button type="button" className="roster-cell-button" onClick={open} aria-label={`${employee.name}, ${formatDayMonth(day.date)}: ${label}`}>{body}</button> : body}
                   </td>
                 );
