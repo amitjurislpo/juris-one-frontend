@@ -7,7 +7,9 @@ const TEST_START_TIME = new Date().toISOString();
 const isoDaysFromNow = (days: number) => new Date(Date.now() + days * 86400_000).toISOString().slice(0, 10);
 
 test.describe("remote work requests", () => {
+  let putSettingBack: (() => Promise<void>) | null = null;
   test.afterAll(async () => {
+    await putSettingBack?.();
     await sql(`DELETE FROM remote_work_requests WHERE created_at >= $1`, [TEST_START_TIME]);
   });
 
@@ -57,10 +59,10 @@ test.describe("remote work requests", () => {
     await expect(page.locator("tbody tr", { hasText: "Internet repair at home" })).toContainText("Approved");
   });
 
-  test("HR raises remote work for an employee from the Request menu and it is approved at once", async ({ page }) => {
-    const fromDate = isoDaysFromNow(40);
+  /** Raises a one-day remote work request as HR (JC012) for JC074 from the Request menu and returns the saved row. */
+  async function raiseForEmployee(page: Page, daysAhead: number, reason: string) {
+    const fromDate = isoDaysFromNow(daysAhead);
     const [employee] = await sql<{ fullName: string }>(`SELECT full_name AS "fullName" FROM employees WHERE code = 'JC074'`);
-
     await login(page, "JC012");
     await expectLanded(page, "/home");
     await page.goto("/attendance");
@@ -72,12 +74,29 @@ test.describe("remote work requests", () => {
     await dialog.getByRole("button", { name: employee.fullName }).click();
     await dialog.getByLabel(/^From/).fill(fromDate);
     await dialog.getByLabel(/^To/).fill(fromDate);
-    await dialog.getByLabel(/^Reason/).fill("Raised by HR for the employee");
+    await dialog.getByLabel(/^Reason/).fill(reason);
     await dialog.getByRole("button", { name: "Add for the employee" }).click();
     await expect(toast(page)).toContainText("Remote work request added successfully");
+    const [request] = await sql<{ status: string; decided_role: string | null; code: string }>(
+      `SELECT r.status, r.decided_role, e.code FROM remote_work_requests r JOIN employees e ON e.id = r.employee_id WHERE r.reason = $1 AND r.created_at >= $2`, [reason, TEST_START_TIME]);
+    return request;
+  }
 
-    const [request] = await sql<{ status: string; decided_role: string; code: string }>(
-      `SELECT r.status, r.decided_role, e.code FROM remote_work_requests r JOIN employees e ON e.id = r.employee_id WHERE r.reason = 'Raised by HR for the employee' AND r.created_at >= $1`, [TEST_START_TIME]);
+  test("HR raises remote work for an employee with auto-approve off: it stays pending", async ({ page }) => {
+    // the business setting autoApprove (shared with regularization) is off by default
+    const request = await raiseForEmployee(page, 40, "Raised by HR, auto-approve off");
+    expect(request).toEqual({ status: "PENDING", decided_role: null, code: "JC074" });
+  });
+
+  test("HR raises remote work for an employee from the Request menu and it is approved at once when auto-approve is on", async ({ page }) => {
+    const previousSettings = await sql<{ businessId: string; value: string }>(`SELECT business_id AS "businessId", value::text AS value FROM settings WHERE key = 'attendance.regularization'`);
+    putSettingBack = async () => {
+      await sql(`DELETE FROM settings WHERE key = 'attendance.regularization'`);
+      for (const previous of previousSettings) await sql(`INSERT INTO settings (business_id, key, value, updated_at) VALUES ($1, 'attendance.regularization', $2::jsonb, now())`, [previous.businessId, previous.value]);
+    };
+    await sql(`INSERT INTO settings (business_id, key, value, updated_at) SELECT business_id, 'attendance.regularization', '{"autoApprove":true}'::jsonb, now() FROM settings WHERE key = 'attendance.policy'
+      ON CONFLICT (business_id, key) DO UPDATE SET value = jsonb_set(settings.value, '{autoApprove}', 'true')`);
+    const request = await raiseForEmployee(page, 41, "Raised by HR for the employee");
     expect(request).toEqual({ status: "APPROVED", decided_role: "HR Manager", code: "JC074" });
 
     // an ordinary employee has no employee picker
