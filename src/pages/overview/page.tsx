@@ -83,7 +83,7 @@ export default function OverviewPage() {
           <span className="spot"></span>
           <div className="card-h"><h3>{t("HR queue")}</h3>{can(user, "appr.leave", "appr.reg") && <Link className="btn btn-sm btn-ghost" href="/approvals">{t("Open")}</Link>}</div>
           <p className="muted" style={{ margin: 0, fontSize: 13.5 }}>
-            {pending ? t("{leave} and {reg} are waiting.", { leave: t(data.pending.leave === 1 ? "{n} leave request" : "{n} leave requests", { n: data.pending.leave }), reg: t(data.pending.regularizations === 1 ? "{n} regularization" : "{n} regularizations", { n: data.pending.regularizations }) }) : t("No leave or attendance requests are waiting.")} {t("Leave is approved by HR; regularizations can be approved by HR, Finance or Admin — the first decision wins.")}
+            {pending ? t("{leave} and {reg} are waiting.", { leave: t(data.pending.leave === 1 ? "{n} leave request" : "{n} leave requests", { n: data.pending.leave }), reg: t(data.pending.regularizations === 1 ? "{n} regularization" : "{n} regularizations", { n: data.pending.regularizations }) }) : t("No leave or attendance requests are waiting.")} {t("Leave is approved by HR. Attendance requests are decided by HR or Admin; an HR person's request by their reporting manager or Admin.")}
           </p>
         </section>
 
