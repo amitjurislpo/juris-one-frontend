@@ -1441,7 +1441,7 @@ export const hindiMessages: Record<string, string> = {
   "{n} regularization": "{n} नियमितीकरण",
   "{n} regularizations": "{n} नियमितीकरण",
   "No leave or attendance requests are waiting.": "कोई छुट्टी या उपस्थिति अनुरोध प्रतीक्षा में नहीं है।",
-  "Leave is approved by HR; regularizations can be approved by HR, Finance or Admin — the first decision wins.": "छुट्टी एचआर द्वारा स्वीकृत होती है; नियमितीकरण एचआर, फ़ाइनेंस या एडमिन द्वारा स्वीकृत किए जा सकते हैं — पहला निर्णय मान्य होता है।",
+  "Leave is approved by HR. Attendance requests are decided by HR or Admin; an HR person's request by their reporting manager or Admin.": "छुट्टी एचआर द्वारा स्वीकृत होती है। उपस्थिति अनुरोधों पर एचआर या एडमिन निर्णय लेते हैं; एचआर व्यक्ति के अनुरोध पर उनके रिपोर्टिंग मैनेजर या एडमिन।",
   "Finance queue": "फ़ाइनेंस कतार",
   "{n} investment proof is pending verification.": "{n} निवेश प्रमाण सत्यापन के लिए लंबित है।",
   "{n} investment proofs are pending verification.": "{n} निवेश प्रमाण सत्यापन के लिए लंबित हैं।",
