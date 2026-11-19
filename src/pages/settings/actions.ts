@@ -1,6 +1,7 @@
 
 import type { ActionResult } from "@/lib/action";
 import { apiAction } from "@/lib/api";
+import type { BusinessPunchMode } from "@/lib/punch-mode";
 
 export interface AttendancePolicyInput {
   fullDayHours: number;
@@ -12,6 +13,8 @@ export interface AttendancePolicyInput {
   lockDayOfNextMonth: number;
   lockTime: string;
   trackingStartDate: string;
+  /** How attendance is recorded: web check-in/out, a punch machine, or chosen per employee. */
+  punchMode: BusinessPunchMode;
 }
 
 /** Attendance policy (REQUIREMENTS §5.4 "configurable in Policies") — saved by the API. Locked months keep their frozen values. */

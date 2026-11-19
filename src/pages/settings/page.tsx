@@ -8,6 +8,7 @@ import { useT } from "@/lib/i18n/client";
 import { pick } from "@/lib/list";
 import { PERMISSIONS } from "@/lib/permissions";
 import type { SettingValue } from "@/lib/api-types";
+import { toBusinessPunchMode } from "@/lib/punch-mode";
 import { AttendancePolicyForm } from "./AttendancePolicyForm";
 import { EmployeeCodeSeries } from "./EmployeeCodeSeries";
 
@@ -133,7 +134,7 @@ function AttendancePolicy() {
   const days = [translate("Sunday"), translate("Monday"), translate("Tuesday"), translate("Wednesday"), translate("Thursday"), translate("Friday"), translate("Saturday")];
   return (
     <>
-    <AttendancePolicyForm locked={locked} initial={{ fullDayHours: attendancePolicy.fullDayHours, halfDayHours: attendancePolicy.halfDayHours, graceMinutes: grc, lateMarksPerHalfDayLop: attendancePolicy.lateMarksPerHalfDayLop, weeklyOffs: attendancePolicy.weeklyOffs, absenceJobBufferMinutes: attendancePolicy.absenceJobBufferMinutes, lockDayOfNextMonth: attendancePolicy.lockDayOfNextMonth, lockTime: attendancePolicy.lockTime, trackingStartDate: attendancePolicy.trackingStartDate }} />
+    <AttendancePolicyForm locked={locked} initial={{ fullDayHours: attendancePolicy.fullDayHours, halfDayHours: attendancePolicy.halfDayHours, graceMinutes: grc, lateMarksPerHalfDayLop: attendancePolicy.lateMarksPerHalfDayLop, weeklyOffs: attendancePolicy.weeklyOffs, absenceJobBufferMinutes: attendancePolicy.absenceJobBufferMinutes, lockDayOfNextMonth: attendancePolicy.lockDayOfNextMonth, lockTime: attendancePolicy.lockTime, trackingStartDate: attendancePolicy.trackingStartDate, punchMode: toBusinessPunchMode(attendancePolicy.punchMode) }} />
     <section className="card pad enter">
       {shifts.map((shift) => (
         <div className="kv" key={shift.id}><span className="muted">{translate("{name} shift", { name: shift.name })}</span><b>{formatClockTime(shift.startLocal)} – {formatClockTime(shift.endLocal)}{shift.region === "US" ? ` ${translate("local")}` : " IST"} · {translate("grace till {time}", { time: grace(shift.startLocal, shift.graceMinutes) })}</b></div>

@@ -2090,3 +2090,35 @@ tr.att-today td{background:var(--accentsoft)}
 
 /* a toolbar with an open dropdown menu is drawn above the cards that follow it (each animated block is its own stacking context) */
 .toolbar:has([aria-expanded="true"]){position:relative;z-index:30}
+
+/* attendance calendar: day code, day-type icon, deduction alert, grace mark, legends, day detail */
+.cal .d{position:relative}
+.cal-code{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;font-family:var(--font-geist-mono),monospace;color:var(--muted)}
+.cal .d.alert{border-color:var(--warn);box-shadow:inset 0 0 0 1px var(--warn)}
+.cal-grace{position:absolute;top:0;right:0;width:0;height:0;border-style:solid;border-width:0 14px 14px 0;border-color:transparent var(--warn) transparent transparent}
+.cal-legends{margin-top:16px;border-top:1px solid var(--line);padding-top:10px}
+.cal-legends-h{display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:0;padding:4px 0;font:inherit;color:var(--text);cursor:pointer;font-size:13.5px}
+.cal-legends-b{display:flex;flex-direction:column;gap:8px;padding-top:6px}
+.cal-legends ul{display:flex;flex-wrap:wrap;gap:8px 18px;list-style:none;margin:0;padding:0;font-size:12.5px;color:var(--muted)}
+.cal-legends li{display:inline-flex;align-items:center;gap:6px}
+.cal-swatch{display:inline-grid;place-items:center;min-width:22px;height:20px;padding:0 4px;border-radius:6px;border:1px solid var(--line2);background:var(--surface);font-style:normal;font-size:10.5px;font-weight:600;font-family:var(--font-geist-mono),monospace;color:var(--text)}
+.cal-swatch.present{background:var(--okbg);color:var(--ok)}
+.cal-swatch.absent{background:var(--badbg);color:var(--bad)}
+.cal-swatch.leave{background:var(--infobg);color:var(--info)}
+.cal-swatch.holiday{background:var(--accentsoft);color:var(--accenttext)}
+.cal-swatch.off{background:var(--sunken);color:var(--faint)}
+.cal-swatch.alert{border-color:var(--warn);box-shadow:inset 0 0 0 1px var(--warn)}
+.cal-swatch.grace{position:relative;overflow:hidden}
+.cal-swatch.grace::after{content:"";position:absolute;top:0;right:0;border-style:solid;border-width:0 9px 9px 0;border-color:transparent var(--warn) transparent transparent}
+.cal-swatch.plain{border:0;background:none;color:var(--muted)}
+.att-day-detail{margin-top:6px}
+.att-day-subhead{font-size:13px;font-weight:600;margin:16px 0 8px}
+.att-day-detail .table-wrap{border:1px solid var(--line);border-radius:10px}
+table.t.att-mini{min-width:360px;font-size:12.5px}
+table.t.att-mini th,table.t.att-mini td{padding:8px 10px}
+@media (min-width:901px){.cal-detail{max-height:calc(100vh - 112px);overflow-y:auto}}
+
+/* attendance calendar: a long holiday name wraps inside the cell, the LATE tag never pushes past the cell edge */
+.cal .d small{max-width:100%;overflow-wrap:anywhere;line-height:1.15}
+.cal-top b{flex:0 0 auto}
+.cal .late-chip{padding:0 4px;font-size:9px;overflow:hidden;text-overflow:clip}

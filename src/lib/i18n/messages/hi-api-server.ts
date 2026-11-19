@@ -320,4 +320,9 @@ export const hindiServerTextMessages: Record<string, string> = {
   "Employee not found.": "कर्मचारी नहीं मिला।",
   // encrypted names (EmployeeNameDirectory)
   "There are too many people to search or sort by name at once. Narrow your search with a filter and try again.": "नाम से खोजने या क्रमबद्ध करने के लिए एक साथ बहुत ज़्यादा लोग हैं। फ़िल्टर से खोज सीमित करें और दोबारा कोशिश करें।",
+  // attendance day detail and punch mode
+  "The date must be between 2000 and 2100.": "तारीख 2000 से 2100 के बीच होनी चाहिए।",
+  "The date must be a day written YYYY-MM-DD.": "तारीख YYYY-MM-DD रूप में लिखा एक दिन होनी चाहिए।",
+  "Your business records attendance from the punch machine, so you can't check in or out here.": "आपका व्यवसाय उपस्थिति पंच मशीन से दर्ज करता है, इसलिए आप यहाँ चेक-इन या चेक-आउट नहीं कर सकते।",
+  "That access card number is already used by another employee.": "यह एक्सेस कार्ड नंबर पहले से किसी दूसरे कर्मचारी के पास है।",
 };
