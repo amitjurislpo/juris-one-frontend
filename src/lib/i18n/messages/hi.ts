@@ -5,11 +5,13 @@ import { hindiOnboardingSummaryMessages } from "./hi-onboarding-summary";
 import { hindiOnboardingHrMessages } from "./hi-onboarding-hr";
 import { hindiOnboardingFlowMessages } from "./hi-onboarding-flow";
 import { hindiAttendanceMessages } from "./hi-attendance";
+import { hindiAttendanceInfoMessages } from "./hi-attendance-info";
 import { hindiOnDutyMessages } from "./hi-on-duty";
 import { hindiRemoteWorkMessages } from "./hi-remote-work";
 
 export const hindiMessages: Record<string, string> = {
   ...hindiAttendanceMessages, // Attendance views, totals and export; entries below win on duplicates
+  ...hindiAttendanceInfoMessages, // Attendance calendar averages, legends, day detail, swipes; punch mode
   ...hindiOnDutyMessages, // Attendance On Duty tab
   ...hindiRemoteWorkMessages, // Remote Work Requests tab
   ...hindiOnboardingWizardMessages, // onboarding wizard shell and steps 1 to 3
@@ -1559,7 +1561,7 @@ export const hindiMessages: Record<string, string> = {
   "Nothing posted yet": "अभी कुछ पोस्ट नहीं किया गया",
   "Post your first announcement — a holiday notice, a new joiner, an office update.": "अपनी पहली घोषणा पोस्ट करें — अवकाश सूचना, नया सदस्य, या कार्यालय की जानकारी।",
   "Unpublish announcement": "घोषणा का प्रकाशन हटाएँ",
-  "Hide": "क्या",
+  "Hide": "छिपाएँ",
   "from everyone? You can publish it again later.": "को सभी से छिपाएँ? आप इसे बाद में फिर से प्रकाशित कर सकते हैं।",
   "Post": "पोस्ट करें",
   "announcements": "घोषणाएँ",

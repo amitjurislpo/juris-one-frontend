@@ -2,6 +2,8 @@
 import type { ActionResult } from "@/lib/action";
 import { apiAction, apiCall, apiFile } from "@/lib/api";
 import type { EmployeeInput } from "@/lib/employee-schema";
+import type { BusinessPunchMode, PunchMode } from "@/lib/punch-mode";
+import { toBusinessPunchMode } from "@/lib/punch-mode";
 
 // People records run in the Spring Boot API (/api/v1/people). Salary is only sent to struct.manage; PII is masked.
 const PAGES = ["/employees", "/directory", "/team", "/departments"];
@@ -38,6 +40,10 @@ export interface Profile {
   canToggle: boolean;
   /** Admin (owner) or HR may make a probation employee permanent. */
   canConfirm: boolean;
+  /** The card number the punch machine reads, if one is set. */
+  accessCardNumber?: string | null;
+  /** null = follows the business setting */
+  punchMode?: PunchMode | null;
 }
 
 export async function getProfile(id: string): Promise<ActionResult<Profile>> {
@@ -91,7 +97,7 @@ export async function getFormOptions(editId?: string): Promise<ActionResult<Form
   if (!body.ok || !body.data) return body;
   // the API sends null for the optional attributes that are not set; the forms work with empty strings
   const { defaults } = body.data;
-  return { ...body, data: { ...body.data, defaults: { ...defaults, employmentType: defaults.employmentType ?? "", paymentType: defaults.paymentType ?? "", gender: defaults.gender ?? "", employeeCode: defaults.employeeCode ?? "" } } };
+  return { ...body, data: { ...body.data, defaults: { ...defaults, employmentType: defaults.employmentType ?? "", paymentType: defaults.paymentType ?? "", gender: defaults.gender ?? "", employeeCode: defaults.employeeCode ?? "", accessCardNumber: defaults.accessCardNumber ?? "", punchMode: defaults.punchMode ?? "" } } };
 }
 
 export async function saveEmployee(input: EmployeeInput, editId?: string): Promise<ActionResult<{ id: string; code: string }>> {
@@ -140,4 +146,10 @@ export async function getAdditionalRoles(id: string): Promise<ActionResult<Addit
 /** Replaces the additional roles with exactly these ones (an empty list removes them all). */
 export async function saveAdditionalRoles(id: string, roleIds: string[]): Promise<ActionResult<AdditionalRoles>> {
   return apiAction("PUT", `/api/v1/people/${enc(id)}/additional-roles`, { roleIds }, PAGES);
+}
+
+/** The business's attendance mode (Settings → Attendance): the profile form shows the per-employee punch mode only when it is PER_EMPLOYEE. Anyone who may not read it gets MANUAL (the field stays hidden). */
+export async function getBusinessPunchMode(): Promise<BusinessPunchMode> {
+  const { body } = await apiCall<{ policy: { punchMode?: string } }>("GET", "/api/v1/settings/attendance", undefined, { quiet: true });
+  return toBusinessPunchMode(body.ok ? body.data?.policy.punchMode : null);
 }

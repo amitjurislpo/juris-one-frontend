@@ -57,6 +57,7 @@ export interface AttendanceSummaryData {
   counters: SummaryCounters;
   days: SummaryDay[];
   openSince: string | null; // ISO time of the check-in that is still open
+  punchMode?: "MANUAL" | "MACHINE"; // how this person is recorded: MACHINE hides the web check-in button
 }
 
 const STORAGE_KEY = "attendance.view";

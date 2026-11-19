@@ -10,6 +10,7 @@ export const DEFAULT_SETTINGS = {
     lockDayOfNextMonth: 1,
     lockTime: "10:00", // IST
     shiftTargetHours: 9,
+    punchMode: "MANUAL", // MANUAL (web check-in), MACHINE (punch machine) or PER_EMPLOYEE
     trackingStartDate: "2026-04-01", // attendance go-live; earlier days are "Not tracked"
   },
   "employee.policy": { probationMonths: 6 },

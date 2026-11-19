@@ -9,7 +9,8 @@ import { EMPLOYMENT_TYPES, EMPLOYMENT_TYPE_LABELS, GENDERS, GENDER_LABELS, PAYME
 import { LOCATIONS } from "@/lib/people-rules";
 import { SHIFT_OPTIONS } from "@/lib/shifts";
 import { useT } from "@/lib/i18n/client";
-import { getFormOptions, removeEmployeePhoto, saveEmployee, uploadEmployeePhoto, type FormOptions } from "./actions";
+import { EMPLOYEE_PUNCH_MODE_LABELS, type BusinessPunchMode, type PunchMode } from "@/lib/punch-mode";
+import { getBusinessPunchMode, getFormOptions, removeEmployeePhoto, saveEmployee, uploadEmployeePhoto, type FormOptions } from "./actions";
 
 const STEPS = ["Personal", "Identity & address", "Job & access"] as const;
 
@@ -30,6 +31,8 @@ export function EmployeeForm({ editId, photo, onClose }: { editId?: string; phot
   const [photoBusy, setPhotoBusy] = useState(false);
   // the employee code: the business's next number (Auto) or one HR types (Custom); a Manual business series always needs a typed code
   const [isCodeCustom, setIsCodeCustom] = useState(false);
+  // how the business records attendance: the punch mode of one employee can be chosen only when it is PER_EMPLOYEE
+  const [businessPunchMode, setBusinessPunchMode] = useState<BusinessPunchMode>("MANUAL");
 
   useEffect(() => {
     let alive = true;
@@ -42,6 +45,7 @@ export function EmployeeForm({ editId, photo, onClose }: { editId?: string; phot
       }
       else setLoadErr(optionsResult.error);
     });
+    getBusinessPunchMode().then((mode) => { if (alive) setBusinessPunchMode(mode); });
     return () => { alive = false; };
   }, [editId]);
 
@@ -224,6 +228,15 @@ export function EmployeeForm({ editId, photo, onClose }: { editId?: string; phot
                     {EMPLOYMENT_TYPES.map((employmentType) => <option key={employmentType} value={employmentType}>{t(EMPLOYMENT_TYPE_LABELS[employmentType])}</option>)}
                   </select>
                 </label>
+                <label className="field">{t("Access card number")} <span className="hint">{t("optional")}</span><input value={form.accessCardNumber} onChange={(e) => set("accessCardNumber", e.target.value)} maxLength={32} autoComplete="off" />{err("accessCardNumber")}</label>
+                {businessPunchMode === "PER_EMPLOYEE" && (
+                  <label className="field">{t("Punch mode")}
+                    <select value={form.punchMode} onChange={(e) => set("punchMode", e.target.value as PunchMode | "")}>
+                      <option value="">{t("Follow business")}</option>
+                      {(["MANUAL", "MACHINE"] as const).map((mode) => <option key={mode} value={mode}>{t(EMPLOYEE_PUNCH_MODE_LABELS[mode])}</option>)}
+                    </select>
+                  </label>
+                )}
                 <label className="field">{t("Shift")}
                   <select value={form.shift} disabled={!india} onChange={(e) => set("shift", e.target.value as EmployeeInput["shift"])}>
                     {(india ? SHIFT_OPTIONS.IN : SHIFT_OPTIONS.US).map((shiftOption) => <option key={shiftOption.value} value={shiftOption.value}>{t(shiftOption.label)}</option>)}

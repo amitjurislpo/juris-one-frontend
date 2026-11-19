@@ -1,5 +1,6 @@
 
 import { useState, useTransition } from "react";
+import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/shell/Toasts";
 import { weekdayOf } from "@/lib/attendance/engine";
 import { formatWeekdayDayMonthYear, formatHours } from "@/lib/format";
@@ -9,6 +10,8 @@ import type { T } from "@/lib/i18n/translate";
 import { cancelRegularization } from "./actions";
 import { KIND_LABEL, type RegularizationKind } from "./regularization";
 import { RegularizationRequestModal } from "./RegularizationRequestModal";
+import { AttendanceDayDetail } from "./AttendanceDayDetail";
+import { AttendanceLegends } from "./AttendanceLegends";
 
 export interface CalendarDay {
   date: string;
@@ -28,11 +31,21 @@ export interface CalendarDay {
   leaveDays: number;
   regularized: boolean;
   checkOutNote: string | null;
+  /** Short attendance code: P, A, P:A, A:P, O, H, L, OD, or "" when there is no record. */
+  code: string;
+  dayType: "WORKING" | "WEEKLY_OFF" | "HOLIDAY" | "HALF_DAY" | "LEAVE";
+  /** Pay will be cut for this day unless it is regularized. */
+  deductionAlert: boolean;
+  /** The late check-in fell inside the grace period. */
+  graceUsed: boolean;
+  sessionCount: number;
 }
 
 export interface RegularizationView { id: string; date: string; kind: string; status: string; decidedBy: string | null; reason: string | null }
 
 const CLS: Record<string, string> = { PRESENT: "present", HALF_DAY: "present", ABSENT: "absent", HOLIDAY: "holiday", LEAVE: "leave", WEEKLY_OFF: "off" };
+const DAY_TYPE_ICON: Record<string, "moon" | "flag" | "clock"> = { WEEKLY_OFF: "moon", HOLIDAY: "flag", HALF_DAY: "clock" };
+const DAY_TYPE_LABEL: Record<string, string> = { WEEKLY_OFF: "Off Day", HOLIDAY: "Holiday", HALF_DAY: "Half Day" };
 const CHIP: Record<string, string> = { PRESENT: "ok", HALF_DAY: "warn", ABSENT: "bad", HOLIDAY: "gold", LEAVE: "info" };
 /** Short form of a leave day's label for the narrow calendar cell ("Casual leave · half day" → "CL · ½"); other labels are unchanged. */
 const LEAVE_SHORT: Record<string, string> = { "Casual leave": "CL", "Earned leave": "EL", "Comp-off": "CO", "Leave without pay": "LWP" };
@@ -100,12 +113,18 @@ export function AttendanceCalendar({ days, regs, initialSel, locked, monthLabel 
             {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map((weekday) => <span className="dow" key={weekday}>{t(weekday)}</span>)}
             {cells.map((cell, i) =>
               cell ? (
-                <button key={cell.date} type="button" className={`d ${cell.future && cell.status !== "LEAVE" ? "none" : CLS[cell.status] ?? "none"}${sel === cell.date ? " sel" : ""}${cell.today ? " today" : ""}`} style={{ animationDelay: `${i * 12}ms` }}
-                  onClick={() => setSel(cell.date)} aria-pressed={sel === cell.date} aria-label={`${formatWeekdayDayMonthYear(cell.date)}, ${cell.label ? t(cell.label) : t("no record")}${cell.late ? `, ${t("late")}` : ""}`}>
+                <button key={cell.date} type="button" className={`d ${cell.future && cell.status !== "LEAVE" ? "none" : CLS[cell.status] ?? "none"}${sel === cell.date ? " sel" : ""}${cell.today ? " today" : ""}${cell.deductionAlert ? " alert" : ""}`} style={{ animationDelay: `${i * 12}ms` }}
+                  onClick={() => setSel(cell.date)} aria-pressed={sel === cell.date} aria-label={`${formatWeekdayDayMonthYear(cell.date)}, ${cell.label ? t(cell.label) : t("no record")}${cell.late ? `, ${t("late")}` : ""}${cell.deductionAlert ? `, ${t("Alert for deduction")}` : ""}`}>
+                  {cell.graceUsed && <span className="cal-grace" title={t("Grace used")} aria-hidden="true"></span>}
                   <span className="cal-top">
                     <b>{Number(cell.date.slice(8))}</b>
                     {cell.late && <span className="chip warn late-chip">{t("LATE")}</span>}
                   </span>
+                  {cell.code && (
+                    <span className="cal-code" title={DAY_TYPE_LABEL[cell.dayType] ? t(DAY_TYPE_LABEL[cell.dayType]) : undefined}>
+                      {DAY_TYPE_ICON[cell.dayType] && <Icon name={DAY_TYPE_ICON[cell.dayType]} size={11} />}{cell.code}
+                    </span>
+                  )}
                   <small title={cell.status === "LEAVE" ? t(cell.label) : undefined}>{cell.future && cell.status !== "LEAVE" ? "" : cell.status === "LEAVE" ? shortLabel(cell.status, cell.label) : t(cell.label)}</small>
                   {cell.hours > 0 && <small className="num" style={{ color: "var(--text)" }}>{formatHours(cell.hours)}</small>}
                 </button>
@@ -114,8 +133,9 @@ export function AttendanceCalendar({ days, regs, initialSel, locked, monthLabel 
               ),
             )}
           </div>
+          <AttendanceLegends days={days} />
         </section>
-        <section className="card pad enter" style={{ ["--i" as string]: 7, flex: "1 1 320px", position: "sticky", top: 96 }} aria-live="polite">
+        <section className="card pad enter cal-detail" style={{ ["--i" as string]: 7, flex: "1 1 320px", position: "sticky", top: 96 }} aria-live="polite">
           <span className="spot" aria-hidden="true"></span>
           <span className="eyebrow">{t("Day detail")}</span>
           <h2 className="serif" style={{ fontSize: 30, margin: "10px 0 10px", fontWeight: 600 }}>{formatWeekdayDayMonthYear(selectedDay.date)}</h2>
@@ -127,6 +147,7 @@ export function AttendanceCalendar({ days, regs, initialSel, locked, monthLabel 
             <div className="kv"><span className="muted">{t("Worked")}</span><b className="num">{selectedDay.hours ? formatHours(selectedDay.hours) : "—"}</b></div>
             <div className="kv"><span className="muted">{t("Counts as")}</span><b>{countsAs(selectedDay, t)}</b></div>
           </div>
+          <AttendanceDayDetail date={selectedDay.date} isFuture={selectedDay.future} />
           <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.65, margin: "14px 0" }}>{selectedDay.future ? t("This day hasn't happened yet.") : explain(selectedDay, t)}</p>
           {pending && (
             <div className="col" style={{ gap: 8 }}>
