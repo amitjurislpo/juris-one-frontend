@@ -1,3 +1,4 @@
+import type { PunchMode } from "./punch-mode";
 import { PAN_PATTERN, validAadhaar, validUan } from "./people-rules";
 import { phoneProblem } from "./phone";
 
@@ -37,6 +38,10 @@ export interface EmployeeInput {
   gender: Gender | "";
   /** empty = the next number of the business's series (Auto); a typed code is Custom */
   employeeCode: string;
+  /** Card number the punch machine reads; empty = none */
+  accessCardNumber: string;
+  /** empty = follow the business setting (only used when the business lets each employee choose) */
+  punchMode: PunchMode | "";
 }
 
 export const EMPLOYMENT_TYPES = ["PERMANENT", "PROBATION", "CONTRACT", "INTERN", "CONSULTANT", "PART_TIME", "FIXED_TERM"] as const;
@@ -53,6 +58,9 @@ export const GENDER_LABELS: Record<Gender, string> = { FEMALE: "Female", MALE: "
 
 /** A typed employee code: capital letters then digits (no hyphen), like JSC07. */
 const CUSTOM_CODE_PATTERN = /^[A-Z]{1,10}[0-9]{1,6}$/;
+
+/** A card number: letters, digits, dashes and spaces, up to 32 characters. */
+const ACCESS_CARD_PATTERN = /^[A-Za-z0-9 -]{1,32}$/;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -79,6 +87,7 @@ export function stepErrors(step: 1 | 2 | 3, form: EmployeeInput, editing: boolea
     if (form.uan && !validUan(form.uan)) errors.uan = "UAN has 12 digits";
   }
   // adding: designation, department, manager, joining date and role are optional (the server defaults them); editing keeps the full rules
+  if (step === 3 && form.accessCardNumber.trim() && !ACCESS_CARD_PATTERN.test(form.accessCardNumber.trim())) errors.accessCardNumber = "Use up to 32 letters, digits, dashes or spaces";
   if (step === 3 && editing) {
     if (form.designation.trim().length < 2) errors.designation = "Designation is required";
     if (!form.departmentId) errors.departmentId = "Pick a department";

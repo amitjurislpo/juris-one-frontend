@@ -3,6 +3,7 @@ import { useState, useTransition } from "react";
 import { useDismissOnEdit } from "@/lib/useDismissOnEdit";
 import { useToast } from "@/components/shell/Toasts";
 import { useT } from "@/lib/i18n/client";
+import { BUSINESS_PUNCH_MODES, BUSINESS_PUNCH_MODE_LABELS } from "@/lib/punch-mode";
 import { useReadOnly } from "@/lib/session";
 import { updateAttendancePolicy, type AttendancePolicyInput } from "./actions";
 
@@ -45,6 +46,16 @@ export function AttendancePolicyForm({ initial, locked: lockedByRules }: { initi
           })}
         </div>
       </div>
+      <fieldset className="col" style={{ gap: 10, border: 0, padding: 0, margin: "18px 0 0" }}>
+        <legend className="eyebrow">{t("How attendance is recorded")}</legend>
+        {BUSINESS_PUNCH_MODES.map((mode) => (
+          <label key={mode} className="row" style={{ gap: 10, alignItems: "center" }}>
+            <input type="radio" name="punchMode" checked={policyForm.punchMode === mode} disabled={readOnly} onChange={() => setF({ ...policyForm, punchMode: mode })} />
+            <b>{t(BUSINESS_PUNCH_MODE_LABELS[mode])}</b>
+          </label>
+        ))}
+        <span className="muted" style={{ fontSize: 13 }}>{t("Web: people check in and out themselves. Punch machine: swipes come from the machine and the web button is switched off. Per employee: HR picks the mode on each employee's profile.")}</span>
+      </fieldset>
       {err && <p className="err" role="alert">{err}</p>}
       {!readOnly && (
         <div style={{ display: "flex", gap: 8, marginTop: 16 }}>

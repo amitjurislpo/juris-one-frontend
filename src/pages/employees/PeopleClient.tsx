@@ -237,6 +237,7 @@ function ProfileDrawer({ id, onboardingStatus, onClose, onEdit }: { id: string; 
             <div className="eyebrow" style={{ margin: "14px 0 4px" }}>{t("Job")}</div>
             {keyValueRow(t("Reporting manager"), profile.manager)}
             {keyValueRow(t("Direct reports"), profile.reports.length ? profile.reports.join(", ") : "—")}
+            {keyValueRow(t("Access card number"), profile.accessCardNumber ?? "—")}
             {keyValueRow(t("Date of joining"), formatDayMonthYear(profile.dateOfJoining))}
             {profile.exitDate && keyValueRow(t("Last working day"), formatDayMonthYear(profile.exitDate))}
             {keyValueRow(t("Location · shift"), `${profile.location} · ${shiftLabel(profile.shift, t)}`)}

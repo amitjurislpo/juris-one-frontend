@@ -58,7 +58,7 @@ export function AttendanceSummary() {
       <PageHeader eyebrow={t("Attendance")} title={t("My")} emphasis={t("attendance")} sub={t("Tap any day to see its check-in, check-out and how it counts.")} />
       {summary.openSince && <div className="att-noprint"><WorkingFor since={summary.openSince} /></div>}
       <AttendanceToolbar data={summary} view={view} onView={setView} status={status} requestKinds={requestKinds} onRequest={(kind) => setRequest({ kind, date: summary.workDate })} onHelp={() => setShowHelp(true)} />
-      <AttendanceShiftCard shiftText={`${summary.shift.name} · ${summary.shift.start} – ${summary.shift.end}`} openSince={summary.openSince} canPunch={!readOnly} />
+      <AttendanceShiftCard shiftText={`${summary.shift.name} · ${summary.shift.start} – ${summary.shift.end}`} openSince={summary.openSince} canPunch={!readOnly && summary.punchMode !== "MACHINE"} />
       {view === "calendar" && month ? <AttendanceMonthView data={month} /> : (
         <section className="card enter">
           {view === "list"

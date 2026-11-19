@@ -78,7 +78,7 @@ describe("status and reporting lines", () => {
 });
 
 describe("form validation", () => {
-  const base: EmployeeInput = { firstName: "Meera", middleName: "", lastName: "Joshi", fatherName: "Prakash Joshi", email: "meera.joshi@jurislpo.com", phoneCountry: "+91", phone: "9876543210", location: "IN_IST", joiningOffice: "", pan: "ABCDE1234F", aadhaar: "2345 6789 0123", uan: "", address: "", designation: "Associate", departmentId: "x", managerId: "y", dateOfJoining: "2026-10-12", shift: "IN_NIGHT", roleId: "r", employmentType: "", paymentType: "BANK_TRANSFER", gender: "", employeeCode: "" };
+  const base: EmployeeInput = { firstName: "Meera", middleName: "", lastName: "Joshi", fatherName: "Prakash Joshi", email: "meera.joshi@jurislpo.com", phoneCountry: "+91", phone: "9876543210", location: "IN_IST", joiningOffice: "", pan: "ABCDE1234F", aadhaar: "2345 6789 0123", uan: "", address: "", designation: "Associate", departmentId: "x", managerId: "y", dateOfJoining: "2026-10-12", shift: "IN_NIGHT", roleId: "r", employmentType: "", paymentType: "BANK_TRANSFER", gender: "", employeeCode: "", accessCardNumber: "", punchMode: "" };
   it("PAN and Aadhaar are optional, but checked when given", () => {
     expect(stepErrors(2, { ...base, pan: "", aadhaar: "" }, false)).toEqual({});
     expect(stepErrors(2, { ...base, pan: "abcde1234f" }, false).pan).toBeUndefined();
@@ -108,7 +108,7 @@ describe("form validation", () => {
 });
 
 describe("slim add-employee form", () => {
-  const added: EmployeeInput = { firstName: "Meera", middleName: "", lastName: "Joshi", fatherName: "", email: "meera.joshi@jurislpo.com", phoneCountry: "+91", phone: "9876543210", location: "", joiningOffice: "", pan: "", aadhaar: "", uan: "", address: "", designation: "", departmentId: "", managerId: "", dateOfJoining: "", shift: "IN_NIGHT", roleId: "", employmentType: "", paymentType: "CASH", gender: "", employeeCode: "" };
+  const added: EmployeeInput = { firstName: "Meera", middleName: "", lastName: "Joshi", fatherName: "", email: "meera.joshi@jurislpo.com", phoneCountry: "+91", phone: "9876543210", location: "", joiningOffice: "", pan: "", aadhaar: "", uan: "", address: "", designation: "", departmentId: "", managerId: "", dateOfJoining: "", shift: "IN_NIGHT", roleId: "", employmentType: "", paymentType: "CASH", gender: "", employeeCode: "", accessCardNumber: "", punchMode: "" };
   it("needs only first name, last name, email, phone and payment type when adding", () => {
     for (const step of [1, 2, 3] as const) expect(stepErrors(step, added, false)).toEqual({});
     expect(stepErrors(1, { ...added, paymentType: "" }, false).paymentType).toBe("Choose how the employee is paid");
